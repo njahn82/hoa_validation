@@ -19,6 +19,24 @@ kb_con <- dbConnect(RPostgres::Postgres(),
                     password = Sys.getenv("kb_pwd"),
                     bigint = "numeric"
 )
+
+#### Prepare affiliation metadata
+
+#' Why?
+#' 
+#' I use ROR ID to retrieve eligible publications using the ROR, which is
+#' both present in JCT and OpenAlex. However, Web of Science and Scopus do not
+#' provide ROR IDs, but use proprietory approaches.
+#' 
+#' How?
+#' 
+#' The idea is to use TA publications as a benchmark to retrieve corresponding
+#' organsiation strings from the Web of Science / Scopus and map them to the ROR 
+#' per article using the DOI. 
+#' 
+#' To account for multiplecaffiliations only the most frequent RORID/WOS ORG 
+#' combination is used.
+#' 
 #' Article-level publication metadata from institutions with TA
 ta_oa_inst <- readr::read_csv("https://github.com/subugoe/hoaddata/releases/download/v0.2.95/ta_oa_inst.csv.gz")
 ta_ror_pubs <- ta_oa_inst |>
@@ -70,6 +88,63 @@ where
 #' backup
 write_csv(ror_wos_matching, here::here("data-raw", "ror_wos_matching.csv"))
 
+#### Prepare journal data
+jct_issn <- hoaddata::jct_hybrid_jns |>
+  distinct(issn, issn_l)
+dbWriteTable(kb_con, "jct_hybrid_jns_issn", jct_issn, overwrite = TRUE)
+
+#### Retrieve articles from hybrid journals
+dbExecute(kb_con, "DROP TABLE wos_jct_items")
+
+dbExecute(kb_con, "CREATE table wos_jct_items AS select
+	distinct 
+	jhji.issn_l ,
+	i.item_id,
+	doi,
+	pubyear,
+	wos_pubdate_online
+from
+	jct_hybrid_jns_issn jhji
+left join wos_b_202310.v_issn_isbn vii on
+	jhji.issn = vii.sn
+left join wos_b_202310.v_items i on
+	vii.item_id = i.item_id
+where
+	pubyear > 2017")
+
+#### Add WOS affiliation data for first data and corresponding authors
+dbExecute(kb_con, "DROP TABLE wos_jct_affiliations")
+
+dbExecute(kb_con, "CREATE table wos_jct_affiliations AS select
+	distinct jct.item_id,
+	jct.issn_l,
+	jct.doi,
+	jct.pubyear,
+	jct.wos_pubdate_online,
+	via.author_seq_nr,
+	via.corresponding,
+	via.orcid,
+	via2.organization,
+	via2.countrycode
+from
+	wos_jct_items jct
+left join wos_b_202310.v_items_authors via on
+	jct.item_id = via.item_id
+left join wos_b_202310.v_authors_affiliations vaa2 on
+	jct.item_id = vaa2.item_id
+	and via.author_seq_nr = vaa2.author_seq_nr
+left join wos_b_202310.v_items_affiliations via2 on
+	jct.item_id = via2.item_id
+	and vaa2.aff_seq_nr = via2.aff_seq_nr
+where
+	via.author_seq_nr = 1 or corresponding = true")
+
+tt <- DBI::dbReadTable(kb_con, "wos_jct_affiliations")
+wos_jct_affiliations <- tt |>
+  mutate(organization = gsub('\\{|\\}|"', '', organization)) |>
+  mutate(doi = tolower(doi)) |>
+  as_tibble()
+write_csv(wos_jct_affiliations, "data-raw/wos_jct_affiliations_20240410.csv")
 #' Disconnect DB
 DBI::dbDisconnect(bq_con)
 DBI::dbDisconnect(kb_con)
