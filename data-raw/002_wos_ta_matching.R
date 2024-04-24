@@ -99,5 +99,47 @@ tb <-  bigrquery::bq_dataset_query("hoa-article.hoa_comparision",
                                    destination_table = "hoa-article.hoa_comparision.wos_jct",
                                    billing = "subugoe-collaborative"
 )
-wos_jct <- bq_table_download(tb)
+#' ## Zwischenschritt Validierung anhand der Länderinformationen des ESAS Registry
+#' 
+#' Get ESAC data
+data_url <- "https://keeper.mpdl.mpg.de/f/7fbb5edd24ab4c5ca157/?dl=1"
+tmp <- tempfile()
+download.file(data_url, tmp)
+esac <- readxl::read_xlsx(tmp, skip = 2) |>
+    janitor::clean_names()
+esac_countries <- esac |>
+  select(id, country) |>
+  separate_rows(country, sep = ",") |>
+  mutate(country = trimws(country)) |>
+  mutate(country_code = countrycode::countrycode(country, origin = "country.name", dest = "iso3c")) |>
+  mutate(country_code = ifelse(country == "Kosovo", "XKK", country_code))
+#' Upload to BQ
+bigrquery::bq_table_upload("hoa-article.hoa_comparision.esac_countries", esac_countries)
+#' Match in BigQuery
+#' 
+#' To Do: Use year and month, both data points seems to be present in wos data
+my_sql <- "SELECT
+  DISTINCT wos.*,
+  CASE
+    WHEN (earliest_year BETWEEN start_year AND end_year) THEN TRUE -- Check if publication is within the agreement's date range
+  ELSE
+  FALSE
+END
+  AS ta,
+  -- Flag indicating if the publication is within the agreement
+FROM
+  `hoa-article.hoa_comparision.wos_jct` AS wos
+INNER JOIN
+  `hoa-article.hoa_comparision.esac_countries` AS esac
+ON
+  wos.countrycode = esac.country_code
+  AND wos.esac_id = esac.id"
 
+if (bigrquery::bq_table_exists("hoa-article.hoa_comparision.wos_jct_ta")) {
+  bigrquery::bq_table_delete("hoa-article.hoa_comparision.wos_jct_ta")
+}
+tb <-  bigrquery::bq_dataset_query("hoa-article.hoa_comparision",
+                                   query = my_sql,
+                                   destination_table = "hoa-article.hoa_comparision.wos_jct_ta",
+                                   billing = "subugoe-collaborative"
+)
