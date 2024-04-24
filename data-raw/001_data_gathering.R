@@ -41,6 +41,7 @@ kb_con <- dbConnect(RPostgres::Postgres(),
 ta_oa_inst <- readr::read_csv("https://github.com/subugoe/hoaddata/releases/download/v0.2.95/ta_oa_inst.csv.gz")
 ta_ror_pubs <- ta_oa_inst |>
   distinct(doi, ror_matching)
+#' Make sure RORs are aligned 
 #' Upload to KB
 dbWriteTable(kb_con, "ta_ror_pubs", ta_ror_pubs, overwrite = TRUE)
 #' #### Web of Science

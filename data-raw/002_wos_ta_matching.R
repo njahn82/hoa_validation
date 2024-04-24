@@ -41,6 +41,7 @@ my_sql <- "WITH
     jct_jn.esac_id,
     issn_l,
     jct_inst.ror_main,
+    jct_inst.ror as ror_matching,
     EXTRACT(YEAR
     FROM
       start_date) AS start_year,
@@ -72,7 +73,8 @@ SELECT
   pubyear,
   wos.online_year,
   CASE WHEN online_year IS NULL THEN pubyear ELSE online_year END AS earliest_year,
-  wos.ror_matching AS ror,
+ -- wos.ror_matching AS ror,
+  ror_main,
   organization,
   countrycode,
   author_seq_nr,
@@ -86,7 +88,7 @@ INNER JOIN
   esac_data
 ON
   esac_data.issn_l = wos.issn_l
-  AND esac_data.ror_main = wos.ror_matching"
+  AND esac_data.ror_matching = wos.ror_matching"
 
 bq_auth()
 if (bigrquery::bq_table_exists("hoa-article.hoa_comparision.wos_jct")) {
