@@ -31,10 +31,10 @@ kb_con <- dbConnect(RPostgres::Postgres(),
 #' How?
 #' 
 #' The idea is to use TA publications as a benchmark to retrieve corresponding
-#' organsiation strings from the Web of Science / Scopus and map them to the ROR 
+#' organisation strings from the Web of Science / Scopus and map them to the ROR 
 #' per article using the DOI. 
 #' 
-#' To account for multiplecaffiliations only the most frequent RORID/WOS ORG 
+#' To account for multiple affiliations only the most frequent RORID/WOS ORG 
 #' combination is used.
 #' 
 #' Article-level publication metadata from institutions with TA
