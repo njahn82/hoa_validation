@@ -89,7 +89,7 @@ where
 #' backup
 write_csv(ror_wos_matching, here::here("data-raw", "ror_wos_matching.csv"))
 
-#### Prepare journal data
+#' ## Prepare journal data
 jct_issn <- hoaddata::jct_hybrid_jns |>
   distinct(issn, issn_l)
 dbWriteTable(kb_con, "jct_hybrid_jns_issn", jct_issn, overwrite = TRUE)
@@ -97,13 +97,26 @@ dbWriteTable(kb_con, "jct_hybrid_jns_issn", jct_issn, overwrite = TRUE)
 #### Retrieve articles from hybrid journals
 dbExecute(kb_con, "DROP TABLE wos_jct_items")
 
-dbExecute(kb_con, "CREATE table wos_jct_items AS select
+dbExecute(kb_con, "CREATE table wos_jct_items AS 
+select distinct 
+    issn_l,
+	item_id,
+	doi,
+	pubyear,
+	wos_pubdate_online,
+	oa_status,
+	item_type
+from (
+select
 	distinct 
-	jhji.issn_l ,
+	jhji.issn_l,
 	i.item_id,
 	doi,
 	pubyear,
-	wos_pubdate_online
+	wos_pubdate_online,
+	unnest(wos_ci) as ci,
+	oa_status,
+	item_type
 from
 	jct_hybrid_jns_issn jhji
 left join wos_b_202310.v_issn_isbn vii on
@@ -111,7 +124,16 @@ left join wos_b_202310.v_issn_isbn vii on
 left join wos_b_202310.v_items i on
 	vii.item_id = i.item_id
 where
-	pubyear > 2017")
+	pubyear > 2017 ) as tmp
+where ci in ('SCI', 'SSCI', 'AHCI')")
+
+wos_jct_items <- DBI::dbReadTable(kb_con, "wos_jct_items")
+#' backup
+wos_jct_items_df <- wos_jct_items |> 
+  as_tibble() |> 
+  mutate(item_type = as.character(gsub('\\{|\\}|"', '', item_type))) |>
+  mutate(oa_status = as.character(gsub('\\{|\\}|"', '', oa_status)))
+write_csv(wos_jct_items_df, "data-raw/wos_jct_items_df.csv")
 
 #### Add WOS affiliation data for first data and corresponding authors
 dbExecute(kb_con, "DROP TABLE wos_jct_affiliations")
