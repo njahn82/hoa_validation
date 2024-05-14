@@ -119,9 +119,9 @@ select
 	item_type
 from
 	jct_hybrid_jns_issn jhji
-left join wos_b_202310.v_issn_isbn vii on
+left join wos_b_202401.v_issn_isbn vii on
 	jhji.issn = vii.sn
-left join wos_b_202310.v_items i on
+left join wos_b_202401.v_items i on
 	vii.item_id = i.item_id
 where
 	pubyear > 2017 ) as tmp

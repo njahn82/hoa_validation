@@ -85,3 +85,106 @@ wos_oa |>
   right_join(wos_all) |>
   mutate(prop = oa / articles)
 ```
+
+## Compare to HOAD
+
+```{r}
+wos_jn_all <- wos_oa |>
+  group_by(earliest_year) |>
+  summarise(journals = n_distinct(issn_l),
+            articles = sum(wos_articles))
+
+wos_oa_per_year <-  wos_oa |>
+  filter(is_oa == TRUE) |>
+  group_by(earliest_year) |>
+  summarise(oa_journals = n_distinct(issn_l),
+            oa_articles = sum(wos_articles))
+
+wos_per_year <- inner_join(wos_jn_all, wos_oa_per_year)
+
+cr_all_per_year <- hoaddata::jn_ind |> 
+  distinct(issn_l, cr_year, jn_all) |>
+  group_by(cr_year) |>
+  summarise(cr_journals = n_distinct(issn_l),
+            cr_articles = sum(jn_all)) 
+
+cr_oa <- hoaddata::jn_ind |>
+  filter(!is.na(cc)) |> group_by(cr_year) |>
+  summarise(cr_oa = sum(cc_total))
+
+cr_per_year <- inner_join(cr_all_per_year, cr_oa) |>
+  mutate(cr_year = as.numeric(as.character(cr_year)))
+
+my_df_year <- inner_join(cr_per_year, wos_per_year, by = c("cr_year" = "earliest_year")) |>
+  mutate(cr_oa_prop = cr_oa / cr_articles,
+         wos_oa_prop = oa_articles / articles)
+
+### journal level
+
+wos_jn_all <- wos_oa |>
+  group_by(earliest_year, issn_l) |>
+  summarise(articles = sum(wos_articles))
+
+wos_oa_per_year <-  wos_oa |>
+  filter(is_oa == TRUE) |>
+  group_by(earliest_year, issn_l) |>
+  summarise(oa_articles = sum(wos_articles))
+
+wos_per_year <- inner_join(wos_jn_all, wos_oa_per_year)
+
+cr_all_per_year <- hoaddata::jn_ind |> 
+  distinct(issn_l, cr_year, jn_all) |>
+  group_by(cr_year, issn_l) |>
+  summarise(cr_articles = sum(jn_all)) 
+
+cr_oa <- hoaddata::jn_ind |>
+  filter(!is.na(cc)) |> group_by(cr_year, issn_l) |>
+  summarise(cr_oa = sum(cc_total))
+
+cr_per_year <- inner_join(cr_all_per_year, cr_oa) |>
+  mutate(cr_year = as.numeric(as.character(cr_year)))
+
+my_df <- inner_join(cr_per_year, wos_per_year, by = c("cr_year" = "earliest_year", "issn_l")) |>
+  mutate(cr_oa_prop = cr_oa / cr_articles,
+         wos_oa_prop = oa_articles / articles)
+```
+
+### wos_jct_items_approach
+
+use items from kb, distinguishing between doc types and provides oa information
+
+```{r}
+wos_jct_items_raw <- readr::read_csv(here::here("data-raw/", "wos_jct_items_df.csv")) 
+wos_jct_items <- wos_jct_items_raw|>
+  mutate(core_pub = ifelse(grepl("Article|Review", item_type), 1, 0),
+         hybrid_oa = ifelse(grepl("hybrid", oa_status), 1, 0),
+         cr_oa = ifelse(tolower(doi) %in% hoaddata::cc_articles$doi, 1, 0),
+         online_year = lubridate::year(wos_pubdate_online)) |>
+  mutate(earlies_year = ifelse(!is.na(online_year), online_year, pubyear)) |>
+  distinct()
+```
+
+
+## stats
+
+```{r}
+core_hybrid_oa <- wos_jct_items |>
+  filter(core_pub == 1) |>
+  group_by(earlies_year) |>
+  summarise(core_hybrid_oa = sum(hybrid_oa),
+            core_cr_oa = sum(cr_oa))
+
+wos_oct_23_stat <- wos_jct_items |>
+  group_by(earlies_year) |>
+  summarise(all = n_distinct(item_id),
+            core = sum(core_pub),
+            hybrid_oa = sum(hybrid_oa),
+            cr_oa = sum(cr_oa)) |>
+  inner_join(core_hybrid_oa) |>
+  mutate(oa_prop = hybrid_oa / all,
+         core_oa_prop = core_hybrid_oa / core,
+         cr_prop = cr_oa / all,
+         core_cr_prop = core_cr_oa / core) 
+
+write_csv(wos_oct_23_stat, here::here("data", "wos_oct_23_stat.csv"))
+```
