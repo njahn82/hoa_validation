@@ -174,7 +174,7 @@ core_hybrid_oa <- wos_jct_items |>
   summarise(core_hybrid_oa = sum(hybrid_oa),
             core_cr_oa = sum(cr_oa))
 
-wos_oct_23_stat <- wos_jct_items |>
+wos_24_stat <- wos_jct_items |>
   group_by(earlies_year) |>
   summarise(all = n_distinct(item_id),
             core = sum(core_pub),
@@ -186,5 +186,57 @@ wos_oct_23_stat <- wos_jct_items |>
          cr_prop = cr_oa / all,
          core_cr_prop = core_cr_oa / core) 
 
-write_csv(wos_oct_23_stat, here::here("data", "wos_oct_23_stat.csv"))
+#write_csv(wos_oct_23_stat, here::here("data", "wos_oct_23_stat.csv"))
+```
+
+## by journal
+
+```{r}
+
+## Wos data
+
+jn_core_hybrid_oa <- wos_jct_items |>
+  filter(core_pub == 1) |>
+  group_by(earlies_year, issn_l) |>
+  summarise(core_hybrid_oa = sum(hybrid_oa),
+            core_cr_oa = sum(cr_oa))
+
+jn_wos_24_stat <- wos_jct_items |>
+  group_by(earlies_year, issn_l) |>
+  summarise(all = n_distinct(item_id),
+            core = sum(core_pub),
+            hybrid_oa = sum(hybrid_oa),
+            cr_oa = sum(cr_oa)) |>
+  inner_join(jn_core_hybrid_oa) |>
+  mutate(oa_prop = hybrid_oa / all,
+         core_oa_prop = core_hybrid_oa / core,
+         cr_prop = cr_oa / all,
+         core_cr_prop = core_cr_oa / core) 
+
+## hoaddata
+
+cr_all_per_year <- hoaddata::jn_ind |> 
+  distinct(issn_l, cr_year, jn_all) |>
+  group_by(cr_year, issn_l) |>
+  summarise(hoad_articles = sum(jn_all)) 
+
+cr_oa <- hoaddata::jn_ind |>
+  filter(!is.na(cc)) |> 
+  group_by(cr_year, issn_l) |>
+  summarise(hoad_oa = sum(cc_total))
+
+cr_per_year <- inner_join(cr_all_per_year, cr_oa) |>
+  mutate(cr_year = as.numeric(as.character(cr_year)))
+
+jn_wos_stats <- inner_join(jn_wos_24_stat, cr_per_year, by = c("earlies_year" = "cr_year", "issn_l"))
+```
+
+### Exploration
+
+```{r}
+ggplot(jn_wos_stats, aes(hoad_oa / hoad_articles, core_cr_prop)) +
+  geom_point(alpha = 0.05) +
+  coord_equal() +
+  geom_smooth(method = "lm") +
+  facet_wrap(~ earlies_year)
 ```
