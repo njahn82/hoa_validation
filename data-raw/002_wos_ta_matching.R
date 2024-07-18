@@ -10,17 +10,17 @@
 #' 
 #' To Do: Keep this data point in KB.
 library(tidyverse)
-wos_df <- readr::read_csv("data-raw/wos_jct_affiliations_20240410.csv") 
+wos_df <- readr::read_csv("data-raw/wos_jct_affiliations_20240717.csv") 
 # Matching
 wos_ror <- readr::read_csv("data-raw/ror_wos_matching.csv") |>
-  distinct(ror_matching, organization)
+  distinct(ror_matching, vendor_org_id)
 
 wos_matching <- wos_df |> 
-  left_join(wos_ror, by = "organization")
+  left_join(wos_ror, by = "vendor_org_id")
 #' The results is downloaded as csv and uploaded to Google BiGQuery using gcloud 
 #' command line tools (because file is large)
-#' `gcloud storage cp ~/Documents/thesis/hoa_validation/data-raw/wos_matching_20240410.csv gs://bigschol`
-write_csv(wos_matching, "data-raw/wos_matching_20240410.csv")
+#' `gcloud storage cp ~/Documents/thesis/hoa_validation/data-raw/wos_matching_20240717.csv gs://bigschol`
+write_csv(wos_matching, "data-raw/wos_matching_20240717.csv")
 #'
 #' 
 #' ## Matching
@@ -30,7 +30,7 @@ write_csv(wos_matching, "data-raw/wos_matching_20240410.csv")
 #' enriched. The resulting temporary table is `esac_data`
 #' 
 #' Then, we create a subset of publications from eligible institutions by merging
-#' `esac_data` with `wos_matching_20240410`. To improve the performance of the query
+#' `esac_data` with `wos_matching_20240717`. To improve the performance of the query
 #' not all fields will be returned. Also, records from institutions without TA were 
 #' excluded before the matching as indicated by NA. 
 library(bigrquery)
@@ -63,7 +63,7 @@ my_sql <- "WITH
     *,
     CAST(REGEXP_EXTRACT(wos_pubdate_online, r'^[0-9]{4}') AS NUMERIC) AS online_year
   FROM
-    `hoa-article.hoa_comparision.wos_matching_20240410`
+    `hoa-article.hoa_comparision.wos_matching_20240717`
   WHERE
     ror_matching != 'NA')
 SELECT
@@ -75,7 +75,7 @@ SELECT
   CASE WHEN online_year IS NULL THEN pubyear ELSE online_year END AS earliest_year,
  -- wos.ror_matching AS ror,
   ror_main,
-  organization,
+  vendor_org_id,
   countrycode,
   author_seq_nr,
   corresponding,
@@ -114,6 +114,8 @@ esac_countries <- esac |>
   mutate(country_code = countrycode::countrycode(country, origin = "country.name", dest = "iso3c")) |>
   mutate(country_code = ifelse(country == "Kosovo", "XKK", country_code))
 #' Upload to BQ
+if (bigrquery::bq_table_exists("hoa-article.hoa_comparision.esac_countries")) 
+  bigrquery::bq_table_delete("hoa-article.hoa_comparision.esac_countries") 
 bigrquery::bq_table_upload("hoa-article.hoa_comparision.esac_countries", esac_countries)
 #' Match in BigQuery
 #' 

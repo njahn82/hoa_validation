@@ -38,7 +38,7 @@ kb_con <- dbConnect(RPostgres::Postgres(),
 #' combination is used.
 #' 
 #' Article-level publication metadata from institutions with TA
-ta_oa_inst <- readr::read_csv("https://github.com/subugoe/hoaddata/releases/download/v0.2.95/ta_oa_inst.csv.gz")
+ta_oa_inst <- readr::read_csv("https://github.com/subugoe/hoaddata/releases/download/v0.2.98/ta_oa_inst.csv.gz")
 ta_ror_pubs <- ta_oa_inst |>
   distinct(doi, ror_matching)
 #' Make sure RORs are aligned 
@@ -51,23 +51,28 @@ dbExecute(kb_con, "DROP TABLE ta_wos")
 dbExecute(kb_con, "CREATE table ta_wos AS 
 select ta.*, vi.item_id
 from ta_ror_pubs ta
-left join wos_b_202310.v_items vi on ta.doi = LOWER(vi.doi)")
+left join wos_b_202404.v_items vi on ta.doi = LOWER(vi.doi)")
 #' 
 #' Get article-level affiliation metadata
 dbExecute(kb_con, "DROP TABLE ta_wos_aff")
 dbExecute(kb_con, "CREATE TABLE ta_wos_aff AS select distinct tw.*, aa.author_seq_nr, aa.organization, aa.vendor_org_id 
 from ta_wos tw 
-inner join wos_b_202310.v_authors_affiliations aa on tw.item_id = aa.item_id 
+inner join wos_b_202404.v_authors_affiliations aa on tw.item_id = aa.item_id 
 where aa.author_seq_nr = 1 ")
 #' Create matching table where the most frequent ror / org combination is chosen to
 #' account for multiple authorships
+#' 
+#' I use the Unique ID of an organization as defined by Clarivate. WoS Organization Enhanced ("preferred name"). 
+#' Path: /REC/static_data/fullrecord_metadata/addresses/address_name/address_spec/organizations/organization@pref.
+#' 
+#' 
 ror_wos_matching <- dbGetQuery(kb_con, "select
 	*
 from
 	(
 	select
 		*,
-		row_number() over(partition by ror_matching
+		row_number() over(partition by vendor_org_id
 	order by
 		matches desc) as row_n
 	from
@@ -75,12 +80,12 @@ from
 		select
 			count(distinct doi) as matches,
 			ror_matching,
-			unnest(organization) as organization
+			unnest(vendor_org_id) as vendor_org_id
 		from
 			ta_wos_aff twa
 		group by
 			ror_matching,
-			organization
+			vendor_org_id
 ) ii ) ppp
 where
 	ppp.row_n = 1
@@ -119,7 +124,7 @@ select
 	item_type
 from
 	jct_hybrid_jns_issn jhji
-left join wos_b_202401.v_issn_isbn vii on
+left join wos_b_202404.v_issn_isbn vii on
 	jhji.issn = vii.sn
 left join wos_b_202401.v_items i on
 	vii.item_id = i.item_id
@@ -147,16 +152,16 @@ dbExecute(kb_con, "CREATE table wos_jct_affiliations AS select
 	via.author_seq_nr,
 	via.corresponding,
 	via.orcid,
-	via2.organization,
+	via2.vendor_org_id,
 	via2.countrycode
 from
 	wos_jct_items jct
-left join wos_b_202310.v_items_authors via on
+left join wos_b_202404.v_items_authors via on
 	jct.item_id = via.item_id
-left join wos_b_202310.v_authors_affiliations vaa2 on
+left join wos_b_202404.v_authors_affiliations vaa2 on
 	jct.item_id = vaa2.item_id
 	and via.author_seq_nr = vaa2.author_seq_nr
-left join wos_b_202310.v_items_affiliations via2 on
+left join wos_b_202404.v_items_affiliations via2 on
 	jct.item_id = via2.item_id
 	and vaa2.aff_seq_nr = via2.aff_seq_nr
 where
@@ -164,10 +169,13 @@ where
 
 tt <- DBI::dbReadTable(kb_con, "wos_jct_affiliations")
 wos_jct_affiliations <- tt |>
-  mutate(organization = gsub('\\{|\\}|"', '', organization)) |>
+  mutate(vendor_org_id = gsub('\\{|\\}|"', '', vendor_org_id)) |>
   mutate(doi = tolower(doi)) |>
   as_tibble()
-write_csv(wos_jct_affiliations, "data-raw/wos_jct_affiliations_20240410.csv")
+write_csv(wos_jct_affiliations, "data-raw/wos_jct_affiliations_20240717.csv")
+
+#' Backup ta oa inst
+write_csv(ta_oa_inst, "data-raw/ta_oa_inst.csv.gz")
 #' Disconnect DB
 DBI::dbDisconnect(bq_con)
 DBI::dbDisconnect(kb_con)
