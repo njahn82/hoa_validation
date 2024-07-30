@@ -7,9 +7,9 @@ To analyse the prevalence of articles published under transformative agreements,
 
 {hoaddata} ships data along with the code, unit testing suite and documentation.
 
- Two questions arise concerning the representation and validity of the open scholarly metadata used:
+Questions arise concerning the representation and validity of the open scholarly metadata used:
 
-1. Are open data sources suitable to measure transformative agreements? More specifically, fo analyses based on {hoaddata} yield comparable results compared to WoS and Scopus? (see RQ2 in https://arxiv.org/pdf/2404.17663)
+1. Are open data sources suitable to measure transformative agreements? More specifically, do analyses based on {hoaddata} yield comparable results compared to WoS and Scopus? (see RQ2 in https://arxiv.org/pdf/2404.17663)
 
 - Article volume 
 	- Issue: document type definitions differ

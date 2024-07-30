@@ -66,30 +66,66 @@ where aa.author_seq_nr = 1 ")
 #' Path: /REC/static_data/fullrecord_metadata/addresses/address_name/address_spec/organizations/organization@pref.
 #' 
 #' 
-ror_wos_matching <- dbGetQuery(kb_con, "select
-	*
+ror_wos_matching <- dbGetQuery(kb_con, "with vendor as
+(
+select
+	ror_matching,
+	vendor_org_id,
+	n,
+	row_number
 from
 	(
 	select
 		*,
-		row_number() over(partition by vendor_org_id
+		row_number() over (partition by vendor_org_id
 	order by
-		matches desc) as row_n
+		n desc) as row_number
 	from
 		(
 		select
-			count(distinct doi) as matches,
+			COUNT(distinct item_id) as n,
 			ror_matching,
-			unnest(vendor_org_id) as vendor_org_id
+			vendor_org_id
 		from
-			ta_wos_aff twa
+			(
+			select
+				distinct item_id,
+				ror_matching,
+				unnest(vendor_org_id) as vendor_org_id
+			from
+				ta_wos_aff twa
+      )
 		group by
 			ror_matching,
 			vendor_org_id
-) ii ) ppp
+		order by
+			vendor_org_id,
+			n desc
+    )
+  )
 where
-	ppp.row_n = 1
-") |>
+	(ror_matching = 'https://ror.org/00cd95c65'
+		or ror_matching = 'https://ror.org/01y9bpm73'
+		or ror_matching = 'https://ror.org/00sb7hc59')
+), 
+ror as 
+(
+select
+	ror_matching,
+	vendor_org_id,
+	n,
+	row_number() over (partition by ror_matching
+order by
+	n desc) as row_number
+from
+	vendor 
+)
+select
+	*
+from
+	ror
+where
+	row_number = 1;") |>
   as_tibble()
 #' backup
 write_csv(ror_wos_matching, here::here("data-raw", "ror_wos_matching.csv"))
@@ -100,7 +136,7 @@ jct_issn <- hoaddata::jct_hybrid_jns |>
 dbWriteTable(kb_con, "jct_hybrid_jns_issn", jct_issn, overwrite = TRUE)
 
 #### Retrieve articles from hybrid journals
-dbExecute(kb_con, "DROP TABLE wos_jct_items")
+  dbExecute(kb_con, "DROP TABLE wos_jct_items")
 
 dbExecute(kb_con, "CREATE table wos_jct_items AS 
 select distinct 
@@ -179,4 +215,81 @@ write_csv(ta_oa_inst, "data-raw/ta_oa_inst.csv.gz")
 #' Disconnect DB
 DBI::dbDisconnect(bq_con)
 DBI::dbDisconnect(kb_con)
+
+### Scopus items and affiliations
+
+#### Retrieve articles from hybrid journals
+dbExecute(kb_con, "DROP TABLE scp_jct_items")
+
+dbExecute(kb_con, "CREATE table scp_jct_items AS 
+select distinct 
+    issn_l,
+	item_id,
+	doi,
+	pubyear,
+	first_pubyear,
+	oa_status,
+	item_type
+from (
+select
+	distinct 
+	jhji.issn_l,
+	i.item_id,
+	doi,
+	pubyear,
+	first_pubyear,
+	sn_c,
+	oa_status,
+	item_type
+from
+	jct_hybrid_jns_issn jhji
+left join scp_b_202404.issn_isbn vii on
+	jhji.issn = vii.sn_c
+left join scp_b_202401.items i on
+	vii.item_id = i.item_id
+where
+	pubyear > 2017 ) as tmp")
+
+scp_jct_items <- DBI::dbReadTable(kb_con, "scp_jct_items")
+#' backup
+scp_jct_items_df <- scp_jct_items |> 
+  as_tibble() |> 
+  mutate(item_type = as.character(gsub('\\{|\\}|"', '', item_type))) |>
+  mutate(oa_status = as.character(gsub('\\{|\\}|"', '', oa_status)))
+write_csv(scp_jct_items_df, "data-raw/scp_jct_items_df.csv")
+
+#### Add WOS affiliation data for first data and corresponding authors
+dbExecute(kb_con, "DROP TABLE scp_jct_affiliations")
+
+dbExecute(kb_con, "CREATE table scp_jct_affiliations AS select distinct jct.item_id,
+	jct.issn_l,
+	jct.doi,
+	jct.pubyear,
+	jct.first_pubyear,
+	via.author_seq_nr,
+	via.corresponding,
+	via.orcid,
+	via2.vendor_org_id,
+	via2.organization,
+	via2.countrycode
+from
+	scp_jct_items jct
+left join scp_b_202404.items_authors via on
+	jct.item_id = via.item_id
+left join scp_b_202404.authors_affiliations vaa2 on
+	jct.item_id = vaa2.item_id
+	and via.author_seq_nr = vaa2.author_seq_nr
+left join scp_b_202404.items_affiliations via2 on
+	jct.item_id = via2.item_id
+	and vaa2.aff_seq_nr = via2.aff_seq_nr
+where
+	via.author_seq_nr = 1 or corresponding = true")
+
+tt <- DBI::dbReadTable(kb_con, "scp_jct_affiliations")
+scp_jct_affiliations <- tt |>
+  mutate(vendor_org_id = gsub('\\{|\\}|"', '', vendor_org_id)) |>
+  mutate(organization = gsub('\\{|\\}|"', '', organization)) |>
+  mutate(doi = tolower(doi)) |>
+  as_tibble()
+write_csv(scp_jct_affiliations, "data-raw/scp_jct_affiliations.csv")
 
