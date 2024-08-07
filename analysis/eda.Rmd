@@ -71,6 +71,7 @@ FROM oa_raw
 GROUP BY issn_l, earliest_year, is_oa
 ORDER BY issn_l, earliest_year
 ```
+
 By year
 
 ```{r}
@@ -225,10 +226,57 @@ cr_oa <- hoaddata::jn_ind |>
   group_by(cr_year, issn_l) |>
   summarise(hoad_oa = sum(cc_total))
 
-cr_per_year <- inner_join(cr_all_per_year, cr_oa) |>
+cr_per_year <- left_join(cr_all_per_year, cr_oa) |>
   mutate(cr_year = as.numeric(as.character(cr_year)))
 
-jn_wos_stats <- inner_join(jn_wos_24_stat, cr_per_year, by = c("earlies_year" = "cr_year", "issn_l"))
+jn_wos_stats <- left_join(cr_per_year, jn_wos_24_stat, by = c("cr_year" = "earlies_year" , "issn_l"))
+
+## add esac portfolios
+
+### in the anayltics, we need to decide whether we anaylse the intersection or the scenario all journals
+
+publisher_intersection_df <- hoaddata::jct_hybrid_jns |>
+  distinct(issn_l, esac_publisher) |>
+  inner_join(jn_wos_stats, by = "issn_l") |>
+  filter(cr_year %in% 2018:2023) |>
+  # only intersection
+  filter(!is.na(all)) |>
+  group_by(esac_publisher) |>
+  summarise(all = sum(all),
+            core = sum(core),
+            hybrid_oa = sum(hybrid_oa),
+            core_hybrid_oa = sum(core_hybrid_oa),
+            cr_oa = sum(cr_oa),
+            core_cr_oa = sum(core_cr_oa),
+            hoad_articles = sum(hoad_articles, na.rm = TRUE),
+            hoad_oa = sum(hoad_oa, na.rm = TRUE)) 
+
+publisher_intersection_by_year_df <- hoaddata::jct_hybrid_jns |>
+  distinct(issn_l, esac_publisher) |>
+  inner_join(jn_wos_stats, by = "issn_l") |>
+  filter(cr_year %in% 2018:2023) |>
+  # only intersection
+  filter(!is.na(all)) |>
+  group_by(esac_publisher, cr_year) |>
+  summarise(all = sum(all),
+            core = sum(core),
+            hybrid_oa = sum(hybrid_oa),
+            core_hybrid_oa = sum(core_hybrid_oa),
+            cr_oa = sum(cr_oa),
+            core_cr_oa = sum(core_cr_oa),
+            hoad_articles = sum(hoad_articles, na.rm = TRUE),
+            hoad_oa = sum(hoad_oa, na.rm = TRUE))
+
+
+p <- ggplot(publisher_intersection_by_year_df, aes(core_hybrid_oa, core_cr_oa, text = esac_publisher)) +
+  geom_point(alpha = 0.4) +
+  #scale_x_log10(limits = c(1,100000)) +
+  #scale_y_log10(limits = c(1,100000)) +
+  coord_equal() +
+  geom_abline(slope = 1, intercept = 0)  +
+  # geom_smooth(method = "lm") +
+  facet_wrap(~ cr_year) 
+plotly::ggplotly(p)
 ```
 
 ### Exploration
@@ -236,7 +284,9 @@ jn_wos_stats <- inner_join(jn_wos_24_stat, cr_per_year, by = c("earlies_year" = 
 ```{r}
 ggplot(jn_wos_stats, aes(hoad_oa / hoad_articles, core_cr_prop)) +
   geom_point(alpha = 0.05) +
+  scale_x_log10(limits = c(0.001,1)) +
+  scale_y_log10(limits = c(0.001,1)) +
   coord_equal() +
-  geom_smooth(method = "lm") +
-  facet_wrap(~ earlies_year)
+  geom_abline(slope = 1, intercept = 0)  +
+  facet_wrap(~ cr_year)
 ```

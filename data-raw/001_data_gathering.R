@@ -293,3 +293,18 @@ scp_jct_affiliations <- tt |>
   as_tibble()
 write_csv(scp_jct_affiliations, "data-raw/scp_jct_affiliations.csv")
 
+### BigQuery raw
+
+hoad_dois_all <- DBI::dbGetQuery(bq_con, "SELECT
+  DISTINCT doi,
+  issn_l,
+  cr_year
+FROM
+  `subugoe-collaborative.hoaddata.cc_md`
+WHERE
+  cr_year BETWEEN 2019
+  AND 2023")
+
+# backup
+
+write_csv(hoad_dois_all, here::here("data-raw", "hoad_dois_all_19_23.csv"))
