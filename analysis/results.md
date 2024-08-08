@@ -276,4 +276,53 @@ upset(fromList(jn_list_with_oa), order.by = "freq")
 ```
 
 <img src="results_files/figure-gfm/unnamed-chunk-6-1.png" width="70%" style="display: block; margin: auto;" />
-\### Item level
+
+#### Compose a complex upset
+
+``` r
+cr_active_upset <- cr_df |>
+  group_by(issn_l) |>
+  summarise(n_cr = n_distinct(doi)) |>
+  mutate(crossref = TRUE)
+wos_active_upset <- wos_active_core |>
+  group_by(issn_l) |>
+  summarise(n_wos = n_distinct(item_id)) |>
+  mutate(wos = TRUE)
+scp_active_upset <- scp_active_core |>
+  group_by(issn_l) |>
+  summarise(n_scp = n_distinct(item_id)) |>
+  mutate(scopus = TRUE)
+
+jn_upset <- dplyr::full_join(cr_active_upset, wos_active_upset, by = "issn_l") |>
+  dplyr::full_join(scp_active_upset, by = "issn_l") |>
+  mutate(across(c(crossref, wos, scopus), ~replace_na(.x, FALSE))) |>
+  # Journal 5-years article volume
+  mutate(n = case_when(!is.na(n_cr) ~ n_cr, !is.na(n_scp) ~n_scp, TRUE ~ n_wos))
+
+library(ComplexUpset)
+
+ComplexUpset::upset(
+  jn_upset,
+  c("crossref", "wos", "scopus"),
+  base_annotations = list(
+    `Journals` = (
+      intersection_size(text_mapping=aes(label=!!upset_text_percentage())) +
+        scale_y_continuous(labels =  scales::number_format(big.mark = ","))
+    )
+  ),
+  annotations = list(
+    'Article Volume' = (
+      ggplot(jn_upset, aes(x = intersection, y = n)) +
+        geom_boxplot(outliers = FALSE) +
+        scale_y_log10(labels =  scales::number_format(big.mark = ",")) 
+    ),
+    'Article Violine' = (
+      ggplot(jn_upset, aes(x = intersection, y = n)) +
+        geom_col() +
+        scale_y_continuous(labels =  scales::number_format(big.mark = ","))
+    )
+  )
+) 
+```
+
+<img src="results_files/figure-gfm/upset_data-1.png" width="70%" style="display: block; margin: auto;" />

@@ -100,14 +100,17 @@ wos_hybrid_jns <- wos_jct_items_df |>
   filter(!issn_l %in% hoad_oa_excluded$issn_l)
 
 wos_active_jns <- wos_hybrid_jns |>
-  filter(pubyear %in% 2019:2023)
+  # use online first, if available
+  mutate(online_year = lubridate::year(wos_pubdate_online)) |>
+  mutate(pub_year = ifelse(!is.na(online_year), online_year, pubyear)) |>
+  filter(pub_year %in% 2019:2023)
 
 wos_active_jns_with_oa <- wos_active_jns |> 
   filter(oa_status == "hybrid") 
 
 # wos core 
 wos_active_core <- wos_active_jns |>
-  filter(item_type %in% c("Article", "Review"))
+  filter(grepl("Article|^Review$", item_type))
 ```
 
 - Number of hybrid journals: `r length(unique(wos_hybrid_jns$issn_l))`
@@ -126,7 +129,9 @@ scp_hybrid_jns <- scp_jct_items_df |>
   filter(!issn_l %in% hoad_oa_excluded$issn_l)
 
 scp_active_jns <- scp_hybrid_jns |>
-  filter(pubyear %in% 2019:2023) 
+   # use online first, if available
+  mutate(pub_year = ifelse(!is.na(first_pubyear), first_pubyear, pubyear)) |>
+  filter(pub_year %in% 2019:2023)
 
 scp_active_jns_with_oa <- scp_active_jns |> 
   filter(grepl("hybrid", oa_status))
@@ -219,7 +224,7 @@ item_view_df <-  list(
 )
 
 # Plot Journals Five Years Period
-upset(fromList(item_view_df), order.by = "freq")
+UpSetR::upset(UpSetR::fromList(item_view_df), order.by = "freq")
 ```
 
 ### OA View
@@ -235,5 +240,76 @@ jn_list_with_oa <- list(
 
 upset(fromList(jn_list_with_oa), order.by = "freq")
 ```
-### Item level
+
+#### Compose a complex upset
+
+```{r upset_data}
+cr_active_upset <- cr_df |>
+  filter(issn_l %in% active_jns$issn_l) |>
+  group_by(issn_l) |>
+  summarise(n_cr = n_distinct(doi)) |>
+  mutate(crossref = TRUE)
+wos_active_upset <- wos_active_core |>
+  group_by(issn_l) |>
+  summarise(n_wos = n_distinct(item_id)) |>
+  mutate(wos = TRUE)
+scp_active_upset <- scp_active_core |>
+  group_by(issn_l) |>
+  summarise(n_scp = n_distinct(item_id)) |>
+  mutate(scopus = TRUE)
+
+jn_upset_ <- dplyr::full_join(cr_active_upset, wos_active_upset, by = "issn_l") |>
+  dplyr::full_join(scp_active_upset, by = "issn_l") |>
+  mutate(across(c(crossref, wos, scopus), ~replace_na(.x, FALSE))) |>
+  # Journal 5-years article volume
+  mutate(n = case_when(!is.na(n_cr) ~ n_cr, !is.na(n_scp) ~n_scp, TRUE ~ n_wos))
+
+# add year
+jn_age <- jn_ind |> 
+  mutate(cr_year = as.numeric(as.character(cr_year))) |> 
+  filter(cr_year %in% 2019:2023) |>
+  group_by(issn_l) |>
+  summarise(min_year = min(cr_year),
+            max_year = max(cr_year)) |>
+  mutate(jn_age = max_year - min_year + 1) 
+
+jn_upset <- jn_upset_ |>
+  inner_join(jn_age, by = "issn_l")
+library(ComplexUpset)
+
+ComplexUpset::upset(
+  jn_upset,
+  c("crossref", "wos", "scopus"),
+  base_annotations = list(
+    `Journals` = (
+      intersection_size() +
+        scale_y_continuous(labels =  scales::number_format(big.mark = ","))
+    )
+  ),
+  annotations = list(
+    'Article Volume' = (
+      ggplot(jn_upset, aes(x = intersection, y = n)) +
+        geom_boxplot(outliers = FALSE) +
+        scale_y_log10(labels =  scales::number_format(big.mark = ",")) 
+    ),
+    # journal age, not very useful
+    'Journal age' = (
+      ggplot(jn_upset, aes(x = intersection, y = jn_age)) +
+         geom_violin())
+    )
+  )
+```
+
+What is the age of the journals?
+
+```{r journal_age}
+jn_age <- jn_ind |> 
+  mutate(cr_year = as.numeric(as.character(cr_year))) |> 
+  filter(cr_year %in% 2019:2023) |>
+  group_by(issn_l) |>
+  summarise(min_year = min(cr_year),
+            max_year = max(cr_year)) |>
+  mutate(jn_age = max_year - min_year + 1) 
+```
+
 
