@@ -243,24 +243,24 @@ upset(fromList(jn_list_with_oa), order.by = "freq")
 
 #### Compose a complex upset
 
-```{r upset_data}
+```{r upset_data, fig.asp=0.8}
 cr_active_upset <- cr_df |>
   filter(issn_l %in% active_jns$issn_l) |>
   group_by(issn_l) |>
   summarise(n_cr = n_distinct(doi)) |>
-  mutate(crossref = TRUE)
+  mutate(Crossref = TRUE)
 wos_active_upset <- wos_active_core |>
   group_by(issn_l) |>
   summarise(n_wos = n_distinct(item_id)) |>
-  mutate(wos = TRUE)
+  mutate(WoS = TRUE)
 scp_active_upset <- scp_active_core |>
   group_by(issn_l) |>
   summarise(n_scp = n_distinct(item_id)) |>
-  mutate(scopus = TRUE)
+  mutate(Scopus = TRUE)
 
 jn_upset_ <- dplyr::full_join(cr_active_upset, wos_active_upset, by = "issn_l") |>
   dplyr::full_join(scp_active_upset, by = "issn_l") |>
-  mutate(across(c(crossref, wos, scopus), ~replace_na(.x, FALSE))) |>
+  mutate(across(c(Crossref, WoS, Scopus), ~replace_na(.x, FALSE))) |>
   # Journal 5-years article volume
   mutate(n = case_when(!is.na(n_cr) ~ n_cr, !is.na(n_scp) ~n_scp, TRUE ~ n_wos))
 
@@ -273,31 +273,102 @@ jn_age <- jn_ind |>
             max_year = max(cr_year)) |>
   mutate(jn_age = max_year - min_year + 1) 
 
-jn_upset <- jn_upset_ |>
-  inner_join(jn_age, by = "issn_l")
+# Add Esac publisher
+
+esac <- hoaddata::jct_hybrid_jns |>
+  distinct(issn_l, esac_publisher) |>
+  mutate(
+    publisher = case_when(
+      esac_publisher == "Elsevier" ~ "Elsevier",
+      esac_publisher == "Springer Nature" ~ "Springer Nature",
+      esac_publisher == "Wiley" ~ "Wiley",
+      is.character(esac_publisher) ~ "Other"
+    )) |>
+  mutate(publisher =
+           forcats::fct_relevel(
+             publisher,
+             c("Elsevier", "Springer Nature", "Wiley", "Other") 
+           )) |>
+  mutate(publisher = forcats::fct_rev(publisher)) |>
+  distinct(issn_l, publisher)
+
 library(ComplexUpset)
+jn_upset <- left_join(jn_upset_, esac, by = "issn_l")
+
+size = get_size_mode('exclusive_intersection')
 
 ComplexUpset::upset(
   jn_upset,
-  c("crossref", "wos", "scopus"),
+  c("Crossref", "WoS", "Scopus"),
+  # Only journals in Crossref
+  min_size = 30,
+  width_ratio = 0.4,
+  stripes = "transparent",
+  name = "Data Source Coverage",
   base_annotations = list(
-    `Journals` = (
-      intersection_size() +
-        scale_y_continuous(labels =  scales::number_format(big.mark = ","))
+    "Journals" = (
+      ComplexUpset::intersection_size(
+        counts = TRUE,
+        text = list(size = 9 / .pt),
+        text_mapping = aes(
+          label = paste0(!!upset_text_percentage(), '\n(', !!size, ')'),
+          colour = ifelse(!!size > 5000, 'on_bar', 'on_background'),
+          y = ifelse(!!size > 5000, !!size - 4000, !!size)
+        )
+      ) +
+        scale_y_continuous(labels = scales::number_format(big.mark = ","))
     )
   ),
-  annotations = list(
-    'Article Volume' = (
-      ggplot(jn_upset, aes(x = intersection, y = n)) +
-        geom_boxplot(outliers = FALSE) +
-        scale_y_log10(labels =  scales::number_format(big.mark = ",")) 
-    ),
-    # journal age, not very useful
-    'Journal age' = (
-      ggplot(jn_upset, aes(x = intersection, y = jn_age)) +
-         geom_violin())
-    )
-  )
+  annotations = list("Article Volume" = (
+    ggplot(mapping = aes(x = intersection, y = n, fill = fct_rev(publisher))) +
+      geom_boxplot(outliers = FALSE) +
+              scale_fill_manual(
+        "",
+        values = c(
+          "Elsevier" = "#e9711c",
+          "Springer Nature" = "#486a7e",
+          "Wiley" = "#068853",
+          "Other" = "#b3b3b3a0"
+        ), guide = "none") +
+      scale_y_log10(labels =  scales::number_format(big.mark = ","))),
+    "Publisher" = (
+      ggplot(mapping = aes(fill = publisher)) +
+        geom_bar(stat = "count", position ="fill") + 
+        scale_y_continuous("Publisher Share", labels=scales::percent_format()) +
+        scale_fill_manual(
+        "",
+        values = c(
+          "Elsevier" = "#e9711c",
+          "Springer Nature" = "#486a7e",
+          "Wiley" = "#068853",
+          "Other" = "#b3b3b3a0"
+        ), guide = "none"))), 
+  #,
+  # 'Total article' = (
+  #   ggplot(mapping = aes(x = intersection, y = n)) +
+  #     geom_bar(stat = "identity", color = "grey35", fill = "grey35")) +
+  #  scale_y_continuous(labels =  scales::number_format(big.mark = ",")) ),
+  set_sizes=(
+        upset_set_size(
+          geom = geom_bar(aes(fill = publisher), width = 0.8), 
+          position='right')) +
+          scale_fill_manual("", values = c(
+          "Elsevier" = "#e9711c",
+          "Springer Nature" = "#486a7e",
+          "Wiley" = "#068853",
+          "Other" = "#b3b3b3a0")) +
+    scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+    guides(fill = guide_legend(reverse = TRUE)) +
+    ylab("Journals"),
+      guides = "over",
+  matrix = (
+        intersection_matrix(
+            geom = geom_point(
+                shape = "square",
+                size=3.5
+            )))
+        ) +
+  patchwork::plot_layout(heights=c(2, 1.5, 2, 1))
 ```
 
 What is the age of the journals?
