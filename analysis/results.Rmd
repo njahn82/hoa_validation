@@ -32,6 +32,8 @@ knitr::knit_hooks$set(
 library(bigrquery)
 library(tidyverse)
 library(hoaddata)
+library(patchwork)
+
 #' Connect to DB 
 #' 
 #' BigQuery HOAD (Crossref, OpenAlex and open friends)
@@ -249,11 +251,11 @@ cr_active_upset <- cr_df |>
   group_by(issn_l) |>
   summarise(n_cr = n_distinct(doi)) |>
   mutate(Crossref = TRUE)
-wos_active_upset <- wos_active_core |>
+wos_active_upset <- wos_active_jns |>
   group_by(issn_l) |>
   summarise(n_wos = n_distinct(item_id)) |>
   mutate(WoS = TRUE)
-scp_active_upset <- scp_active_core |>
+scp_active_upset <- scp_active_jns |>
   group_by(issn_l) |>
   summarise(n_scp = n_distinct(item_id)) |>
   mutate(Scopus = TRUE)
@@ -293,7 +295,8 @@ esac <- hoaddata::jct_hybrid_jns |>
   distinct(issn_l, publisher)
 
 library(ComplexUpset)
-jn_upset <- left_join(jn_upset_, esac, by = "issn_l")
+jn_upset <- inner_join(jn_upset_, esac, by = "issn_l") |>
+  distinct(issn_l, .keep_all = TRUE)
 
 size = get_size_mode('exclusive_intersection')
 
@@ -383,4 +386,141 @@ jn_age <- jn_ind |>
   mutate(jn_age = max_year - min_year + 1) 
 ```
 
+### DOI coverage
+
+```{r doi_coverage_check}
+jn_overlap <- jn_upset |> 
+  filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE)
+
+miss_doi <- cr_df |>
+  filter(issn_l %in% jn_overlap$issn_l) |> 
+  filter(!doi %in% wos_active_core$doi)
+
+# Check if it is in WOS (full)
+wos_type_diff <- wos_jct_items_df |>
+  filter(doi %in% miss_doi$doi) 
+
+miss_doi |>
+  filter(!doi %in% wos_type_diff$doi) |>
+  sample_n(10)
+```
+
+### Add Article Coverage
+
+- hoaddata: Crossref exclunding paratext and proceedings as indicated by pattern macthing. Patterns mostly from Unpaywall / OpenAlex
+- WoS: All DOIs / DOIS only article and reviews
+- Scopus: All DOIs / DOIS only article and reviews
+
+```{r fig.asp=0.8}
+ doi_overlap_df <- cr_df |>
+  filter(issn_l %in% active_jns$issn_l) |>
+  mutate(in_wos_and_scopus = ifelse(doi %in% wos_active_jns$doi & doi %in% scp_active_jns$doi, 1, 0),
+         in_scopus = ifelse(doi %in% scp_active_jns$doi, 1, 0),
+         in_wos =  ifelse(doi %in% wos_active_jns$doi, 1, 0))
+doi_overlap <- doi_overlap_df |>
+  group_by(issn_l) |>
+  summarise(
+    doi_in_wos_and_scopus = sum(in_wos_and_scopus),
+    doi_in_scopus = sum(in_scopus),
+    doi_in_wos = sum(in_wos))
+
+jn_upset_articles <- jn_upset |> 
+  left_join(doi_overlap, by = "issn_l") 
+
+
+### Plot
+size = get_size_mode('exclusive_intersection')
+
+upset_overview <- ComplexUpset::upset(
+  jn_upset_articles,
+  c("Crossref", "WoS", "Scopus"),
+  # Only journals in Crossref
+  min_size = 30,
+  width_ratio = 0.4,
+  set_sizes=FALSE,
+  stripes = "transparent",
+  wrap = TRUE,
+  name = "Data Source Coverage",
+  base_annotations = list(
+    "Journals" = (
+      ComplexUpset::intersection_size(
+        counts = TRUE,
+        text = list(size = 9 / .pt),
+        text_mapping = aes(
+          label = paste0(!!upset_text_percentage(), '\n(', !!size, ')'),
+          colour = ifelse(!!size > 5000, 'on_bar', 'on_background'),
+          y = ifelse(!!size > 5000, !!size - 4000, !!size)
+        )
+      ) +
+        scale_y_continuous(labels = scales::number_format(big.mark = ","))
+    )
+  ),
+  annotations = list("Journal size\n(log scale)" = (
+    ggplot(mapping = aes(x = intersection, y = n)) +
+      geom_boxplot(outliers = FALSE) +
+      scale_y_log10(labels =  scales::number_format(big.mark = ","))),
+    "Articles" = (ggplot(mapping = aes(y = n_cr)) +
+                        geom_bar(stat = "identity", color = "grey80", aes(fill = "in Crossref only")) +
+                        geom_bar(aes(y = doi_in_wos_and_scopus, fill = "Shared"), stat = "identity", color = "#0093c7") +
+                        geom_bar(aes(y = doi_in_wos, fill = "Shared"), stat = "identity", color = "#0093c7") +
+                        geom_bar(aes(y = doi_in_scopus, fill = "Shared"), stat = "identity", color = "#0093c7") +
+                        scale_fill_manual(values = c(`in Crossref only` = "grey80", `Shared` = "#0093c7"), name = "") +
+                        scale_y_continuous(labels =  scales::number_format(big.mark = ",")) +
+                        theme(
+    legend.position = "top",
+    legend.justification = "right"
+  ) +
+    guides(fill = "none")
+    )),
+   matrix = (
+        intersection_matrix(
+            geom = geom_point(
+                shape = "square",
+                size = 2
+            )))
+        ) 
+upset_overview
+```
+
+```{r dois_over_the_years}
+doi_coverage_over_years <- doi_overlap_df |>
+  group_by(cr_year) |>
+  summarise(dois = n_distinct(doi),
+            in_wos_and_scopus = sum(in_wos_and_scopus, na.rm = TRUE),
+            in_scopus = sum(in_scopus, na.rm = TRUE),
+            in_wos = sum(in_wos)) |>
+  pivot_longer(cols = c(dois, in_wos_and_scopus, in_scopus, in_wos)) |>
+  mutate(cr_year = gsub("^20", "'", as.character(cr_year)))
+
+# dois all
+dois_all_by_year <- doi_coverage_over_years |>
+  filter(name == "dois") |>
+  select(-name)
+
+coverage_over_year_plot <- doi_coverage_over_years |>
+  filter(name != "dois") |>
+  # Fix order of panel
+  mutate(name = factor(name, levels = c("in_wos_and_scopus", "in_scopus", "in_wos"))) |>
+  ggplot(aes(x = cr_year, y = value)) +
+  geom_bar(data = dois_all_by_year, aes(fill = "in Crossref only"), color = "transparent", stat = "identity") +
+  geom_bar(aes(fill = "Shared"), color = "transparent", stat = "identity") +
+  facet_wrap( ~ name, ncol = 1) +
+  scale_fill_manual(values = c("grey80", "#0093c7"), name = "") +
+  scale_y_continuous(labels =  scales::number_format(big.mark = ",")) +
+  labs(x = "Year published", y = "Articles with DOI") + 
+  theme_minimal() +
+  theme(legend.position = "top",
+        legend.justification = "right") 
+coverage_over_year_plot
+```
+
+```{r coverage_upset_patch, fig.asp=0.85}
+design = "AB"
+wrap_plots(
+  A = upset_overview,
+  B = coverage_over_year_plot,
+  design = design,
+  widths = c(3.5,1)
+) & plot_annotation(tag_levels = 'A') 
+```
 
