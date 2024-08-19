@@ -1,4 +1,4 @@
-Results
+Journal and article coverage
 ================
 
 ``` r
@@ -6,6 +6,7 @@ library(bigrquery)
 library(tidyverse)
 library(hoaddata)
 library(patchwork)
+library(ComplexUpset)
 
 #' Connect to DB 
 #' 
@@ -25,16 +26,11 @@ results compared to WoS and Scopus?
 
 ## Journal and article volume
 
-- Hybrid Journal coverage
-- Article coverage (unsing document types)
-- classification of publisher (top 3, other)
-
-### Journal level
-
 - JCT Journal data: `hoaddata::jct_hybrid_jns` (excluding PNAS)
 - Crossref: Journal-level data on article volume including OA:
   `hoaddata::jn_ind`
 - Web of Science: `data-raw/wos_jct_items.csv`
+- Scopus: `data-raw/scp_jct_items.csv`
 
 Levels:
 
@@ -42,19 +38,20 @@ Levels:
 - Active: Have published at least one article between 2019 - 2023
 - Hybrid OA: Have published at least one OA article between 2019 - 2023
 
-#### Overview
+### Create analytical datasets
 
-HOAD:
+#### {hoaddata}
 
 ``` r
 hoad_jns <- hoaddata::jct_hybrid_jns |>
   filter(issn_l != "0027-8424")
 
+# Full OA journals detected through OA proportion > .95
 hoad_oa_excluded <- bq_table_download("subugoe-collaborative.hoaddata.cc_oa_prop") |>
   distinct(issn_l)
 
 active_jns <- hoad_jns |>
- # filter(!issn_l %in% hoad_oa_excluded$issn_l) |>
+  # Only active hybrid journals from JCT
   inner_join(hoaddata::jn_ind, by = "issn_l") |>
   filter(!cr_year %in% c("2017", "2018", "2024"))
 
@@ -67,7 +64,7 @@ active_jns_with_oa <- active_jns |>
 - Number of active hybrid journals with at least one OA between 2019 and
   2023: 11,342
 
-Web of Science:
+#### Web of Science
 
 ``` r
 wos_jct_items_df <- readr::read_csv(here::here("data-raw", "wos_jct_items_df.csv"))
@@ -79,7 +76,7 @@ wos_hybrid_jns <- wos_jct_items_df |>
   filter(!issn_l %in% hoad_oa_excluded$issn_l)
 
 wos_active_jns <- wos_hybrid_jns |>
-  # use online first, if available
+  # Use online first, if available
   mutate(online_year = lubridate::year(wos_pubdate_online)) |>
   mutate(pub_year = ifelse(!is.na(online_year), online_year, pubyear)) |>
   filter(pub_year %in% 2019:2023)
@@ -90,6 +87,9 @@ wos_active_jns_with_oa <- wos_active_jns |>
 # wos core 
 wos_active_core <- wos_active_jns |>
   filter(grepl("Article|^Review$", item_type))
+
+wos_active_core_oa <- wos_active_jns |>
+   filter(grepl("hybrid", oa_status))
 ```
 
 - Number of hybrid journals: 8,666
@@ -97,7 +97,12 @@ wos_active_core <- wos_active_jns |>
 - Number of active hybrid journals with at least one OA between 2019 and
   2023: 8,238
 
-Scopus
+Core:
+
+- Active Journals: 8,655
+- Active journals with OA: 8,358
+
+#### Scopus
 
 ``` r
 scp_jct_items_df <- readr::read_csv(here::here("data-raw", "scp_jct_items_df.csv"))
@@ -109,7 +114,7 @@ scp_hybrid_jns <- scp_jct_items_df |>
   filter(!issn_l %in% hoad_oa_excluded$issn_l)
 
 scp_active_jns <- scp_hybrid_jns |>
-   # use online first, if available
+   # Use online first, if available
   mutate(pub_year = ifelse(!is.na(first_pubyear), first_pubyear, pubyear)) |>
   filter(pub_year %in% 2019:2023)
 
@@ -157,136 +162,17 @@ scp_active_jns |>
 #>      Total   814
 ```
 
-### Journal analytics
+## Coverage analysis: Journal and article volume
+
+### Overview
 
 Journals with items published between 2019 - 2023
 
 ``` r
-library(UpSetR)
-
-jn_list <- list(
-  crossref = unique(active_jns$issn_l),
-  wos = unique(wos_active_jns$issn_l),
-  scp = unique(scp_active_jns$issn_l)
-)
-
-# Plot Journals Five Years Period
-upset(fromList(jn_list), order.by = "freq")
-```
-
-<img src="results_files/figure-gfm/upset_jns-1.png" width="70%" style="display: block; margin: auto;" />
-
-Print out journals, which are not in Crossref, but in WoS or Scopus
-
-WoS:
-
-``` r
-wos_active_jns |>
-  filter(issn_l %in% setdiff(jn_list$wos, jn_list$crossref)) |>
-  group_by(issn_l) |>
-  summarise(items = n_distinct(item_id)) |>
-  arrange(desc(items)) |>
-  janitor::adorn_totals()
-#>     issn_l items
-#>  1009-1963  1743
-#>  0893-7400   868
-#>  1368-0668   551
-#>  0011-4642   416
-#>  0001-253X   335
-#>  0862-7940   212
-#>  0277-8033    64
-#>  0967-0750    42
-#>  0251-2513    28
-#>  1464-1801    10
-#>      Total  4269
-```
-
-(Chinese Physics B seems to have the Chinese Physics ISSN-L in WOS)
-
-Scopus:
-
-``` r
-scp_active_jns |>
-  filter(issn_l %in% setdiff(jn_list$scp, jn_list$crossref)) |>
-  group_by(issn_l) |>
-  summarise(items = n_distinct(item_id)) |>
-  arrange(desc(items)) |>
-  janitor::adorn_totals()
-#>     issn_l items
-#>  0094-243X 72283
-#>  0893-7400   875
-#>  1542-5983   615
-#>  0011-4642   419
-#>  0261-0159   357
-#>  1661-819X   340
-#>  1578-1771   335
-#>  1939-8441   261
-#>  0899-1855   236
-#>  0862-7940   213
-#>  0965-7967   155
-#>  2093-761X   143
-#>  0743-4154   124
-#>  2095-4638   124
-#>  0250-1589   102
-#>  1550-1949    79
-#>  0277-8033    78
-#>  0039-3266    74
-#>  0095-2338    59
-#>  1350-7583    53
-#>  1091-3211    50
-#>  2157-3735    39
-#>  1464-1801    31
-#>  2590-1559    21
-#>  0967-0750    12
-#>  1861-0706    10
-#>  0163-514X     8
-#>  2376-1407     7
-#>  0163-9269     3
-#>      Total 77106
-```
-
-- `0094-243X` represents API Proceedings, all content tagged as
-  proceedings article in Crossref.
-- `0893-7400` changed to `1547-1896` and is present in both datasets
-- `0095-2338` changed to `1549-9596`
-
-### Item level view
-
-``` r
+# DOI set too large to track it with Git, see 001_data_gathering how the data
+# was obtained from Google BQ
 cr_df <- readr::read_csv(here::here("data-raw/hoad_dois_all_19_23.csv"))
 
-
-item_view_df <-  list(
-  crossref = unique(cr_df$doi),
-  wos = unique(unlist(wos_active_core[!is.na(wos_active_core$doi),"doi"])),
-  scp = unique(unlist(scp_active_core[!is.na(scp_active_core$doi),"doi"]))
-)
-
-# Plot Journals Five Years Period
-UpSetR::upset(UpSetR::fromList(item_view_df), order.by = "freq")
-```
-
-<img src="results_files/figure-gfm/unnamed-chunk-5-1.png" width="70%" style="display: block; margin: auto;" />
-
-### OA View
-
-Journals with at least one OA item according to database
-
-``` r
-jn_list_with_oa <- list(
-  crossref = unique(active_jns_with_oa$issn_l),
-  wos = unique(wos_active_core$issn_l),
-  scp = unique(scp_active_core$issn_l)
-)
-
-upset(fromList(jn_list_with_oa), order.by = "freq")
-```
-
-<img src="results_files/figure-gfm/unnamed-chunk-6-1.png" width="70%" style="display: block; margin: auto;" />
-
-#### Compose a complex upset
-
-``` r
 cr_active_upset <- cr_df |>
   filter(issn_l %in% active_jns$issn_l) |>
   group_by(issn_l) |>
@@ -303,173 +189,13 @@ scp_active_upset <- scp_active_jns |>
 
 jn_upset_ <- dplyr::full_join(cr_active_upset, wos_active_upset, by = "issn_l") |>
   dplyr::full_join(scp_active_upset, by = "issn_l") |>
-  mutate(across(c(Crossref, WoS, Scopus), ~replace_na(.x, FALSE))) |>
+  mutate(across(c(Crossref, WoS, Scopus), ~ replace_na(.x, FALSE))) |>
   # Journal 5-years article volume
-  mutate(n = case_when(!is.na(n_cr) ~ n_cr, !is.na(n_scp) ~n_scp, TRUE ~ n_wos))
+  mutate(n = case_when(!is.na(n_cr) ~ n_cr, !is.na(n_scp) ~ n_scp, TRUE ~ n_wos))
 
-# add year
-jn_age <- jn_ind |> 
-  mutate(cr_year = as.numeric(as.character(cr_year))) |> 
-  filter(cr_year %in% 2019:2023) |>
-  group_by(issn_l) |>
-  summarise(min_year = min(cr_year),
-            max_year = max(cr_year)) |>
-  mutate(jn_age = max_year - min_year + 1) 
+## DOI overlap 
 
-# Add Esac publisher
-
-esac <- hoaddata::jct_hybrid_jns |>
-  distinct(issn_l, esac_publisher) |>
-  mutate(
-    publisher = case_when(
-      esac_publisher == "Elsevier" ~ "Elsevier",
-      esac_publisher == "Springer Nature" ~ "Springer Nature",
-      esac_publisher == "Wiley" ~ "Wiley",
-      is.character(esac_publisher) ~ "Other"
-    )) |>
-  mutate(publisher =
-           forcats::fct_relevel(
-             publisher,
-             c("Elsevier", "Springer Nature", "Wiley", "Other") 
-           )) |>
-  mutate(publisher = forcats::fct_rev(publisher)) |>
-  distinct(issn_l, publisher)
-
-library(ComplexUpset)
-jn_upset <- inner_join(jn_upset_, esac, by = "issn_l") |>
-  distinct(issn_l, .keep_all = TRUE)
-
-size = get_size_mode('exclusive_intersection')
-
-ComplexUpset::upset(
-  jn_upset,
-  c("Crossref", "WoS", "Scopus"),
-  # Only journals in Crossref
-  min_size = 30,
-  width_ratio = 0.4,
-  stripes = "transparent",
-  name = "Data Source Coverage",
-  base_annotations = list(
-    "Journals" = (
-      ComplexUpset::intersection_size(
-        counts = TRUE,
-        text = list(size = 9 / .pt),
-        text_mapping = aes(
-          label = paste0(!!upset_text_percentage(), '\n(', !!size, ')'),
-          colour = ifelse(!!size > 5000, 'on_bar', 'on_background'),
-          y = ifelse(!!size > 5000, !!size - 4000, !!size)
-        )
-      ) +
-        scale_y_continuous(labels = scales::number_format(big.mark = ","))
-    )
-  ),
-  annotations = list("Article Volume" = (
-    ggplot(mapping = aes(x = intersection, y = n, fill = fct_rev(publisher))) +
-      geom_boxplot(outliers = FALSE) +
-              scale_fill_manual(
-        "",
-        values = c(
-          "Elsevier" = "#e9711c",
-          "Springer Nature" = "#486a7e",
-          "Wiley" = "#068853",
-          "Other" = "#b3b3b3a0"
-        ), guide = "none") +
-      scale_y_log10(labels =  scales::number_format(big.mark = ","))),
-    "Publisher" = (
-      ggplot(mapping = aes(fill = publisher)) +
-        geom_bar(stat = "count", position ="fill") + 
-        scale_y_continuous("Publisher Share", labels=scales::percent_format()) +
-        scale_fill_manual(
-        "",
-        values = c(
-          "Elsevier" = "#e9711c",
-          "Springer Nature" = "#486a7e",
-          "Wiley" = "#068853",
-          "Other" = "#b3b3b3a0"
-        ), guide = "none"))), 
-  #,
-  # 'Total article' = (
-  #   ggplot(mapping = aes(x = intersection, y = n)) +
-  #     geom_bar(stat = "identity", color = "grey35", fill = "grey35")) +
-  #  scale_y_continuous(labels =  scales::number_format(big.mark = ",")) ),
-  set_sizes=(
-        upset_set_size(
-          geom = geom_bar(aes(fill = publisher), width = 0.8), 
-          position='right')) +
-          scale_fill_manual("", values = c(
-          "Elsevier" = "#e9711c",
-          "Springer Nature" = "#486a7e",
-          "Wiley" = "#068853",
-          "Other" = "#b3b3b3a0")) +
-    scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
-    guides(fill = guide_legend(reverse = TRUE)) +
-    ylab("Journals"),
-      guides = "over",
-  matrix = (
-        intersection_matrix(
-            geom = geom_point(
-                shape = "square",
-                size=3.5
-            )))
-        ) +
-  patchwork::plot_layout(heights=c(2, 1.5, 2, 1))
-```
-
-<img src="results_files/figure-gfm/upset_data-1.png" width="70%" style="display: block; margin: auto;" />
-
-What is the age of the journals?
-
-``` r
-jn_age <- jn_ind |> 
-  mutate(cr_year = as.numeric(as.character(cr_year))) |> 
-  filter(cr_year %in% 2019:2023) |>
-  group_by(issn_l) |>
-  summarise(min_year = min(cr_year),
-            max_year = max(cr_year)) |>
-  mutate(jn_age = max_year - min_year + 1) 
-```
-
-### DOI coverage
-
-``` r
-jn_overlap <- jn_upset |> 
-  filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE)
-
-miss_doi <- cr_df |>
-  filter(issn_l %in% jn_overlap$issn_l) |> 
-  filter(!doi %in% wos_active_core$doi)
-
-# Check if it is in WOS (full)
-wos_type_diff <- wos_jct_items_df |>
-  filter(doi %in% miss_doi$doi) 
-
-miss_doi |>
-  filter(!doi %in% wos_type_diff$doi) |>
-  sample_n(10)
-#> # A tibble: 10 × 3
-#>    doi                                 issn_l    cr_year
-#>    <chr>                               <chr>       <dbl>
-#>  1 10.1016/j.recesp.2022.12.014        0300-8932    2023
-#>  2 10.1021/jyv123i047_1331967          1932-7447    2019
-#>  3 10.1039/c9nr90077b                  2040-3364    2019
-#>  4 10.1016/j.jesp.2022.104383          0022-1031    2022
-#>  5 10.1136/vr.l720                     0042-4900    2019
-#>  6 10.1200/jco.2022.40.16_suppl.e16139 0732-183X    2022
-#>  7 10.1016/j.ophtha.2022.03.004        0161-6420    2022
-#>  8 10.1007/s10339-023-01157-x          1612-4782    2023
-#>  9 10.1021/csv009i006_1286279          2155-5435    2019
-#> 10 10.1097/01.ccm.0000552039.13386.82  0090-3493    2019
-```
-
-### Add Article Coverage
-
-- hoaddata: Crossref exclunding paratext and proceedings as indicated by
-  pattern macthing. Patterns mostly from Unpaywall / OpenAlex
-- WoS: All DOIs / DOIS only article and reviews
-- Scopus: All DOIs / DOIS only article and reviews
-
-``` r
- doi_overlap_df <- cr_df |>
+doi_overlap_df <- cr_df |>
   filter(issn_l %in% active_jns$issn_l) |>
   mutate(in_wos_and_scopus = ifelse(doi %in% wos_active_jns$doi & doi %in% scp_active_jns$doi, 1, 0),
          in_scopus = ifelse(doi %in% scp_active_jns$doi, 1, 0),
@@ -481,12 +207,15 @@ doi_overlap <- doi_overlap_df |>
     doi_in_scopus = sum(in_scopus),
     doi_in_wos = sum(in_wos))
 
-jn_upset_articles <- jn_upset |> 
+jn_upset_articles <- jn_upset_ |> 
   left_join(doi_overlap, by = "issn_l") 
 
+# Backup
+write_csv(jn_upset_articles, here::here("data/jn_upset_articles.csv"))
+```
 
-### Plot
-size = get_size_mode('exclusive_intersection')
+``` r
+size <- get_size_mode("exclusive_intersection")
 
 upset_overview <- ComplexUpset::upset(
   jn_upset_articles,
@@ -494,9 +223,9 @@ upset_overview <- ComplexUpset::upset(
   # Only journals in Crossref
   min_size = 30,
   width_ratio = 0.4,
-  set_sizes=FALSE,
+  set_sizes = FALSE,
   stripes = "transparent",
-  wrap = TRUE,
+ # wrap = TRUE,
   name = "Data Source Coverage",
   base_annotations = list(
     "Journals" = (
@@ -539,50 +268,270 @@ upset_overview <- ComplexUpset::upset(
 upset_overview
 ```
 
-<img src="results_files/figure-gfm/unnamed-chunk-7-1.png" width="70%" style="display: block; margin: auto;" />
+<img src="results_files/figure-gfm/journal_article_overlap_upset-1.png" width="70%" style="display: block; margin: auto;" />
+The plot is limited to journals, which are indexed in Crossref. However,
+there are 33 journals not incldued in Crossref, but in WoS or Scopus:
 
 ``` r
-doi_coverage_over_years <- doi_overlap_df |>
-  group_by(cr_year) |>
-  summarise(dois = n_distinct(doi),
-            in_wos_and_scopus = sum(in_wos_and_scopus, na.rm = TRUE),
-            in_scopus = sum(in_scopus, na.rm = TRUE),
-            in_wos = sum(in_wos)) |>
-  pivot_longer(cols = c(dois, in_wos_and_scopus, in_scopus, in_wos)) |>
-  mutate(cr_year = gsub("^20", "'", as.character(cr_year)))
-
-# dois all
-dois_all_by_year <- doi_coverage_over_years |>
-  filter(name == "dois") |>
-  select(-name)
-
-coverage_over_year_plot <- doi_coverage_over_years |>
-  filter(name != "dois") |>
-  # Fix order of panel
-  mutate(name = factor(name, levels = c("in_wos_and_scopus", "in_scopus", "in_wos"))) |>
-  ggplot(aes(x = cr_year, y = value)) +
-  geom_bar(data = dois_all_by_year, aes(fill = "in Crossref only"), color = "transparent", stat = "identity") +
-  geom_bar(aes(fill = "Shared"), color = "transparent", stat = "identity") +
-  facet_wrap( ~ name, ncol = 1) +
-  scale_fill_manual(values = c("grey80", "#0093c7"), name = "") +
-  scale_y_continuous(labels =  scales::number_format(big.mark = ",")) +
-  labs(x = "Year published", y = "Articles with DOI") + 
-  theme_minimal() +
-  theme(legend.position = "top",
-        legend.justification = "right") 
-coverage_over_year_plot
+jn_upset_articles |> 
+  filter(Crossref == FALSE) |> 
+  distinct(issn_l, n) |>
+  arrange(desc(n)) |>
+  janitor::adorn_totals()
+#>     issn_l     n
+#>  0094-243X 72283
+#>  1009-1963  1743
+#>  0893-7400   875
+#>  1542-5983   615
+#>  1368-0668   551
+#>  0011-4642   419
+#>  0261-0159   357
+#>  1661-819X   340
+#>  0001-253X   335
+#>  1578-1771   335
+#>  1939-8441   261
+#>  0899-1855   236
+#>  0862-7940   213
+#>  0965-7967   155
+#>  2093-761X   143
+#>  0743-4154   124
+#>  2095-4638   124
+#>  0250-1589   102
+#>  1550-1949    79
+#>  0277-8033    78
+#>  0039-3266    74
+#>  0095-2338    59
+#>  1350-7583    53
+#>  1091-3211    50
+#>  2157-3735    39
+#>  1464-1801    31
+#>  0251-2513    28
+#>  2590-1559    21
+#>  0967-0750    12
+#>  1861-0706    10
+#>  0163-514X     8
+#>  2376-1407     7
+#>  0163-9269     3
+#>      Total 79763
 ```
 
-<img src="results_files/figure-gfm/dois_over_the_years-1.png" width="70%" style="display: block; margin: auto;" />
+WoS:
 
 ``` r
-design = "AB"
-wrap_plots(
-  A = upset_overview,
-  B = coverage_over_year_plot,
-  design = design,
-  widths = c(3.5,1)
-) & plot_annotation(tag_levels = 'A') 
+jn_upset_articles |>
+  filter(Crossref == FALSE, Scopus == FALSE, WoS == TRUE) |>
+  distinct(issn_l, n) |>
+  arrange(desc(n)) |>
+  janitor::adorn_totals()
+#>     issn_l    n
+#>  1009-1963 1743
+#>  1368-0668  551
+#>  0001-253X  335
+#>  0251-2513   28
+#>      Total 2657
 ```
 
-<img src="results_files/figure-gfm/coverage_upset_patch-1.png" width="70%" style="display: block; margin: auto;" />
+(Chinese Physics B seems to have the Chinese Physics ISSN-L in WOS)
+
+Scopus:
+
+``` r
+jn_upset_articles |>
+  filter(Crossref == FALSE, Scopus == TRUE, WoS == FALSE) |>
+  distinct(issn_l, n) |>
+  arrange(desc(n)) |>
+  janitor::adorn_totals()
+#>     issn_l     n
+#>  0094-243X 72283
+#>  1542-5983   615
+#>  0261-0159   357
+#>  1661-819X   340
+#>  1578-1771   335
+#>  1939-8441   261
+#>  0899-1855   236
+#>  0965-7967   155
+#>  2093-761X   143
+#>  0743-4154   124
+#>  2095-4638   124
+#>  0250-1589   102
+#>  1550-1949    79
+#>  0039-3266    74
+#>  0095-2338    59
+#>  1350-7583    53
+#>  1091-3211    50
+#>  2157-3735    39
+#>  2590-1559    21
+#>  1861-0706    10
+#>  0163-514X     8
+#>  2376-1407     7
+#>  0163-9269     3
+#>      Total 75478
+```
+
+- `0094-243X` represents API Proceedings, all content tagged as
+  proceedings article in Crossref.
+- `0893-7400` changed to `1547-1896` and is present in both datasets
+- `0095-2338` changed to `1549-9596`
+- `1542-5983` for `1542-5991` used in Scopus for different journal
+  (Hearing Journal, 0745-7472). `1542-5983` journal changed to
+  `2771-1897` since 2009
+
+### By publisher
+
+``` r
+# Add ESAC portfolio names
+esac <- hoaddata::jct_hybrid_jns |>
+  distinct(issn_l, esac_publisher) |>
+  mutate(
+    publisher = case_when(
+      esac_publisher == "Elsevier" ~ "Elsevier",
+      esac_publisher == "Springer Nature" ~ "Springer Nature",
+      esac_publisher == "Wiley" ~ "Wiley",
+      is.character(esac_publisher) ~ "Other"
+    )) |>
+  mutate(publisher =
+           forcats::fct_relevel(
+             publisher,
+             c("Elsevier", "Springer Nature", "Wiley", "Other") 
+           )) |>
+  mutate(publisher = forcats::fct_rev(publisher)) |>
+  distinct(issn_l, publisher)
+
+jn_upset_publisher <- inner_join(jn_upset_articles, esac, by = "issn_l") |>
+  # Because of Journal transfer, restrict choice to one portfolio
+  distinct(issn_l, .keep_all = TRUE)
+```
+
+``` r
+size = get_size_mode('exclusive_intersection')
+
+upset_publisher_plot <- ComplexUpset::upset(
+  jn_upset_publisher,
+  c("Crossref", "WoS", "Scopus"),
+  # Only journals in Crossref
+  min_size = 30,
+  width_ratio = 0.4,
+  stripes = "transparent",
+  name = "Data Source Coverage",
+  base_annotations = NULL,
+  annotations = list(
+    "Journal size\n(log-scale)" = (
+      ggplot(mapping = aes(x = intersection, y = n, fill = fct_rev(publisher))) +
+        geom_boxplot(outliers = FALSE) +
+        scale_fill_manual(
+          "",
+          values = c(
+            "Elsevier" = "#e9711c",
+            "Springer Nature" = "#486a7e",
+            "Wiley" = "#068853",
+            "Other" = "#b3b3b3"
+          ), guide = "none") +
+        scale_y_log10(labels = scales::number_format(big.mark = ",")) 
+    ),
+    "Articles" = (
+      ggplot(mapping = aes(y = n, fill = publisher, color = publisher)) +
+        geom_bar(stat = "identity") +
+        scale_fill_manual(
+          "",
+          values = c(
+            "Elsevier" = "#e9711c",
+            "Springer Nature" = "#486a7e",
+            "Wiley" = "#068853",
+            "Other" = "#b3b3b3a0"
+          ), guide = "none") +
+        scale_color_manual(
+          values = c(
+            "Elsevier" = "#e9711c",
+            "Springer Nature" = "#486a7e",
+            "Wiley" = "#068853",
+            "Other" = "#b3b3b3"
+          ), guide = "none"
+        ) + scale_y_continuous(labels = scales::number_format(big.mark = ",")) 
+    ),
+    "Publisher" = (
+      ggplot(mapping = aes(fill = publisher)) +
+        geom_bar(stat = "count", position = "fill") + 
+        scale_y_continuous("Journals", labels = scales::percent_format()) +
+        scale_fill_manual(
+          "",
+          values = c(
+            "Elsevier" = "#e9711c",
+            "Springer Nature" = "#486a7e",
+            "Wiley" = "#068853",
+            "Other" = "#b3b3b3"
+          ), guide = "none")
+    )
+  ),
+  set_sizes = (
+    upset_set_size(
+      geom = geom_bar(aes(fill = publisher), width = 0.8), 
+      position = "right"
+    ) +
+    scale_fill_manual(
+      "",
+      values = c(
+        "Elsevier" = "#e9711c",
+        "Springer Nature" = "#486a7e",
+        "Wiley" = "#068853",
+        "Other" = "#b3b3b3"
+      )
+    ) +
+    scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+    guides(fill = guide_legend(reverse = TRUE)) +
+    ylab("Journals")
+  ),
+  guides = "over",
+  matrix = (
+    intersection_matrix(
+      geom = geom_point(
+        shape = "square",
+        size = 2
+      )
+    )
+  )
+)
+
+upset_publisher_plot 
+```
+
+<img src="results_files/figure-gfm/upset_publisher_plot-1.png" width="70%" style="display: block; margin: auto;" />
+
+What is the age of the journals?
+
+``` r
+jn_age <- jn_ind |> 
+  mutate(cr_year = as.numeric(as.character(cr_year))) |> 
+  filter(cr_year %in% 2019:2023) |>
+  group_by(issn_l) |>
+  summarise(min_year = min(cr_year),
+            max_year = max(cr_year)) |>
+  mutate(jn_age = max_year - min_year + 1) 
+```
+
+DOI coverage check
+
+``` r
+jn_overlap <- jn_upset |> 
+  filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE)
+
+miss_doi <- cr_df |>
+  filter(issn_l %in% jn_overlap$issn_l) |> 
+  filter(!doi %in% wos_active_core$doi)
+
+# Check if it is in WOS (full)
+wos_type_diff <- wos_jct_items_df |>
+  filter(doi %in% miss_doi$doi) 
+
+miss_doi |>
+  filter(!doi %in% wos_type_diff$doi) |>
+  sample_n(10)
+```
+
+10.1016/j.apmr.2022.08.623 -\> research poster abstract
+10.1016/s1530-891x(20)39611-7 -\> research abstract
+10.1007/s42835-023-01664-z -\> publsihed 2024
+10.1097/yic.0000000000000534 -\> published 2024
+10.1038/s41415-022-5051-7 -\> others 10.1016/j.matpr.2020.03.412 -\>
+proceedings paper 10.3233/jifs-219108 -\> doi does not work
+10.1136/vr.m1027 -\> paper review vet record! 10.1002/jmv.29204 -\>
+indexing date 2024, pubyear 2023 10.1159/000516826 -\> subject index
