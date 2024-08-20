@@ -16,6 +16,15 @@ bq_con <- dbConnect(
   billing = "subugoe-collaborative",
   project = "subugoe-collaborative"
 )
+
+# Set themes for plots
+my_base_size = 12
+
+my_upset_theme <-
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        plot.title.position="plot",
+        plot.title = element_text(hjust = 0, vjust = 1, face = "bold"))
 ```
 
 ## Research questions
@@ -211,10 +220,34 @@ jn_upset_articles <- jn_upset_ |>
   left_join(doi_overlap, by = "issn_l") 
 
 # Backup
+jn_upset_articles
+#> # A tibble: 12,921 × 11
+#>    issn_l     n_cr Crossref n_wos WoS   n_scp Scopus     n doi_in_wos_and_scopus
+#>    <chr>     <int> <lgl>    <int> <lgl> <int> <lgl>  <int>                 <dbl>
+#>  1 0001-0782  1467 TRUE      1625 TRUE   1464 TRUE    1467                  1282
+#>  2 0001-1541  1844 TRUE      1953 TRUE   1939 TRUE    1844                  1807
+#>  3 0001-2092  1359 TRUE      1463 TRUE   1040 TRUE    1359                   868
+#>  4 0001-2785   875 TRUE        NA FALSE    NA FALSE    875                     0
+#>  5 0001-2998   326 TRUE       336 TRUE    343 TRUE     326                   314
+#>  6 0001-3072   144 TRUE       142 TRUE    141 TRUE     144                   141
+#>  7 0001-3455   120 TRUE        NA FALSE    NA FALSE    120                     0
+#>  8 0001-4338   793 TRUE       757 TRUE    765 TRUE     793                   723
+#>  9 0001-4346  1108 TRUE      1023 TRUE    993 TRUE    1108                   988
+#> 10 0001-4370   526 TRUE       526 TRUE    525 TRUE     526                   525
+#> # ℹ 12,911 more rows
+#> # ℹ 2 more variables: doi_in_scopus <dbl>, doi_in_wos <dbl>
 write_csv(jn_upset_articles, here::here("data/jn_upset_articles.csv"))
 ```
 
 ``` r
+# Helper function to make text labels the same size as axis labels as seen in
+# <https://wjschne.github.io/posts/making-text-labels-the-same-size-as-axis-labels-in-ggplot2/>
+# Todo: Learn how to invoke it
+ggtext_size <- function(base_size, ratio = 0.8) {
+  ratio * base_size / ggplot2::.pt
+}
+
+bar_width <- 0.7
 size <- get_size_mode("exclusive_intersection")
 
 upset_overview <- ComplexUpset::upset(
@@ -222,53 +255,78 @@ upset_overview <- ComplexUpset::upset(
   c("Crossref", "WoS", "Scopus"),
   # Only journals in Crossref
   min_size = 30,
-  width_ratio = 0.4,
   set_sizes = FALSE,
   stripes = "transparent",
- # wrap = TRUE,
+  # wrap = TRUE,
   name = "Data Source Coverage",
   base_annotations = list(
     "Journals" = (
       ComplexUpset::intersection_size(
         counts = TRUE,
-        text = list(size = 9 / .pt),
+        text = list(size = 8 / .pt),
         text_mapping = aes(
           label = paste0(!!upset_text_percentage(), '\n(', !!size, ')'),
           colour = ifelse(!!size > 5000, 'on_bar', 'on_background'),
           y = ifelse(!!size > 5000, !!size - 4000, !!size)
-        )
+        ), width = bar_width
       ) +
-        scale_y_continuous(labels = scales::number_format(big.mark = ","))
+        scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+        ggtitle("A")
     )
   ),
-  annotations = list("Journal size\n(log scale)" = (
-    ggplot(mapping = aes(x = intersection, y = n)) +
-      geom_boxplot(outliers = FALSE) +
-      scale_y_log10(labels =  scales::number_format(big.mark = ","))),
-    "Articles" = (ggplot(mapping = aes(y = n_cr)) +
-                        geom_bar(stat = "identity", color = "grey80", aes(fill = "in Crossref only")) +
-                        geom_bar(aes(y = doi_in_wos_and_scopus, fill = "Shared"), stat = "identity", color = "#0093c7") +
-                        geom_bar(aes(y = doi_in_wos, fill = "Shared"), stat = "identity", color = "#0093c7") +
-                        geom_bar(aes(y = doi_in_scopus, fill = "Shared"), stat = "identity", color = "#0093c7") +
-                        scale_fill_manual(values = c(`in Crossref only` = "grey80", `Shared` = "#0093c7"), name = "") +
-                        scale_y_continuous(labels =  scales::number_format(big.mark = ",")) +
-                        theme(
-    legend.position = "top",
-    legend.justification = "right"
-  ) +
-    guides(fill = "none")
-    )),
-   matrix = (
-        intersection_matrix(
-            geom = geom_point(
-                shape = "square",
-                size = 2
-            )))
-        ) 
-upset_overview
+  annotations = list(
+    "Journal size\n(log scale)" = (
+      ggplot(mapping = aes(x = intersection, y = n)) +
+        geom_boxplot(outliers = FALSE, width = bar_width) +
+        scale_y_log10(labels =  scales::number_format(big.mark = ",")) +
+        ggtitle("C")
+    ),
+    "Articles" = (
+      ggplot(mapping = aes(y = n_cr)) +
+        geom_bar(
+          stat = "identity",
+          color = "grey80",
+          width = bar_width,
+          aes(fill = "in Crossref only")
+        ) +
+        geom_bar(
+          aes(y = doi_in_wos_and_scopus, fill = "Shared"),
+          stat = "identity",
+          width = bar_width,
+          color = "#0093c7"
+        ) +
+        geom_bar(
+          aes(y = doi_in_wos, fill = "Shared"),
+          stat = "identity",
+          width = bar_width,
+          color = "#0093c7"
+        ) +
+        geom_bar(
+          aes(y = doi_in_scopus, fill = "Shared"),
+          stat = "identity",
+          width = bar_width,
+          color = "#0093c7"
+        ) +
+        scale_fill_manual(
+          values = c(
+            `in Crossref only` = "grey80",
+            `Shared` = "#0093c7"
+          ),
+          name = "DOI"
+        ) +
+        scale_y_continuous(labels =  scales::number_format(big.mark = ",")) +
+        ggtitle("B")
+    )
+  ),
+  matrix = (intersection_matrix(geom = geom_point(
+    shape = "square", size = 2
+  )))
+)
+upset_overview & my_upset_theme
 ```
 
 <img src="results_files/figure-gfm/journal_article_overlap_upset-1.png" width="70%" style="display: block; margin: auto;" />
+
 The plot is limited to journals, which are indexed in Crossref. However,
 there are 33 journals not incldued in Crossref, but in WoS or Scopus:
 
@@ -417,7 +475,7 @@ upset_publisher_plot <- ComplexUpset::upset(
   annotations = list(
     "Journal size\n(log-scale)" = (
       ggplot(mapping = aes(x = intersection, y = n, fill = fct_rev(publisher))) +
-        geom_boxplot(outliers = FALSE) +
+        geom_boxplot(outliers = FALSE, width = bar_width) +
         scale_fill_manual(
           "",
           values = c(
@@ -426,11 +484,12 @@ upset_publisher_plot <- ComplexUpset::upset(
             "Wiley" = "#068853",
             "Other" = "#b3b3b3"
           ), guide = "none") +
-        scale_y_log10(labels = scales::number_format(big.mark = ",")) 
+        scale_y_log10(labels = scales::number_format(big.mark = ",")) +
+        ggtitle("C")
     ),
     "Articles" = (
       ggplot(mapping = aes(y = n, fill = publisher, color = publisher)) +
-        geom_bar(stat = "identity") +
+        geom_bar(stat = "identity", width = bar_width) +
         scale_fill_manual(
           "",
           values = c(
@@ -446,11 +505,12 @@ upset_publisher_plot <- ComplexUpset::upset(
             "Wiley" = "#068853",
             "Other" = "#b3b3b3"
           ), guide = "none"
-        ) + scale_y_continuous(labels = scales::number_format(big.mark = ",")) 
+        ) + scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+        ggtitle("B") 
     ),
     "Publisher" = (
       ggplot(mapping = aes(fill = publisher)) +
-        geom_bar(stat = "count", position = "fill") + 
+        geom_bar(stat = "count", position = "fill", width = bar_width) + 
         scale_y_continuous("Journals", labels = scales::percent_format()) +
         scale_fill_manual(
           "",
@@ -459,7 +519,8 @@ upset_publisher_plot <- ComplexUpset::upset(
             "Springer Nature" = "#486a7e",
             "Wiley" = "#068853",
             "Other" = "#b3b3b3"
-          ), guide = "none")
+          ), guide = "none") +
+        ggtitle("A")
     )
   ),
   set_sizes = (
@@ -491,7 +552,7 @@ upset_publisher_plot <- ComplexUpset::upset(
   )
 )
 
-upset_publisher_plot 
+upset_publisher_plot & my_upset_theme 
 ```
 
 <img src="results_files/figure-gfm/upset_publisher_plot-1.png" width="70%" style="display: block; margin: auto;" />
