@@ -38,9 +38,11 @@ kb_con <- dbConnect(RPostgres::Postgres(),
 #' combination is used.
 #' 
 #' Article-level publication metadata from institutions with TA
-ta_oa_inst <- readr::read_csv("https://github.com/subugoe/hoaddata/releases/download/v0.2.98/ta_oa_inst.csv.gz")
+ta_oa_inst <- readr::read_csv("https://github.com/subugoe/hoaddata/releases/download/v.0.3/ta_oa_inst.csv.gz")
+#' Backup
+write_csv(ta_oa_inst, here::here("data-raw", "ta_oa_inst.csv"))
 ta_ror_pubs <- ta_oa_inst |>
-  distinct(doi, ror_matching)
+  distinct(doi, ror)
 #' Make sure RORs are aligned 
 #' Upload to KB
 dbWriteTable(kb_con, "ta_ror_pubs", ta_ror_pubs, overwrite = TRUE)
@@ -69,7 +71,7 @@ where aa.author_seq_nr = 1 ")
 ror_wos_matching <- dbGetQuery(kb_con, "with vendor as
 (
 select
-	ror_matching,
+	ror,
 	vendor_org_id,
 	n,
 	row_number
@@ -84,37 +86,33 @@ from
 		(
 		select
 			COUNT(distinct item_id) as n,
-			ror_matching,
+			ror,
 			vendor_org_id
 		from
 			(
 			select
 				distinct item_id,
-				ror_matching,
+				ror,
 				unnest(vendor_org_id) as vendor_org_id
 			from
 				ta_wos_aff twa
       )
 		group by
-			ror_matching,
+			ror,
 			vendor_org_id
 		order by
 			vendor_org_id,
 			n desc
     )
   )
-where
-	(ror_matching = 'https://ror.org/00cd95c65'
-		or ror_matching = 'https://ror.org/01y9bpm73'
-		or ror_matching = 'https://ror.org/00sb7hc59')
 ), 
 ror as 
 (
 select
-	ror_matching,
+	ror,
 	vendor_org_id,
 	n,
-	row_number() over (partition by ror_matching
+	row_number() over (partition by ror
 order by
 	n desc) as row_number
 from
@@ -130,13 +128,142 @@ where
 #' backup
 write_csv(ror_wos_matching, here::here("data-raw", "ror_wos_matching.csv"))
 
+#' Items where no vendor could be retrieved
+#' 
+ror_no_vendor_org_id <- dbGetQuery(kb_con, "with doi_groups as (
+select
+	doi,
+	case
+		when every(vendor_org_id is null) then true
+		else false
+	end as all_null
+from
+	ta_wos_aff
+group by
+	doi
+)
+select distinct *
+from
+	doi_groups
+where
+	all_null = true;"
+)
+#' Backup
+write_csv(ror_no_vendor_org_id, here::here("data-raw", "wos_ror_no_vendor_org_id.csv"))
+
+#' #### Scopus
+#' 
+#' Matching table
+dbExecute(kb_con, "DROP TABLE ta_scopus")
+dbExecute(kb_con, "CREATE table ta_scopus AS 
+select ta.*, vi.item_id
+from ta_ror_pubs ta
+left join scp_b_202404.items vi on ta.doi = LOWER(vi.doi)")
+#' 
+#' Get article-level affiliation metadata
+dbExecute(kb_con, "DROP TABLE ta_scopus_aff")
+dbExecute(kb_con, "CREATE TABLE ta_scopus_aff AS select distinct tw.*, aa.author_seq_nr, aa.organization, aa.vendor_org_id 
+from ta_scopus tw 
+inner join scp_b_202404.authors_affiliations aa on tw.item_id = aa.item_id 
+where aa.author_seq_nr = 1 ")
+#' Create matching table where the most frequent ror / org combination is chosen to
+#' account for multiple authorships
+#' 
+#' In Scopus, I use the Scopus Affiliation ID https://www.wikidata.org/wiki/Property:P1155
+#' 
+ror_scp_matching <- dbGetQuery(kb_con, "with vendor as
+(
+select
+	ror,
+	vendor_org_id,
+	n,
+	row_number
+from
+	(
+	select
+		*,
+		row_number() over (partition by vendor_org_id
+	order by
+		n desc) as row_number
+	from
+		(
+		select
+			COUNT(distinct item_id) as n,
+			ror,
+			vendor_org_id
+		from
+			(
+			select
+				distinct item_id,
+				ror,
+				unnest(vendor_org_id) as vendor_org_id
+			from
+				ta_scopus_aff twa
+      )
+		group by
+			ror,
+			vendor_org_id
+		order by
+			vendor_org_id,
+			n desc
+    )
+  )
+), 
+ror as 
+(
+select
+	ror,
+	vendor_org_id,
+	n,
+	row_number() over (partition by ror
+order by
+	n desc) as row_number
+from
+	vendor 
+)
+select
+	*
+from
+	ror
+where
+	row_number = 1;") |>
+as_tibble()
+#' backup
+write_csv(ror_scp_matching, here::here("data-raw", "scp_wos_matching.csv"))
+
+#' Items where no vendor could be retrieved
+#' 
+scp_ror_no_vendor_id <- dbGetQuery(kb_con, "with doi_groups as (
+select
+	doi,
+	case
+		when every(vendor_org_id is null) then true
+		else false
+	end as all_null
+from
+	ta_scopus_aff
+group by
+	doi
+)
+select distinct *
+from
+	doi_groups
+where
+	all_null = true;"
+                               )
+#' Backup
+write_csv(scp_ror_no_vendor_id, here::here("data-raw", "scp_ror_no_vendor_id.csv"))
+
+
+
+
 #' ## Prepare journal data
 jct_issn <- hoaddata::jct_hybrid_jns |>
   distinct(issn, issn_l)
 dbWriteTable(kb_con, "jct_hybrid_jns_issn", jct_issn, overwrite = TRUE)
 
 #### Retrieve articles from hybrid journals
-  dbExecute(kb_con, "DROP TABLE wos_jct_items")
+dbExecute(kb_con, "DROP TABLE wos_jct_items")
 
 dbExecute(kb_con, "CREATE table wos_jct_items AS 
 select distinct 
@@ -208,13 +335,7 @@ wos_jct_affiliations <- tt |>
   mutate(vendor_org_id = gsub('\\{|\\}|"', '', vendor_org_id)) |>
   mutate(doi = tolower(doi)) |>
   as_tibble()
-write_csv(wos_jct_affiliations, "data-raw/wos_jct_affiliations_20240717.csv")
-
-#' Backup ta oa inst
-write_csv(ta_oa_inst, "data-raw/ta_oa_inst.csv.gz")
-#' Disconnect DB
-DBI::dbDisconnect(bq_con)
-DBI::dbDisconnect(kb_con)
+write_csv(wos_jct_affiliations, "data-raw/wos_jct_affiliations.csv")
 
 ### Scopus items and affiliations
 
@@ -308,3 +429,8 @@ WHERE
 # backup
 
 write_csv(hoad_dois_all, here::here("data-raw", "hoad_dois_all_19_23.csv"))
+
+#' Disconnect DB
+DBI::dbDisconnect(bq_con)
+DBI::dbDisconnect(kb_con)
+
