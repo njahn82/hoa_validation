@@ -289,7 +289,7 @@ from
 	jct_hybrid_jns_issn jhji
 left join wos_b_202404.v_issn_isbn vii on
 	jhji.issn = vii.sn
-left join wos_b_202401.v_items i on
+left join wos_b_202404.v_items i on
 	vii.item_id = i.item_id
 where
 	pubyear > 2017 ) as tmp
@@ -366,7 +366,7 @@ from
 	jct_hybrid_jns_issn jhji
 left join scp_b_202404.issn_isbn vii on
 	jhji.issn = vii.sn_c
-left join scp_b_202401.items i on
+left join scp_b_202404.items i on
 	vii.item_id = i.item_id
 where
 	pubyear > 2017 ) as tmp")
@@ -429,6 +429,20 @@ WHERE
 # backup
 
 write_csv(hoad_dois_all, here::here("data-raw", "hoad_dois_all_19_23.csv"))
+
+# Backup OpenAlex funder information and corresponding author data
+
+dbExecute(bq_con, "DROP TABLE hoa-article.hoaddata_sep24.oalex_cr_raw_cor_funder")
+
+dbExecute(bq_con, "-- Safeguard corresponding author and funding data
+CREATE table hoa-article.hoaddata_sep24.oalex_cr_raw_cor_funder AS SELECT DISTINCT cr.doi, inst.ror,  au.is_corresponding, author_position, ARRAY_LENGTH(oalex.grants) as has_funder
+  FROM `hoa-article.hoaddata_sep24.cr_raw` AS cr
+  LEFT JOIN `subugoe-collaborative.openalex.works` AS oalex 
+    ON oalex.doi = cr.doi,
+  UNNEST(authorships) AS au,
+  UNNEST(au.institutions) AS inst
+  WHERE au.is_corresponding = TRUE
+")
 
 #' Disconnect DB
 DBI::dbDisconnect(bq_con)

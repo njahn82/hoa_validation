@@ -10,10 +10,10 @@
 #' 
 #' To Do: Keep this data point in KB.
 library(tidyverse)
-wos_df <- readr::read_csv("data-raw/wos_jct_affiliations_20240717.csv") 
+wos_df <- readr::read_csv("data-raw/wos_jct_affiliations.csv") 
 # Matching
 wos_ror <- readr::read_csv("data-raw/ror_wos_matching.csv") |>
-  distinct(ror_matching, vendor_org_id)
+  distinct(ror, vendor_org_id)
 
 wos_matching <- wos_df |> 
   left_join(wos_ror, by = "vendor_org_id")
@@ -99,7 +99,7 @@ tb <-  bigrquery::bq_dataset_query("hoa-article.hoa_comparision",
                                    destination_table = "hoa-article.hoa_comparision.wos_jct",
                                    billing = "subugoe-collaborative"
 )
-#' ## Zwischenschritt Validierung anhand der Länderinformationen des ESAS Registry
+#' ## Zwischenschritt Validierung anhand der Länderinformationen des ESAC Registry
 #' 
 #' Get ESAC data
 data_url <- "https://keeper.mpdl.mpg.de/f/7fbb5edd24ab4c5ca157/?dl=1"
