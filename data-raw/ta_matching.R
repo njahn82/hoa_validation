@@ -53,6 +53,8 @@ if (bigrquery::bq_table_exists("hoa-article.hoa_comparision.esac_countries"))
   bigrquery::bq_table_delete("hoa-article.hoa_comparision.esac_countries") 
 bigrquery::bq_table_upload("hoa-article.hoa_comparision.esac_countries", esac_countries)
 
+## Web of Science
+
 #' Upload Web of Science article-level affilaition data and the matching table to Cloud Storage
 #'  and import to BigQuery
 #' `gcloud storage cp ~/Documents/thesis/hoa_validation/data-raw/wos_jct_affiliations.csv gs://bigschol`
@@ -150,4 +152,101 @@ if (bigrquery::bq_table_exists("hoa-article.hoa_comparision.wos_jct_match")) {
 bigrquery::bq_dataset_query("hoa-article.hoa_comparision",
                             query = wos_jct_match_sql,
                             destination_table = "hoa-article.hoa_comparision.wos_jct_match",
+                            billing = "subugoe-collaborative")
+
+## Scopus
+
+#' Upload Web of Science article-level affilaition data and the matching table to Cloud Storage
+#'  and import to BigQuery
+#' `gcloud storage cp ~/Documents/thesis/hoa_validation/data-raw/scp_jct_affiliations.csv gs://bigschol`
+#' `gcloud storage cp ~/Documents/thesis/hoa_validation/data-raw/scp_wos_matching.csv gs://bigschol`
+#' `gcloud storage cp ~/Documents/thesis/hoa_validation/data-raw/scp_jct_items_df.csv gs://bigschol`
+#' 
+#' Main query: Get candidate articles published under an TA from WOS using JCT and ESAC metadata
+scp_jct_match_sql <- "WITH
+  -- Extract affiliation data from scp_jct_affiliation and match it with ror_scp
+  scp_ror AS (
+  SELECT
+    DISTINCT scp_jct.item_id,
+    scp_jct.issn_l,
+    scp_jct.doi,
+    scp_jct.first_pubyear,
+    scp_jct.author_seq_nr,
+    scp_jct.corresponding,
+    scp_jct.vendor_org_id,
+    scp_jct.countrycode,
+    matching.ror
+  FROM
+    `hoa-article.hoa_comparision.scp_jct_affiliations` AS scp_jct
+  LEFT JOIN
+    `hoa-article.hoa_comparision.scp_ror_matching` AS matching
+  ON
+    scp_jct.vendor_org_id = CAST(matching.vendor_org_id AS STRING)
+  WHERE
+    matching.ror != 'NA'),
+  -- Filter and add additional metadata from Web of Science items
+  scp_items AS (
+  SELECT
+    DISTINCT scp_ror.*,
+    items.oa_status,
+    REGEXP_CONTAINS(items.item_type, '^Article|^Review') AS core
+  FROM
+    `hoa-article.hoa_comparision.scp_jct_items` AS items
+  INNER JOIN
+    scp_ror
+  ON
+    items.item_id = scp_ror.item_id ),
+  -- Combine with JCT data to capture agreements' details
+  scp_ror_jct AS (
+  SELECT
+    DISTINCT scp_items.item_id,
+    scp_items.issn_l,
+    scp_items.doi,
+    scp_items.first_pubyear,
+    scp_items.ror,
+    scp_items.countrycode,
+    scp_items.author_seq_nr,
+    scp_items.corresponding,
+    scp_items.oa_status,
+    scp_items.core,
+    jct_full.esac_id,
+    jct_full.start_year,
+    jct_full.end_year
+  FROM
+    scp_items
+  INNER JOIN
+    `hoa-article.hoa_comparision.jct_full` AS jct_full
+  ON
+    scp_items.issn_l = jct_full.issn_l
+    AND scp_items.ror = jct_full.ror ),
+  -- Check if the article was published within the JCT agreement date range
+  eligible_articles AS (
+  SELECT
+    scp_ror_jct.*,
+    CASE
+      WHEN scp_ror_jct.first_pubyear BETWEEN scp_ror_jct.start_year AND scp_ror_jct.end_year THEN TRUE
+      ELSE FALSE
+  END
+    AS ta_flag
+  FROM
+    scp_ror_jct
+  INNER JOIN
+    `hoa-article.hoa_comparision.esac_countries` AS esac
+  ON
+    scp_ror_jct.countrycode = esac.country_code
+    AND scp_ror_jct.esac_id = esac.id )
+  -- Select only the articles that are identified as published under a transformative agreement
+SELECT
+  DISTINCT *
+FROM
+  eligible_articles
+WHERE
+  ta_flag = TRUE"
+
+if (bigrquery::bq_table_exists("hoa-article.hoa_comparision.scp_jct_match")) {
+  bigrquery::bq_table_delete("hoa-article.hoa_comparision.scp_jct_match")
+}
+bigrquery::bq_dataset_query("hoa-article.hoa_comparision",
+                            query = scp_jct_match_sql,
+                            destination_table = "hoa-article.hoa_comparision.scp_jct_match",
                             billing = "subugoe-collaborative")
