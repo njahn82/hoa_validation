@@ -71,7 +71,7 @@ active_jns_with_oa <- active_jns |>
 - Number of hybrid journals: 13,820
 - Number of active hybrid journals between 2019 and 2023: 12,888
 - Number of active hybrid journals with at least one OA between 2019 and
-  2023: 11,342
+  2023: 11,348
 
 #### Web of Science
 
@@ -101,15 +101,15 @@ wos_active_core_oa <- wos_active_jns |>
    filter(grepl("hybrid", oa_status))
 ```
 
-- Number of hybrid journals: 8,666
+- Number of hybrid journals: 8,667
 - Number of active hybrid journals between 2019 and 2023: 8,655
 - Number of active hybrid journals with at least one OA between 2019 and
-  2023: 8,238
+  2023: 8,221
 
 Core:
 
 - Active Journals: 8,655
-- Active journals with OA: 8,358
+- Active journals with OA: 8,392
 
 #### Scopus
 
@@ -138,15 +138,15 @@ scp_active_core_oa <- scp_active_core |>
     filter(grepl("hybrid", oa_status))
 ```
 
-- Number of hybrid journals: 11,905
-- Number of active hybrid journals between 2019 and 2023: 11,875
+- Number of hybrid journals: 11,918
+- Number of active hybrid journals between 2019 and 2023: 11,888
 - Number of active hybrid journals with at least one OA between 2019 and
-  2023: 11,180
+  2023: 11,349
 
 Core
 
-- Active Journals: 11,865
-- Active journals with OA: 11,160
+- Active Journals: 11,878
+- Active journals with OA: 11,313
 
 Journals without Original Articles and Reviews (mostly Proceedings)
 
@@ -158,8 +158,8 @@ scp_active_jns |>
   arrange(desc(items)) |>
   janitor::adorn_totals()
 #>     issn_l items
-#>  1071-1813   364
-#>  1661-819X   340
+#>  1071-1813  1361
+#>  1661-819X   377
 #>  1380-7412    51
 #>  2192-2624    32
 #>  0267-9914    19
@@ -168,7 +168,7 @@ scp_active_jns |>
 #>  1752-9298     1
 #>  2332-0249     1
 #>  2341-1929     1
-#>      Total   814
+#>      Total  1848
 ```
 
 ## Coverage analysis: Journal and article volume
@@ -221,20 +221,20 @@ jn_upset_articles <- jn_upset_ |>
 
 # Backup
 jn_upset_articles
-#> # A tibble: 12,921 × 11
+#> # A tibble: 12,920 × 11
 #>    issn_l     n_cr Crossref n_wos WoS   n_scp Scopus     n doi_in_wos_and_scopus
 #>    <chr>     <int> <lgl>    <int> <lgl> <int> <lgl>  <int>                 <dbl>
-#>  1 0001-0782  1467 TRUE      1625 TRUE   1464 TRUE    1467                  1282
-#>  2 0001-1541  1844 TRUE      1953 TRUE   1939 TRUE    1844                  1807
-#>  3 0001-2092  1359 TRUE      1463 TRUE   1040 TRUE    1359                   868
+#>  1 0001-0782  1467 TRUE      1625 TRUE   1488 TRUE    1467                  1306
+#>  2 0001-1541  1844 TRUE      1962 TRUE   1939 TRUE    1844                  1815
+#>  3 0001-2092  1359 TRUE      1495 TRUE   1040 TRUE    1359                   881
 #>  4 0001-2785   875 TRUE        NA FALSE    NA FALSE    875                     0
-#>  5 0001-2998   326 TRUE       336 TRUE    343 TRUE     326                   314
+#>  5 0001-2998   324 TRUE       336 TRUE    343 TRUE     324                   314
 #>  6 0001-3072   144 TRUE       142 TRUE    141 TRUE     144                   141
 #>  7 0001-3455   120 TRUE        NA FALSE    NA FALSE    120                     0
-#>  8 0001-4338   793 TRUE       757 TRUE    765 TRUE     793                   723
-#>  9 0001-4346  1108 TRUE      1023 TRUE    993 TRUE    1108                   988
-#> 10 0001-4370   526 TRUE       526 TRUE    525 TRUE     526                   525
-#> # ℹ 12,911 more rows
+#>  8 0001-4338   793 TRUE       838 TRUE    839 TRUE     793                   793
+#>  9 0001-4346  1108 TRUE      1102 TRUE   1076 TRUE    1108                  1071
+#> 10 0001-4370   526 TRUE       542 TRUE    545 TRUE     526                   525
+#> # ℹ 12,910 more rows
 #> # ℹ 2 more variables: doi_in_scopus <dbl>, doi_in_wos <dbl>
 write_csv(jn_upset_articles, here::here("data/jn_upset_articles.csv"))
 ```
@@ -265,7 +265,7 @@ upset_overview <- ComplexUpset::upset(
         counts = TRUE,
         text = list(size = 8 / .pt),
         text_mapping = aes(
-          label = paste0(!!upset_text_percentage(), '\n(', !!size, ')'),
+          label = paste0(!!upset_text_percentage(), '\n(', format(!!size, big.mark = ","), ')'),
           colour = ifelse(!!size > 5000, 'on_bar', 'on_background'),
           y = ifelse(!!size > 5000, !!size - 4000, !!size)
         ), width = bar_width
@@ -328,7 +328,7 @@ upset_overview & my_upset_theme
 <img src="results_files/figure-gfm/journal_article_overlap_upset-1.png" width="70%" style="display: block; margin: auto;" />
 
 The plot is limited to journals, which are indexed in Crossref. However,
-there are 33 journals not incldued in Crossref, but in WoS or Scopus:
+there are 32 journals not incldued in Crossref, but in WoS or Scopus:
 
 ``` r
 jn_upset_articles |> 
@@ -337,14 +337,14 @@ jn_upset_articles |>
   arrange(desc(n)) |>
   janitor::adorn_totals()
 #>     issn_l     n
-#>  0094-243X 72283
+#>  0094-243X 72340
 #>  1009-1963  1743
-#>  0893-7400   875
+#>  0893-7400   876
 #>  1542-5983   615
-#>  1368-0668   551
+#>  1368-0668   553
 #>  0011-4642   419
+#>  1661-819X   377
 #>  0261-0159   357
-#>  1661-819X   340
 #>  0001-253X   335
 #>  1578-1771   335
 #>  1939-8441   261
@@ -369,8 +369,7 @@ jn_upset_articles |>
 #>  1861-0706    10
 #>  0163-514X     8
 #>  2376-1407     7
-#>  0163-9269     3
-#>      Total 79763
+#>      Total 79857
 ```
 
 WoS:
@@ -383,10 +382,10 @@ jn_upset_articles |>
   janitor::adorn_totals()
 #>     issn_l    n
 #>  1009-1963 1743
-#>  1368-0668  551
+#>  1368-0668  553
 #>  0001-253X  335
 #>  0251-2513   28
-#>      Total 2657
+#>      Total 2659
 ```
 
 (Chinese Physics B seems to have the Chinese Physics ISSN-L in WOS)
@@ -400,10 +399,10 @@ jn_upset_articles |>
   arrange(desc(n)) |>
   janitor::adorn_totals()
 #>     issn_l     n
-#>  0094-243X 72283
+#>  0094-243X 72340
 #>  1542-5983   615
+#>  1661-819X   377
 #>  0261-0159   357
-#>  1661-819X   340
 #>  1578-1771   335
 #>  1939-8441   261
 #>  0899-1855   236
@@ -422,8 +421,7 @@ jn_upset_articles |>
 #>  1861-0706    10
 #>  0163-514X     8
 #>  2376-1407     7
-#>  0163-9269     3
-#>      Total 75478
+#>      Total 75569
 ```
 
 - `0094-243X` represents API Proceedings, all content tagged as

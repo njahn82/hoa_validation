@@ -261,7 +261,7 @@ upset_overview <- ComplexUpset::upset(
         counts = TRUE,
         text = list(size = 8 / .pt),
         text_mapping = aes(
-          label = paste0(!!upset_text_percentage(), '\n(', !!size, ')'),
+          label = paste0(!!upset_text_percentage(), '\n(', format(!!size, big.mark = ","), ')'),
           colour = ifelse(!!size > 5000, 'on_bar', 'on_background'),
           y = ifelse(!!size > 5000, !!size - 4000, !!size)
         ), width = bar_width
