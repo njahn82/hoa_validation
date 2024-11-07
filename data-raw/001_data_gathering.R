@@ -430,19 +430,40 @@ WHERE
 
 write_csv(hoad_dois_all, here::here("data-raw", "hoad_dois_all_19_23.csv"))
 
-# Backup OpenAlex funder information and corresponding author data
+# Backup OpenAlex funder information and corresponding author data using KB
 
-dbExecute(bq_con, "DROP TABLE hoa-article.hoaddata_sep24.oalex_cr_raw_cor_funder")
+#dbExecute(bq_con, "DROP TABLE hoa-article.hoaddata_sep24.oalex_cr_raw_cor_funder")
 
-dbExecute(bq_con, "-- Safeguard corresponding author and funding data
-CREATE table hoa-article.hoaddata_sep24.oalex_cr_raw_cor_funder AS SELECT DISTINCT cr.doi, inst.ror,  au.is_corresponding, author_position, ARRAY_LENGTH(oalex.grants) as has_funder
-  FROM `hoa-article.hoaddata_sep24.cr_raw` AS cr
-  LEFT JOIN `subugoe-collaborative.openalex.works` AS oalex 
-    ON oalex.doi = cr.doi,
-  UNNEST(authorships) AS au,
-  UNNEST(au.institutions) AS inst
-  WHERE au.is_corresponding = TRUE
-")
+dbExecute(kb_con, "CREATE TABLE oalex_cr_raw_cor_funder AS WITH filtered_works AS (
+  SELECT 
+    id,
+    REPLACE(doi, 'https://doi.org/', '') as short_doi,
+    corresponding_author_ids, 
+    corresponding_institution_ids,
+    json_array_length(corresponding_author_ids) AS num_corresponding_authors,
+    json_array_length(corresponding_institution_ids) AS num_corresponding_institutions
+  FROM 
+    fiz_openalex_rep_20240831_openbib.works
+)
+SELECT 
+    hoad.doi, 
+    w.corresponding_author_ids, 
+    w.corresponding_institution_ids,
+    w.num_corresponding_authors,
+    w.num_corresponding_institutions,
+    f.funder_id
+FROM 
+    hoad_dois_all_19_23 hoad
+LEFT JOIN 
+    filtered_works w
+ON
+    hoad.doi = w.short_doi
+LEFT JOIN
+    fiz_openalex_rep_20240831_openbib.works_funders f
+ON 
+    w.id = f.work_id")
+
+ dbGetQuery(kb_con, "SELECT COUNT(DISTINCT(doi)) FROM hoad_dois_all_19_23")
 
 #' Disconnect DB
 DBI::dbDisconnect(bq_con)
