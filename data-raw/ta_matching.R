@@ -206,6 +206,7 @@ scp_jct_match_sql <- "WITH
     scp_items.ror,
     scp_items.countrycode,
     scp_items.author_seq_nr,
+    scp_items.vendor_org_id,
     scp_items.corresponding,
     scp_items.oa_status,
     scp_items.core,
