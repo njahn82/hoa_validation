@@ -174,17 +174,21 @@ scp_jct_match_sql <- "WITH
     scp_jct.author_seq_nr,
     scp_jct.corresponding,
     scp_jct.vendor_org_id,
+    vendor_org_id_part,
     scp_jct.countrycode,
     matching.ror
   FROM
     `hoa-article.hoa_comparision.scp_jct_affiliations` AS scp_jct
+  # Be aware of multiple ids
+  CROSS JOIN
+    UNNEST(SPLIT(scp_jct.vendor_org_id, ',')) AS vendor_org_id_part
   LEFT JOIN
     `hoa-article.hoa_comparision.scp_ror_matching` AS matching
   ON
-    scp_jct.vendor_org_id = CAST(matching.vendor_org_id AS STRING)
+    vendor_org_id_part = CAST(matching.vendor_org_id AS STRING)
   WHERE
     matching.ror != 'NA'),
-  -- Filter and add additional metadata from Web of Science items
+  -- Filter and add additional metadata from Scopus
   scp_items AS (
   SELECT
     DISTINCT scp_ror.*,
@@ -206,7 +210,7 @@ scp_jct_match_sql <- "WITH
     scp_items.ror,
     scp_items.countrycode,
     scp_items.author_seq_nr,
-    scp_items.vendor_org_id,
+    scp_items.vendor_org_id_part as vendor_org_id,
     scp_items.corresponding,
     scp_items.oa_status,
     scp_items.core,
