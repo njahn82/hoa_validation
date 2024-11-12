@@ -379,7 +379,7 @@ scp_jct_items_df <- scp_jct_items |>
   mutate(oa_status = as.character(gsub('\\{|\\}|"', '', oa_status)))
 write_csv(scp_jct_items_df, "data-raw/scp_jct_items_df.csv")
 
-#### Add WOS affiliation data for first data and corresponding authors
+#### Add Scopus affiliation data for first data and corresponding authors
 dbExecute(kb_con, "DROP TABLE scp_jct_affiliations")
 
 dbExecute(kb_con, "CREATE table scp_jct_affiliations AS select distinct jct.item_id,

@@ -12,7 +12,7 @@ knitr::opts_chunk$set(
   echo = TRUE,
   fig.width = 6,
   fig.asp = 0.618,
-  out.width = "70%",
+  out.width = "99%",
   fig.align = "center",
   dpi = 300
 )
@@ -45,7 +45,7 @@ bq_con <- dbConnect(
 )
 
 # Set themes for plots
-my_base_size = 12
+my_base_size = 10
 
 my_upset_theme <-
   theme(panel.grid.minor = element_blank(),
@@ -593,9 +593,10 @@ uptake_df <- bind_rows(wos_ta_df, scp_ta_df, hoad_ta_df) |>
   mutate_if(is.numeric, ~replace(., is.na(.), 0))
 ```
 
-```{r plot_uptake}
+```{r plot_uptake, fig.width=8}
 # Data prep
 uptake_by_year <- uptake_df |>
+  mutate(earliest_year = as.character(earliest_year)) |>
   group_by(earliest_year, src) |>
   summarize(
     n_articles = sum(n_articles),
@@ -606,7 +607,7 @@ uptake_by_year <- uptake_df |>
 
 uptake_by_year_df <- uptake_by_year |>
   # Remove HOAD because we only have first author data available
-  filter(src != "HOAD") |>
+  filter(src != "HOAD", earliest_year != "2018") |>
   pivot_longer(cols = c(ta_oa_first_author_articles, ta_oa_corresponding_author_articles))
 
 hoad_panel <- uptake_by_year |>
@@ -651,15 +652,21 @@ hoad_panel <- uptake_by_year |>
   labs(y = "Hybrid OA Uptake", x = NULL) +
   theme(
     legend.position = "top",
-    legend.justification = "left",
-    axis.text.x = element_blank()
+    legend.justification = "left"
   )
+
+# Prepare facet labels
+my_facet_labels <- c(ta_oa_first_author_articles = "First Author",
+                  ta_oa_corresponding_author_articles = "Corresponding Author",
+                  `Web of Science` = "Web of Science",
+                  `Scopus` = "Scopus"
+                )
 
 wos_scp_uptake_panel <- uptake_by_year_df |>
   distinct(earliest_year, n_oa_articles, n_articles, src, name, value) |>
   # Modify factor levels to control order
   mutate(
-    src = factor(src, levels = c("Scopus", "Web of Science")),
+    src = factor(src, levels = c("Web of Science", "Scopus")),
     name = factor(name, 
                  levels = c("ta_oa_first_author_articles", "ta_oa_corresponding_author_articles"))
   ) |>
@@ -697,7 +704,7 @@ wos_scp_uptake_panel <- uptake_by_year_df |>
     # https://wjschne.github.io/posts/making-text-labels-the-same-size-as-axis-labels-in-ggplot2/
     size = 0.8 * my_base_size / .pt
   ) +
-  facet_grid(fct_rev(src) ~ name) +
+  facet_grid(src ~ name, labeller = as_labeller(my_facet_labels)) +
   scale_fill_manual(
     values = c("#b3b3b3a0", "#56B4E9"),
     name = "",
@@ -713,6 +720,29 @@ wos_scp_uptake_panel <- uptake_by_year_df |>
   labs(y = "Hybrid OA Uptake", x = NULL) +
   theme(
     legend.position = "top",
-    legend.justification = "left",
-    axis.text.x = element_blank())
+    legend.justification = "left")
+
+## Combine to patchwork
+layout <- "
+AC
+BB
+"
+wrap_plots(
+  A = hoad_panel,
+  B = wos_scp_uptake_panel,
+  C = guide_area(),
+  design = layout,
+  guides = "collect",
+  axes = "collect",
+  heights = c(0.5, 1)
+) &
+  theme(
+    legend.position = "top",
+    legend.justification = "right",
+    legend.direction = "horizontal",
+ #   panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "grey50", fill = NA),
+    axis.title=element_text(size = 10)) &
+    plot_annotation(tag_levels = 'A')
+
 ```

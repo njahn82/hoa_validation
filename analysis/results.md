@@ -18,7 +18,7 @@ bq_con <- dbConnect(
 )
 
 # Set themes for plots
-my_base_size = 12
+my_base_size = 10
 
 my_upset_theme <-
   theme(panel.grid.minor = element_blank(),
@@ -325,7 +325,7 @@ upset_overview <- ComplexUpset::upset(
 upset_overview & my_upset_theme
 ```
 
-<img src="results_files/figure-gfm/journal_article_overlap_upset-1.png" width="70%" style="display: block; margin: auto;" />
+<img src="results_files/figure-gfm/journal_article_overlap_upset-1.png" width="99%" style="display: block; margin: auto;" />
 
 The plot is limited to journals, which are indexed in Crossref. However,
 there are 32 journals not incldued in Crossref, but in WoS or Scopus:
@@ -553,7 +553,7 @@ upset_publisher_plot <- ComplexUpset::upset(
 upset_publisher_plot & my_upset_theme 
 ```
 
-<img src="results_files/figure-gfm/upset_publisher_plot-1.png" width="70%" style="display: block; margin: auto;" />
+<img src="results_files/figure-gfm/upset_publisher_plot-1.png" width="99%" style="display: block; margin: auto;" />
 
 What is the age of the journals?
 
@@ -594,3 +594,236 @@ miss_doi |>
 proceedings paper 10.3233/jifs-219108 -\> doi does not work
 10.1136/vr.m1027 -\> paper review vet record! 10.1002/jmv.29204 -\>
 indexing date 2024, pubyear 2023 10.1159/000516826 -\> subject index
+
+## Replication
+
+Here, I want to check whether we find consistent results across the
+three databases relative to open access uptake in hybrid journals in
+general, and relative to open access through agreements in particular. A
+particular focus will be whether findings change substantially when
+counting first or corresponding authors
+
+Working definition replication: In scientific research, a replication is
+commonly defined as a study that is conducted using the same or similar
+methods as the original investigation, in order to evaluate whether
+consistent results can be obtained \[1\].
+<https://pmc.ncbi.nlm.nih.gov/articles/PMC10019630/>
+
+``` r
+# Web of Science
+wos_jn_by_year <- readr::read_csv(here::here("data", "wos_jn_by_year.csv")) 
+
+wos_jn_ta_by_year <- readr::read_csv(here::here("data", "wos_jn_ta_by_year.csv"))
+
+wos_ta_df <- wos_jn_by_year |>
+  # only hybrid journals with at least one oa between 2018 - 2023
+  filter(issn_l %in% wos_active_jns_with_oa$issn_l) |>
+  left_join(wos_jn_ta_by_year, by = c("issn_l", "earliest_year", "pub_type" = "pubtype")) |>
+  # Focus on core
+  filter(pub_type == "core") |>
+  mutate(src = "Web of Science") |>
+  select(-pub_type, -p)
+
+# Scopus
+scp_jn_by_year <-  readr::read_csv(here::here("data", "scp_jn_by_year.csv")) 
+
+scp_jn_ta_by_year <- readr::read_csv(here::here("data", "scp_ta_jn_by_year.csv"))
+
+scp_ta_df <-  scp_jn_by_year |>
+  # only hybrid journals with at least one oa between 2018 - 2023
+  filter(issn_l %in% scp_active_jns_with_oa$issn_l) |>
+  left_join(scp_jn_ta_by_year, by = c("issn_l", "earliest_year" = "first_pubyear", "pub_type" = "pubtype")) |>
+  # Focus on core
+  filter(pub_type == "core") |>
+  mutate(src = "Scopus") |>
+  select(-pub_type, -p)
+
+# HOAD
+hoad_jn_by_year_ <- active_jns_with_oa |>
+  mutate(cr_year = as.numeric(as.character(cr_year))) |>
+  distinct(issn_l, cr_year, n_articles = jn_all)
+hoad_oa_jn_by_year <- hoaddata::cc_articles |>
+  group_by(issn_l, cr_year) |>
+  summarise(n_oa_articles = n_distinct(doi))
+
+hoad_jn_by_year <- inner_join(hoad_jn_by_year_, hoad_oa_jn_by_year, by = c("issn_l", "cr_year"))
+
+hoad_jn_ta_by_year <- readr::read_csv(here::here("data-raw", "ta_oa_inst.csv"))
+
+hoad_ta_by_year <- hoad_jn_ta_by_year |>
+  filter(issn_l %in% active_jns_with_oa$issn_l, ta_active == TRUE) |>
+  group_by(issn_l, cr_year) |>
+  summarise(ta_first_author_articles = n_distinct(doi))
+
+hoad_ta_oa_by_year <- hoad_jn_ta_by_year |>
+  filter(issn_l %in% active_jns_with_oa$issn_l, ta_active == TRUE, !is.na(cc)) |>
+  group_by(issn_l, cr_year) |>
+  summarise(ta_oa_first_author_articles = n_distinct(doi))
+
+hoad_jn_ta_by_year_ <- left_join(hoad_ta_by_year, hoad_ta_oa_by_year)
+
+hoad_ta_df <- hoad_jn_by_year |>
+  left_join(hoad_jn_ta_by_year_) |>
+  # https://stackoverflow.com/a/73621978
+  {\(.) {replace(.,is.na(.),0)}}() |>
+  mutate(src = "HOAD") |>
+  distinct(issn_l, earliest_year = cr_year, n_oa_articles, n_articles, ta_articles = ta_first_author_articles, ta_first_author_articles, ta_oa_articles = ta_oa_first_author_articles, ta_oa_first_author_articles, src) 
+
+uptake_df <- bind_rows(wos_ta_df, scp_ta_df, hoad_ta_df) |>
+  mutate_if(is.numeric, ~replace(., is.na(.), 0))
+```
+
+``` r
+# Data prep
+uptake_by_year <- uptake_df |>
+  mutate(earliest_year = as.character(earliest_year)) |>
+  group_by(earliest_year, src) |>
+  summarize(
+    n_articles = sum(n_articles),
+    n_oa_articles = sum(n_oa_articles),
+    ta_oa_first_author_articles = sum(ta_oa_first_author_articles),
+    ta_oa_corresponding_author_articles = sum(ta_oa_corresponding_author_articles)
+  )
+
+uptake_by_year_df <- uptake_by_year |>
+  # Remove HOAD because we only have first author data available
+  filter(src != "HOAD", earliest_year != "2018") |>
+  pivot_longer(cols = c(ta_oa_first_author_articles, ta_oa_corresponding_author_articles))
+
+hoad_panel <- uptake_by_year |>
+  filter(src == "HOAD") |>
+  ggplot(aes(x = earliest_year)) +
+  geom_bar(
+    aes(y = n_oa_articles / n_articles, fill = "All"),
+    stat = "identity",
+    color = "#000000"
+  ) +
+  geom_bar(
+    aes(y = ta_oa_first_author_articles / n_articles, fill = "TA OA"),
+    stat = "identity",
+    color = "#000000"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(
+        round(ta_oa_first_author_articles / n_oa_articles * 100, 1),
+        "%\n(",
+        format(ta_oa_first_author_articles, big.mark = ","),
+        ")"
+      ),
+      y = ta_oa_first_author_articles / n_articles),
+    position = position_dodge(width = 1),
+    vjust = -0.2,
+    # https://wjschne.github.io/posts/making-text-labels-the-same-size-as-axis-labels-in-ggplot2/
+    size = 0.8 * my_base_size / .pt
+  ) +
+  scale_fill_manual(
+    values = c("#b3b3b3a0", "#56B4E9"),
+    name = "",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.05)),
+    labels = scales::percent_format(),
+    limits = c(0, .20),
+    breaks = c(0, .05, .1, .15, .20)
+  ) +
+  theme_minimal(base_size = my_base_size) +
+  labs(y = "Hybrid OA Uptake", x = NULL) +
+  theme(
+    legend.position = "top",
+    legend.justification = "left"
+  )
+
+# Prepare facet labels
+my_facet_labels <- c(ta_oa_first_author_articles = "First Author",
+                  ta_oa_corresponding_author_articles = "Corresponding Author",
+                  `Web of Science` = "Web of Science",
+                  `Scopus` = "Scopus"
+                )
+
+wos_scp_uptake_panel <- uptake_by_year_df |>
+  distinct(earliest_year, n_oa_articles, n_articles, src, name, value) |>
+  # Modify factor levels to control order
+  mutate(
+    src = factor(src, levels = c("Web of Science", "Scopus")),
+    name = factor(name, 
+                 levels = c("ta_oa_first_author_articles", "ta_oa_corresponding_author_articles"))
+  ) |>
+  ggplot() +
+  geom_bar(
+    aes(
+      x = earliest_year,
+      y = n_oa_articles / n_articles,
+      fill = "All"
+    ),
+    stat = "identity",
+    color = "#000000"
+  ) +
+  geom_bar(
+    aes(
+      x = earliest_year,
+      y = value / n_articles,
+      fill = "TA OA"
+    ),
+    stat = "identity",
+    color = "#000000"
+  ) +
+   geom_text(
+    aes(
+      label = paste0(
+        round(value / n_oa_articles * 100, 1),
+        "%\n(",
+        format(value, big.mark = ","),
+        ")"
+      ),
+      x = earliest_year,
+      y = value / n_articles),
+    position = position_dodge(width = 1),
+    vjust = -0.2,
+    # https://wjschne.github.io/posts/making-text-labels-the-same-size-as-axis-labels-in-ggplot2/
+    size = 0.8 * my_base_size / .pt
+  ) +
+  facet_grid(src ~ name, labeller = as_labeller(my_facet_labels)) +
+  scale_fill_manual(
+    values = c("#b3b3b3a0", "#56B4E9"),
+    name = "",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.05)),
+    labels = scales::percent_format(),
+    limits = c(0, .20),
+    breaks = c(0, .05, .1, .15, .20)
+  ) +
+  theme_minimal(base_size = my_base_size) +
+  labs(y = "Hybrid OA Uptake", x = NULL) +
+  theme(
+    legend.position = "top",
+    legend.justification = "left")
+
+## Combine to patchwork
+layout <- "
+AC
+BB
+"
+wrap_plots(
+  A = hoad_panel,
+  B = wos_scp_uptake_panel,
+  C = guide_area(),
+  design = layout,
+  guides = "collect",
+  axes = "collect",
+  heights = c(0.5, 1)
+) &
+  theme(
+    legend.position = "top",
+    legend.justification = "right",
+    legend.direction = "horizontal",
+ #   panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "grey50", fill = NA),
+    axis.title=element_text(size = 10)) &
+    plot_annotation(tag_levels = 'A')
+```
+
+<img src="results_files/figure-gfm/plot_uptake-1.png" width="99%" style="display: block; margin: auto;" />
