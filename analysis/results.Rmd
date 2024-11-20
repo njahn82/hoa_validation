@@ -744,5 +744,279 @@ wrap_plots(
     panel.border = element_rect(color = "grey50", fill = NA),
     axis.title=element_text(size = 10)) &
     plot_annotation(tag_levels = 'A')
+```
+
+### Scatterplot
+
+```{r}
+uptake_jn_five_jns <- uptake_df |>
+  filter(earliest_year != "2018") |>
+  group_by(issn_l, src) |>
+  summarize(
+    n_articles = sum(n_articles),
+    n_oa_articles = sum(n_oa_articles),
+    ta_oa_first_author_articles = sum(ta_oa_first_author_articles),
+    ta_oa_corresponding_author_articles = sum(ta_oa_corresponding_author_articles)
+  )
+
+uptake_scatter_df <- uptake_jn_five_jns |>
+  pivot_longer(cols = c(ta_oa_first_author_articles, ta_oa_corresponding_author_articles)) |>
+  select(issn_l, src, n_articles, n_oa_articles, author_position_oa = name, value) |>
+  mutate(cat = tolower(paste(src, author_position_oa, sep = "_")))
+```
+
+
+```{r}
+plot_uptake_jn_five_jns <- uptake_jn_five_jns |>
+  mutate(oa_ta_first = ta_oa_first_author_articles,
+         oa_ta_corr =  ta_oa_corresponding_author_articles) |> 
+  distinct(issn_l, src, oa_ta_first, oa_ta_corr) |> 
+  pivot_wider(names_from = src,
+              values_from = c("oa_ta_first", "oa_ta_corr")) |> 
+  janitor::clean_names() |>
+  pivot_longer(
+    cols = c(oa_ta_first_scopus, oa_ta_first_web_of_science, oa_ta_corr_scopus, oa_ta_corr_web_of_science)
+  ) |>
+  distinct(issn_l, oa_ta_first_hoad, name, value)
+  
+  
+ggplot(plot_uptake_jn_five_jns, aes(oa_ta_first_hoad, value, group = name))  +
+  geom_point(alpha = 0.05) +
+  scale_x_log10() +
+  scale_y_log10() +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray50") +
+  coord_fixed() +
+  facet_grid(~name)
+```
+
+### By publisher
+
+```{r}
+uptake_publisher <- uptake_df |>
+  inner_join(esac, by = "issn_l") |>
+  filter(earliest_year != "2018")
+
+uptake_publisher_by_year <- uptake_publisher |>
+  mutate(earliest_year = as.character(earliest_year)) |>
+  group_by(earliest_year, src, publisher) |>
+  summarize(
+    n_articles = sum(n_articles),
+    n_oa_articles = sum(n_oa_articles),
+    ta_oa_first_author_articles = sum(ta_oa_first_author_articles),
+    ta_oa_corresponding_author_articles = sum(ta_oa_corresponding_author_articles)
+  )
+
+uptake_by_year_publisher_df <- uptake_publisher_by_year |>
+  # Remove HOAD because we only have first author data available
+  filter(src != "HOAD", earliest_year != "2018") |>
+  pivot_longer(cols = c(ta_oa_first_author_articles, ta_oa_corresponding_author_articles))
+
+hoad_publisher_panel <- uptake_publisher_by_year |>
+  filter(src == "HOAD") |>
+  ggplot(aes(x = earliest_year)) +
+  geom_bar(
+    aes(y = n_oa_articles / n_articles, fill = "All"),
+    stat = "identity",
+    color = "#000000"
+  ) +
+  geom_bar(
+    aes(y = ta_oa_first_author_articles / n_articles, fill = "TA OA"),
+    stat = "identity",
+    color = "#000000"
+  ) +
+  geom_text(
+    aes(
+      label = paste0(
+        round(ta_oa_first_author_articles / n_oa_articles * 100, 1),
+        "%\n(",
+        format(ta_oa_first_author_articles, big.mark = ","),
+        ")"
+      ),
+      y = ta_oa_first_author_articles / n_articles),
+    position = position_dodge(width = 1),
+    vjust = -0.1,
+    # https://wjschne.github.io/posts/making-text-labels-the-same-size-as-axis-labels-in-ggplot2/
+    size = 0.8 * my_base_size / .pt
+  ) + 
+  facet_grid(~fct_rev(publisher)) +
+  scale_fill_manual(
+    values = c("#b3b3b3a0", "#56B4E9"),
+    name = "",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+   scale_y_continuous(
+    expand = expansion(mult = c(0, 0.05)),
+    labels = scales::percent_format(),
+    limits = c(0, .4),
+    breaks = c(0, .1, .20, .3, .4)
+  ) +
+  theme_minimal(base_size = my_base_size) +
+  labs(y = "Hybrid OA Uptake", x = NULL) +
+  theme(
+    legend.position = "top",
+    legend.justification = "left"
+  )
+
+## label test
+
+
+first_au_publisher_panel <- uptake_by_year_publisher_df |>
+  distinct(earliest_year, publisher, n_oa_articles, n_articles, src, name, value) |>
+  # Modify factor levels to control order
+  mutate(
+    src = factor(src, levels = c("Web of Science", "Scopus")),
+    name = factor(name, 
+                 levels = c("ta_oa_first_author_articles", "ta_oa_corresponding_author_articles"))
+  ) |>
+  filter(name == "ta_oa_first_author_articles") |>
+  ggplot() +
+   geom_bar(
+    aes(
+      x = earliest_year,
+      y = n_oa_articles / n_articles,
+      fill = "All"
+    ),
+    stat = "identity",
+    color = "#000000a0",
+    size = .2
+  ) +
+  geom_bar(
+    aes(
+      x = earliest_year,
+      y = value / n_articles,
+      fill = "TA OA"
+    ),
+    stat = "identity",
+    color = "#000000a0",
+    size = .2
+  ) +
+   geom_text(
+    aes(
+      label = paste0(
+        round(value / n_oa_articles * 100, 1),
+        "%\n(",
+        format(value, big.mark = ","),
+        ")"
+      ),
+      x = earliest_year,
+      y = value / n_articles),
+    position = position_dodge(width = 1),
+    vjust = -0.2,
+    # https://wjschne.github.io/posts/making-text-labels-the-same-size-as-axis-labels-in-ggplot2/
+    size = 0.7 * my_base_size / .pt
+  ) +
+  facet_grid(src ~ fct_rev(publisher)) +
+  scale_fill_manual(
+    values = c("#b3b3b3a0", "#56B4E9"),
+    name = "",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.05)),
+    labels = scales::percent_format(),
+    limits = c(0, .4),
+    breaks = c(0, .1, .20, .3, .4)
+  ) +
+  theme_minimal(base_size = my_base_size) +
+  labs(y = "Hybrid OA Uptake", x = NULL) +
+  theme(
+    legend.position = "top",
+    legend.justification = "left")
+
+cor_au_publisher_panel <- uptake_by_year_publisher_df |>
+  distinct(earliest_year, publisher, n_oa_articles, n_articles, src, name, value) |>
+  # Modify factor levels to control order
+  mutate(
+    src = factor(src, levels = c("Web of Science", "Scopus")),
+    name = factor(name, 
+                 levels = c("ta_oa_first_author_articles", "ta_oa_corresponding_author_articles"))
+  ) |>
+  filter(name == "ta_oa_corresponding_author_articles") |>
+  ggplot() +
+  geom_bar(
+    aes(
+      x = earliest_year,
+      y = n_oa_articles / n_articles,
+      fill = "All"
+    ),
+    stat = "identity",
+    color = "#000000",
+    size = .2
+  ) +
+  geom_bar(
+    aes(
+      x = earliest_year,
+      y = value / n_articles,
+      fill = "TA OA"
+    ),
+    stat = "identity",
+    color = "#000000",
+    size = .2
+  ) +
+   geom_text(
+    aes(
+      label = paste0(
+        round(value / n_oa_articles * 100, 1),
+        "%\n(",
+        format(value, big.mark = ","),
+        ")"
+      ),
+      x = earliest_year,
+      y = n_oa_articles / n_articles),
+    position = position_dodge(width = 1),
+    vjust = -0.1,
+    # https://wjschne.github.io/posts/making-text-labels-the-same-size-as-axis-labels-in-ggplot2/
+    size = 0.8 * my_base_size / .pt
+  ) +
+  facet_grid(src ~ fct_rev(publisher)) +
+  scale_fill_manual(
+    values = c("#b3b3b3a0", "#56B4E9"),
+    name = "",
+    guide = guide_legend(reverse = TRUE)
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.05)),
+    labels = scales::percent_format(),
+    limits = c(0, .4),
+    breaks = c(0, .1, .20, .3, .4)
+  ) +
+  theme_minimal(base_size = my_base_size) +
+  labs(y = "Hybrid OA Uptake", x = NULL) +
+  theme(
+    legend.position = "top",
+    legend.justification = "left")
+```
+
+```{r, fig.asp=0.7}
+## Combine to patchwork
+layout <- "
+A
+B
+C
+"
+wrap_plots(
+  A = hoad_publisher_panel,
+  B = first_au_publisher_panel,
+  C = cor_au_publisher_panel,
+  D = guide_area(),
+  design = layout,
+  guides = "collect",
+  axes = "collect",
+  heights = c(1, 2, 2)
+) &
+  theme(
+    legend.position = "top",
+    legend.justification = "right",
+    legend.direction = "horizontal",
+ #   panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "grey50", fill = NA),
+    axis.title=element_text(size = 10)) &
+    plot_annotation(tag_levels = 'A')
+```
+
+- Elsevier gap suggests different oa information, let's make a scatterplot and contrast it hoad info using a shared corpus. due to publisher-specifc license 
+
+ta by country
 
 ```
+
