@@ -56,7 +56,7 @@ hoad_jns <- hoaddata::jct_hybrid_jns |>
   filter(issn_l != "0027-8424")
 
 # Full OA journals detected through OA proportion > .95
-hoad_oa_excluded <- bq_table_download("subugoe-collaborative.hoaddata.cc_oa_prop") |>
+hoad_oa_excluded <- bq_table_download("hoa-article.hoaddata_sep24.cc_oa_prop") |>
   distinct(issn_l)
 
 active_jns <- hoad_jns |>
@@ -69,9 +69,9 @@ active_jns_with_oa <- active_jns |>
 ```
 
 - Number of hybrid journals: 13,820
-- Number of active hybrid journals between 2019 and 2023: 12,888
+- Number of active hybrid journals between 2019 and 2023: 12,886
 - Number of active hybrid journals with at least one OA between 2019 and
-  2023: 11,348
+  2023: 11,349
 
 #### Web of Science
 
@@ -91,7 +91,7 @@ wos_active_jns <- wos_hybrid_jns |>
   filter(pub_year %in% 2019:2023)
 
 wos_active_jns_with_oa <- wos_active_jns |> 
-  filter(oa_status == "hybrid") 
+  filter(grepl("hybrid", oa_status))
 
 # wos core 
 wos_active_core <- wos_active_jns |>
@@ -104,7 +104,7 @@ wos_active_core_oa <- wos_active_jns |>
 - Number of hybrid journals: 8,667
 - Number of active hybrid journals between 2019 and 2023: 8,655
 - Number of active hybrid journals with at least one OA between 2019 and
-  2023: 8,221
+  2023: 8,392
 
 Core:
 
@@ -221,7 +221,7 @@ jn_upset_articles <- jn_upset_ |>
 
 # Backup
 jn_upset_articles
-#> # A tibble: 12,920 × 11
+#> # A tibble: 12,917 × 11
 #>    issn_l     n_cr Crossref n_wos WoS   n_scp Scopus     n doi_in_wos_and_scopus
 #>    <chr>     <int> <lgl>    <int> <lgl> <int> <lgl>  <int>                 <dbl>
 #>  1 0001-0782  1467 TRUE      1625 TRUE   1488 TRUE    1467                  1306
@@ -234,7 +234,7 @@ jn_upset_articles
 #>  8 0001-4338   793 TRUE       838 TRUE    839 TRUE     793                   793
 #>  9 0001-4346  1108 TRUE      1102 TRUE   1076 TRUE    1108                  1071
 #> 10 0001-4370   526 TRUE       542 TRUE    545 TRUE     526                   525
-#> # ℹ 12,910 more rows
+#> # ℹ 12,907 more rows
 #> # ℹ 2 more variables: doi_in_scopus <dbl>, doi_in_wos <dbl>
 write_csv(jn_upset_articles, here::here("data/jn_upset_articles.csv"))
 ```
@@ -595,7 +595,7 @@ proceedings paper 10.3233/jifs-219108 -\> doi does not work
 10.1136/vr.m1027 -\> paper review vet record! 10.1002/jmv.29204 -\>
 indexing date 2024, pubyear 2023 10.1159/000516826 -\> subject index
 
-## Replication
+\## Replication
 
 Here, I want to check whether we find consistent results across the
 three databases relative to open access uptake in hybrid journals in
@@ -1098,3 +1098,193 @@ wrap_plots(
 ```
 
 <img src="results_files/figure-gfm/unnamed-chunk-10-1.png" width="99%" style="display: block; margin: auto;" />
+
+- Elsevier gap suggests different oa information, let’s make a
+  scatterplot and contrast it hoad info using a shared corpus. due to
+  publisher-specifc license
+
+ta by country
+
+### shared
+
+``` r
+# Create a shared corpus via DOI
+wos_dois_active_jns_with_oa_core_df <- wos_active_jns |> 
+  filter(issn_l %in% wos_active_core_oa$issn_l) |>
+  filter(grepl("Article|^Review$", item_type)) |>
+  mutate(is_hybrid_wos = grepl("hybrid", oa_status)) |>
+  distinct(doi, is_hybrid_wos) |>
+  mutate(wos = TRUE)
+
+scp_dois_active_jns_with_oa_core_df <- scp_active_jns |> 
+  filter(issn_l %in% scp_active_core_oa$issn_l) |>
+  filter(grepl("^Article|^Review", item_type)) |>
+  mutate(is_hybrid_scp = grepl("hybrid", oa_status)) |>
+  distinct(doi, is_hybrid_scp) |>
+  mutate(scopus = TRUE)
+
+hoad_dois_active_jns_with_oa <- cr_df |> 
+  filter(issn_l %in% active_jns_with_oa$issn_l, between(cr_year, 2019, 2023)) |>
+  mutate(is_hybrid_hoad = doi %in% hoaddata::cc_articles$doi) |>
+  distinct(doi, issn_l, is_hybrid_hoad) |>
+  mutate(hoad = TRUE)
+
+## Shared corpus
+all_dois <- dplyr::full_join(hoad_dois_active_jns_with_oa, scp_dois_active_jns_with_oa_core_df, by = "doi") |>
+  dplyr::full_join(wos_dois_active_jns_with_oa_core_df, by = "doi") |>
+  mutate(across(where(is.logical), ~ replace_na(.x, FALSE))) |>
+  filter(!is.na(doi))
+
+shared_dois <- all_dois |>
+  filter(wos == TRUE, scopus == TRUE, hoad == TRUE) 
+
+## Merge Publisher info
+
+shared_dois_df <- hoaddata::jct_hybrid_jns |>
+  distinct(issn_l, esac_publisher) |>
+  inner_join(shared_dois, by = "issn_l")
+  
+esac_five_years <- shared_dois_df |>
+  group_by(esac_publisher) |>
+  summarise(hoad = sum(hoad == TRUE),
+            hoad_oa = sum(is_hybrid_hoad == TRUE),
+            wos = sum(wos == TRUE),
+            wos_oa = sum(is_hybrid_wos == TRUE),
+            scp = sum(scopus == TRUE),
+            scp_oa = sum(is_hybrid_scp == TRUE)) |>
+  mutate(hoad_oa_prop = hoad_oa / hoad,
+         wos_oa_prop = wos_oa / wos,
+         scp_oa_prop = scp_oa / scp) |>
+   mutate(
+    publisher = case_when(
+      esac_publisher == "Elsevier" ~ "Elsevier",
+      esac_publisher == "Springer Nature" ~ "Springer Nature",
+      esac_publisher == "Wiley" ~ "Wiley",
+      is.character(esac_publisher) ~ "Other"
+    )) |>
+  mutate(publisher =
+           forcats::fct_relevel(
+             publisher,
+             c("Elsevier", "Springer Nature", "Wiley", "Other") 
+           )) 
+
+oa_plot_df <- esac_five_years |> 
+    pivot_longer(cols = contains(c("wos", "scp")))
+
+oa_absolut_plot <- oa_plot_df |>
+  filter(name %in% c("wos_oa", "scp_oa")) |>
+  mutate(
+    publisher = case_when(
+      esac_publisher == "Elsevier" ~ "Elsevier",
+      esac_publisher == "Springer Nature" ~ "Springer Nature",
+      esac_publisher == "Wiley" ~ "Wiley",
+      is.character(esac_publisher) ~ "Other"
+    )
+  ) |>
+  mutate(publisher =
+           forcats::fct_relevel(publisher, c(
+             "Elsevier", "Springer Nature", "Wiley", "Other"
+           ))) |>
+  ggplot(aes(x = hoad_oa, y = value, size = hoad)) +
+  geom_point(aes(fill = publisher), pch = 21) +
+  scale_x_continuous(limits = c(0, max(
+    c(
+      esac_five_years$scp_oa,
+      esac_five_years$hoad_oa,
+      esac_five_years$wos_oa
+    )
+  )),
+  labels = scales::number_format(big.mark = ",")) +
+  scale_y_continuous(limits = c(0, max(
+    c(
+      esac_five_years$scp_oa,
+      esac_five_years$hoad_oa,
+      esac_five_years$wos_oa
+    )
+  )),
+  labels = scales::number_format(big.mark = ",")) +
+  scale_fill_manual(
+    "",
+    values = c(
+      "Elsevier" = "#e9711c",
+      "Springer Nature" = "#486a7e",
+      "Wiley" = "#068853",
+      "Other" = "#b3b3b3"
+    )
+  ) +
+  facet_grid( ~ name) +
+  geom_abline(slope = 1,
+              intercept = 0,
+              color = "blue") +
+  coord_fixed() +
+  theme_minimal(my_base_size)
+
+
+oa_share_plot <- oa_plot_df |>
+  filter(name %in% c("wos_oa", "scp_oa")) |>
+   mutate(
+    publisher = case_when(
+      esac_publisher == "Elsevier" ~ "Elsevier",
+      esac_publisher == "Springer Nature" ~ "Springer Nature",
+      esac_publisher == "Wiley" ~ "Wiley",
+      is.character(esac_publisher) ~ "Other"
+    )) |>
+  mutate(publisher =
+           forcats::fct_relevel(
+             publisher,
+             c("Elsevier", "Springer Nature", "Wiley", "Other") 
+           )) |>
+  ggplot(aes(x = hoad_oa / hoad, y = value / hoad, size = hoad)) +
+  geom_point(aes(fill = publisher),  pch = 21) +
+  scale_x_continuous(limits = c(0, 1), labels = scales::percent_format()) +
+  scale_y_continuous(limits = c(0, 1), labels = scales::percent_format())+
+  scale_fill_manual(
+      "",
+      values = c(
+        "Elsevier" = "#e9711c",
+        "Springer Nature" = "#486a7e",
+        "Wiley" = "#068853",
+        "Other" = "#b3b3b3"
+      )
+    ) +
+  facet_grid(~name) +
+  geom_abline(slope = 1, intercept = 0, color = "blue") +
+  coord_fixed() +
+  theme_minimal(my_base_size)
+```
+
+``` r
+layout <- "
+C
+A
+B
+"
+wrap_plots(
+  A = oa_absolut_plot,
+  B = oa_share_plot,
+#  C = guide_area(),
+  design = layout,
+  guides = "collect",
+  axes = "collect",
+  heights = c(0.5, 1, 1)
+) &
+  theme(
+   # legend.position = "top",
+  #  legend.justification = "right",
+ #   legend.direction = "horizontal",
+ #   panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "grey50", fill = NA),
+ #   axis.title=element_text(size = 10)
+ ) &
+    plot_annotation(tag_levels = 'A')
+```
+
+<img src="results_files/figure-gfm/fig_oa_compare_scatter-1.png" width="99%" style="display: block; margin: auto;" />
+
+### 
+
+crossref / unpaywall
+
+### TA countries
+
+replication database vs database validation shared corpus based on dois
