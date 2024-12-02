@@ -790,3 +790,199 @@ ORDER BY
 scp_ta_jn_by_year |>
   filter(between(first_pubyear, 2018, 2023)) |>
   write_csv(here::here("data", "scp_ta_jn_by_year.csv"))
+
+### Country Affiliations
+
+#' ## Web of Science
+wos_country_aff <- dbGetQuery(bq_con, "WITH
+  items_by_year AS (
+  SELECT
+    DISTINCT wos.item_id,
+    wos.issn_l,
+    COALESCE(CAST(REGEXP_EXTRACT(wos.wos_pubdate_online, r'^[0-9]{4}') AS NUMERIC), wos.pubyear) AS earliest_year,
+    REGEXP_CONTAINS(wos.oa_status, 'hybrid') AS is_oa,
+    REGEXP_CONTAINS(wos.item_type, 'Article|^Review$') AS core,
+    aff.countrycode,
+    aff.author_seq_nr,
+    aff.corresponding
+  FROM
+    `hoa-article.hoa_comparision.wos_jct_items` AS wos
+  LEFT JOIN
+    `hoa-article.hoa_comparision.wos_jct_affiliations` AS aff
+  ON
+    wos.item_id = aff.item_id
+  WHERE
+    REGEXP_CONTAINS(wos.item_type, 'Article|^Review$') = TRUE),
+  article_counts AS (
+  SELECT
+    issn_l,
+    earliest_year,
+    COUNT(DISTINCT item_id) AS n_articles,
+    SUM(
+    IF
+      (is_oa = TRUE, 1, 0)) AS n_oa_articles,
+    countrycode,
+    author_seq_nr,
+    corresponding
+  FROM
+    items_by_year
+  GROUP BY
+    issn_l,
+    earliest_year,
+    countrycode,
+    author_seq_nr,
+    corresponding
+  HAVING
+    earliest_year BETWEEN 2019
+    AND 2023)
+SELECT
+  issn_l,
+  earliest_year,
+  n_articles,
+  n_oa_articles,
+  countrycode,
+  author_seq_nr,
+  corresponding
+FROM
+  article_counts
+ORDER BY
+  issn_l,
+  earliest_year,
+  n_articles DESC")
+#' 
+write_csv(wos_country_aff, here::here("data", "wos_country_aff.csv"))
+
+wos_jn_country_ta_by_year <-  dbGetQuery(bq_con, "WITH
+  jct_short AS (
+  SELECT
+    DISTINCT item_id,
+    countrycode,
+    issn_l,
+    earliest_year,
+    CASE
+      WHEN author_seq_nr = 1 THEN item_id
+      ELSE NULL
+  END
+    AS is_first_author,
+    CASE
+      WHEN corresponding = TRUE THEN item_id
+      ELSE NULL
+  END
+    AS is_corresponding_author,
+    CASE
+      WHEN REGEXP_CONTAINS(oa_status, 'hybrid') THEN item_id
+      ELSE NULL
+  END
+    AS is_oa,
+    core
+  FROM
+    `hoa-article.hoa_comparision.wos_jct_match`),
+  article_stats AS (
+  SELECT
+    issn_l,
+    countrycode,
+    earliest_year,
+    'all' AS pubtype,
+    COUNT(DISTINCT item_id) AS ta_articles,
+    COUNT(DISTINCT is_oa) AS ta_oa_articles,
+    COUNT(DISTINCT is_first_author) AS ta_first_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_first_author
+        ELSE NULL
+    END
+      ) AS ta_oa_first_author_articles,
+    COUNT(DISTINCT is_corresponding_author) AS ta_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_corresponding_author
+        ELSE NULL
+    END
+      ) AS ta_oa_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS ta_first_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL AND is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS ta_oa_first_corresponding_author_articles
+  FROM
+    jct_short
+  GROUP BY
+    issn_l,
+    countrycode,
+    earliest_year
+  UNION ALL
+  SELECT
+    issn_l,
+    countrycode,
+    earliest_year,
+    'core' AS pubtype,
+    COUNT(DISTINCT item_id) AS ta_articles,
+    COUNT(DISTINCT is_oa) AS ta_oa_articles,
+    COUNT(DISTINCT is_first_author) AS ta_first_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_first_author
+        ELSE NULL
+    END
+      ) AS ta_oa_first_author_articles,
+    COUNT(DISTINCT is_corresponding_author) AS ta_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_corresponding_author
+        ELSE NULL
+    END
+      ) AS ta_oa_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS ta_first_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL AND is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS ta_oa_first_corresponding_author_articles
+  FROM
+    jct_short
+  WHERE
+    core = TRUE
+  GROUP BY
+    issn_l,
+    countrycode,
+    earliest_year)
+SELECT
+  issn_l,
+  countrycode,
+  earliest_year,
+  pubtype,
+  ta_articles,
+  ta_oa_articles,
+  -- Output for first author articles
+  ta_first_author_articles,
+  ta_oa_first_author_articles,
+  -- Output for corresponding author articles
+  ta_corresponding_author_articles,
+  ta_oa_corresponding_author_articles,
+  -- Output for first + corresponding author articles
+  ta_first_corresponding_author_articles,
+  ta_oa_first_corresponding_author_articles
+FROM
+  article_stats
+WHERE
+    earliest_year BETWEEN 2019
+    AND 2023
+ORDER BY
+  issn_l, earliest_year DESC, countrycode")
+
+write_csv(wos_jn_country_ta_by_year, here::here("data", "wos_jn_country_ta_by_year.csv"))
+
+#' Scopus
