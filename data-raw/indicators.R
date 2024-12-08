@@ -59,7 +59,8 @@ wos_by_year <- dbGetQuery(bq_con, "WITH
     n_core_oa_articles / n_core_articles AS p
   FROM
     article_counts )
-SELECT
+SELECT *
+FROM (SELECT
   *
 FROM
   all_oa
@@ -69,11 +70,11 @@ SELECT
 FROM
   core_oa
 ORDER BY
-  earliest_year DESC")
+  earliest_year DESC )
+WHERE earliest_year BETWEEN 2019 AND 2023")
 #' Save results
-wos_by_year |>
-  filter(between(earliest_year, 2018, 2023)) |>
-  write_csv(here::here("data", "wos_by_year.csv"))
+write_csv(wos_by_year, here::here("data", "wos_by_year.csv"))
+
 #' ### by journal
 wos_jn_by_year <- dbGetQuery(bq_con, "WITH
   tt AS (
@@ -461,7 +462,7 @@ FROM
 ORDER BY
   earliest_year DESC")
 #' Save results
-write_csv(here::here(scp_by_year, "data", "scp_by_year.csv"))
+write_csv(scp_by_year, here::here("data", "scp_by_year.csv"))
 
 scp_jn_by_year <- dbGetQuery(bq_con, "WITH
   tt AS (
@@ -641,14 +642,12 @@ SELECT
   ta_oa_first_corresponding_author_articles
 FROM
   article_stats
-WHERE first_pubyear BEWTEEN 2019 AND 2023
+WHERE first_pubyear BETWEEN 2019 AND 2023
 ORDER BY
   first_pubyear DESC")
 
 #' Save results
-scp_ta_by_year |>
-  filter(between(first_pubyear, 2018, 2023)) |>
-  write_csv(here::here("data", "scp_ta_by_year.csv"))
+write_csv(scp_ta_by_year, here::here("data", "scp_ta_by_year.csv"))
 
 scp_ta_jn_by_year <- dbGetQuery(bq_con, "WITH
   jct_short AS (
@@ -771,7 +770,7 @@ ORDER BY
   first_pubyear DESC,
   issn_l")
 
-write_csv(first_pubyear, here::here("data", "scp_ta_jn_by_year.csv"))
+write_csv(scp_ta_jn_by_year, here::here("data", "scp_ta_jn_by_year.csv"))
 
 ### Country Affiliations
 
