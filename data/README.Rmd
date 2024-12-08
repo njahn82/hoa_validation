@@ -1,0 +1,234 @@
+---
+output: github_document
+---
+
+```{r}
+#| include: false
+#| message: false
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+```
+
+## About
+
+This folder contains analytical datasets providing aggregated counts on the uptake of open access in hybrid journals included in transformative agreements by journal and country information between 2019 and 2023. A particular focus was on whether publications were from eligible authors who could use such agreements. For this purpose, the affiliations of  first and corresponding authors were analysed.
+
+The following datasets were used:
+
+- Scopus (`scp`): In-house Scopus database provided by the Kompetenznetzwerk Bibliometrie (April 2024 snapshot)
+- Web of Science (`wos`): In-house Web of Science database provided by the Kompetenznetzwerk Bibliometrie (April 2024 snapshot)
+
+See `data-raw/` how the subset of publications associated with hybrid journals and transformative agreements was retrieved. 
+The indicator were determined using SQL. `indicators.R` contains the database queries.
+
+## Data files
+
+### Overview
+
+Articles in hybrid journals by year
+ 
+|Variable | Description |
+|-------- |-----------  |
+|`earliest_year`|Year first published |
+|`pub_type`|`core`: Article or Review; `all`: All articles regardless of item type |
+|`n_articles` | Number of items |
+|`n_oa_articles` | Number of items in the database with a hybrid flag, indicating open access availability under an open license |
+|`p`| Open access uptake |
+
+#### `wos_by_year`
+
+Web of Science
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "wos_by_year.csv"))
+```
+
+#### `scp_by_year`
+
+Scopus
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "scp_by_year.csv"))
+```
+
+### By hybrid journal
+
+Articles in hybrid journals by year and hybrid journal included in a transformative agreement
+
+|Variable | Description |
+|-------- |-----------  |
+|`issn_l` | Linking ISSN, a unique identifier for different journal ISSN according to the ISSN agency |
+|`earliest_year`|Year first published |
+|`pub_type`|`core`: Article or Review; `all`: All articles regardless of item type |
+|`n` | Number of items |
+|`oa_articles` | Number of items in the database with a hybrid flag, indicating open access availability under an open license |
+
+#### `wos_jn_by_year`
+
+Web of Science
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "wos_jn_by_year.csv"))
+```
+
+#### `scp_jn_by_year`
+
+Scopus
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "scp_jn_by_year.csv"))
+```
+
+### Country affiliations
+
+Indicators are provided for both first and corresponding authors. Because of multiple country affiliations, full counting was applied. Note that the bibliometric database did not always include the corresponding affiliation.
+
+|Variable | Description |
+|-------- |-----------  |
+|`issn_l` | Linking ISSN, a unique identifier for different journal ISSN according to the ISSN agency |
+|`earliest_year`|Year first published |
+|`country_code`|ISO three letter country codes |
+|`pub_type`|`core`: Article or Review; `all`: All articles regardless of item type |
+|`n` | Number of items |
+|`oa_articles` | Number of items in the database with a hybrid flag, indicating open access availability under an open license |
+|`first_author_articles`|Number of items from first authors|
+|`oa_first_author_articles`|Number of open access items (tagged as hybrid) from first authors|
+|`corresponding_author_articles`|Number of items from corresponding authors|
+|`oa_first_author_articles`|Number of open access items (tagged as hybrid) from corresponding authors|
+|`first_corresponding_author_articles`|Number of items from first authors, which are also corresponding authors|
+|`oa_first_corresponding_author_articles`|Number of open access items (tagged as hybrid) from first authors, which are also corresponding authors|
+
+
+#### `wos_country_aff.csv`
+
+Web of Science 
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "wos_country_aff.csv"))
+```
+
+#### `scp_country_aff.csv`
+
+Scopus
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "scp_country_aff.csv"))
+```
+
+### Transformative agreement data: Overview
+
+The following data files contain indicators for journals where a link were established between articles and eligible institutions participating in transformative agreements. This could be achieved by linking author affiliations with agreement data.
+
+Note that the earliest snapshot available with information about transformative agreemnt were from July 2021, while the analysis started in 2019.
+
+|Variable | Description |
+|-------- |-----------  |
+|`earliest_year`|Year first published |
+|`pub_type`|`core`: Article or Review; `all`: All articles regardless of item type |
+|`ta_articles` | Number of items under an transformative agreement (first OR corresponding author)|
+|`ta_oa_articles` | Number of items under an transformative agreement in the database with a hybrid flag, indicating open access availability under an open license (first OR corresponding author)|
+|`ta_first_author_articles`|Number items from first authors under an transformative agreement |
+|`ta_oa_first_author_articles`|Number of open access items (tagged as hybrid) from first authors under an transformative agreement|
+|`ta_corresponding_author_articles`|Number of items from corresponding authors under an transformative agreement|
+|`ta_oa_first_author_articles`|Number of open access items (tagged as hybrid) from corresponding authors under an transformative agreement|
+|`ta_first_corresponding_author_articles`|Number of items from first authors under an transformative agreement, which are also corresponding authors|
+|`ta_oa_first_corresponding_author_articles`|Number of open access items (tagged as hybrid) from first authors under an transformative agreement, which are also corresponding authors|
+
+#### `wos_ta_by_year`
+
+Web of Science
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "wos_ta_by_year.csv"))
+```
+
+#### `scp_ta_by_year`
+
+Scopus
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "scp_ta_by_year.csv"))
+```
+
+### Transformative agreement data by hybrid journal
+
+Articles in hybrid journals under transformative agreements by journal.
+ 
+|Variable | Description |
+|-------- |-----------  |
+|`issn_l` | Linking ISSN, a unique identifier for different journal ISSN according to the ISSN agency |
+|`earliest_year`|Year first published |
+|`pub_type`|`core`: Article or Review; `all`: All articles regardless of item type |
+|`ta_articles` | Number of items under an transformative agreement (first OR corresponding author)|
+|`ta_oa_articles` | Number of items under an transformative agreement in the database with a hybrid flag, indicating open access availability under an open license (first OR corresponding author)|
+|`ta_first_author_articles`|Number items from first authors under an transformative agreement |
+|`ta_oa_first_author_articles`|Number of open access items (tagged as hybrid) from first authors under an transformative agreement|
+|`ta_corresponding_author_articles`|Number of items from corresponding authors under an transformative agreement|
+|`ta_oa_first_author_articles`|Number of open access items (tagged as hybrid) from corresponding authors under an transformative agreement|
+|`ta_first_corresponding_author_articles`|Number of items from first authors under an transformative agreement, which are also corresponding authors|
+|`ta_oa_first_corresponding_author_articles`|Number of open access items (tagged as hybrid) from first authors under an transformative agreement, which are also corresponding authors|
+
+#### `wos_jn_ta_by_year`
+
+Web of Science
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "wos_jn_ta_by_year.csv"))
+```
+
+#### `scp_ta_jn_by_year`
+
+Scopus
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "scp_ta_jn_by_year.csv"))
+```
+
+### Transformative agreement data by country affiliations
+
+Indicators are provided for both first and corresponding authors. Because of multiple country affiliations, full counting was applied. Note that the bibliometric database did not always include the corresponding affiliation.
+
+|Variable | Description |
+|-------- |-----------  |
+|`issn_l` | Linking ISSN, a unique identifier for different journal ISSN according to the ISSN agency |
+|`country_code`|ISO three letter country codes |
+|`earliest_year`|Year first published |
+|`pub_type`|`core`: Article or Review; `all`: All articles regardless of item type |
+|`ta_articles` | Number of items under an transformative agreement (first OR corresponding author)|
+|`ta_oa_articles` | Number of items under an transformative agreement in the database with a hybrid flag, indicating open access availability under an open license (first OR corresponding author)|
+|`ta_first_author_articles`|Number items from first authors under an transformative agreement |
+|`ta_oa_first_author_articles`|Number of open access items (tagged as hybrid) from first authors under an transformative agreement|
+|`ta_corresponding_author_articles`|Number of items from corresponding authors under an transformative agreement|
+|`ta_oa_first_author_articles`|Number of open access items (tagged as hybrid) from corresponding authors under an transformative agreement|
+|`ta_first_corresponding_author_articles`|Number of items from first authors under an transformative agreement, which are also corresponding authors|
+|`ta_oa_first_corresponding_author_articles`|Number of open access items (tagged as hybrid) from first authors under an transformative agreement, which are also corresponding authors|
+
+#### `wos_jn_country_ta_by_year`
+
+Web of Science
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "wos_jn_country_ta_by_year.csv"))
+```
+
+#### `wos_jn_country_ta_by_year`
+
+Scopus
+
+```{r}
+#| message: false
+readr::read_csv(here("data", "scp_jn_country_ta_by_year.csv"))
+```
+
