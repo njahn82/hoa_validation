@@ -1,4 +1,4 @@
-first_pubyear,pubtype,ta_articles,ta_oa_articles,ta_first_author_articles,ta_oa_first_author_articles,ta_corresponding_author_articles,ta_oa_corresponding_author_articles,ta_first_corresponding_author_articles,ta_oa_first_corresponding_author_articles
+earliest_year,pubtype,ta_articles,ta_oa_articles,ta_first_author_articles,ta_oa_first_author_articles,ta_corresponding_author_articles,ta_oa_corresponding_author_articles,ta_first_corresponding_author_articles,ta_oa_first_corresponding_author_articles
 2023,core,335542,214396,308494,201268,313216,206318,190113,127142
 2023,all,364652,221444,335759,207865,339022,213010,208962,131931
 2022,core,237181,127417,217834,119497,221013,122573,135464,77196
@@ -9,5 +9,3 @@ first_pubyear,pubtype,ta_articles,ta_oa_articles,ta_first_author_articles,ta_oa_
 2020,all,110041,50799,102638,47958,101487,48543,65227,30428
 2019,core,33925,15823,31912,14928,30891,15048,19289,9704
 2019,all,36419,16209,34277,15296,33044,15382,20949,9949
-2018,core,5173,2897,4906,2757,4545,2664,3136,1657
-2018,all,5530,2966,5240,2823,4860,2727,3378,1702

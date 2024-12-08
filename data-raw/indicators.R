@@ -75,70 +75,69 @@ wos_by_year |>
   filter(between(earliest_year, 2018, 2023)) |>
   write_csv(here::here("data", "wos_by_year.csv"))
 #' ### by journal
-wos_jn_by_year <- dbGetQuery(bq_con, "-- Step 1: Extract relevant data with distinct item_id
-WITH items_by_year AS (
+wos_jn_by_year <- dbGetQuery(bq_con, "WITH
+  tt AS (
   SELECT
     DISTINCT wos.item_id,
-    COALESCE(CAST(REGEXP_EXTRACT(wos_pubdate_online, r'^[0-9]{4}') AS NUMERIC), pubyear) AS earliest_year,
-    REGEXP_CONTAINS(wos.oa_status, 'hybrid') AS is_oa,
-    REGEXP_CONTAINS(item_type, 'Article|^Review$') AS core,
+    COALESCE(CAST(REGEXP_EXTRACT(wos.wos_pubdate_online, r'^[0-9]{4}') AS NUMERIC), wos.pubyear) AS earliest_year,
+    CASE
+      WHEN REGEXP_CONTAINS(oa_status, 'hybrid') THEN wos.item_id
+      ELSE NULL
+  END
+    AS is_oa,
+    CASE
+      WHEN REGEXP_CONTAINS(item_type, 'Article|^Review$') THEN TRUE
+      ELSE FALSE
+  END
+    AS is_core,
     wos.issn_l
   FROM
-    `hoa-article.hoa_comparision.wos_jct_items` AS wos
-),
-
--- Step 2: Aggregate article counts by year and issn_l
-article_counts AS (
+    `hoa-article.hoa_comparision.wos_jct_items` AS wos),
+  -- Just core
+  core_pubs AS (
   SELECT
-    issn_l,
-    earliest_year,
-    COUNT(DISTINCT item_id) AS n_articles,
-    SUM(CASE WHEN core = TRUE THEN 1 ELSE 0 END) AS n_core_articles,
-    SUM(CASE WHEN is_oa = TRUE THEN 1 ELSE 0 END) AS n_oa_articles,
-    SUM(CASE WHEN is_oa = TRUE AND core = TRUE THEN 1 ELSE 0 END) AS n_core_oa_articles
-  FROM
-    items_by_year
-  GROUP BY
-    issn_l, earliest_year
-),
-
--- Step 3: Calculate OA percentages for all articles
-all_oa AS (
-  SELECT
-    issn_l,
-    earliest_year,
-    'all' AS pub_type,
-    n_articles,
-    n_oa_articles,
-    -- Avoid division by zero by checking if n_articles > 0
-    CASE WHEN n_articles > 0 THEN n_oa_articles / n_articles ELSE 0 END AS p
-  FROM
-    article_counts
-),
-
--- Step 4: Calculate OA percentages for core articles
-core_oa AS (
-  SELECT
-    issn_l,
+    DISTINCT issn_l,
     earliest_year,
     'core' AS pub_type,
-    n_core_articles AS n_articles,
-    n_core_oa_articles AS n_oa_articles,
-    -- Avoid division by zero by checking if n_core_articles > 0
-    CASE WHEN n_core_articles > 0 THEN n_core_oa_articles / n_core_articles ELSE 0 END AS p
+    COUNT(DISTINCT item_id) AS n,
+    COUNT(DISTINCT is_oa) AS oa_articles,
   FROM
-    article_counts
-)
-
--- Step 5: Combine and sort results
-SELECT * FROM all_oa
+    tt
+  WHERE
+    is_core IS TRUE
+  GROUP BY
+    issn_l,
+    earliest_year),
+  -- All
+  all_pubs AS (
+  SELECT
+    DISTINCT issn_l,
+    earliest_year,
+    'all' AS pub_type,
+    COUNT(DISTINCT item_id) AS n,
+    COUNT(DISTINCT is_oa) AS oa_articles
+  FROM
+    tt
+  GROUP BY
+    issn_l,
+    earliest_year),
+combined AS (SELECT
+  *
+FROM
+  core_pubs
 UNION ALL
-SELECT * FROM core_oa
-ORDER BY issn_l, earliest_year DESC")
+SELECT
+  *
+FROM
+  all_pubs
+ORDER BY
+  issn_l,
+  earliest_year)
+SELECT *
+FROM combined
+WHERE earliest_year BETWEEN 2019 AND 2023")
 #' Save results
-wos_jn_by_year |>
-  filter(between(earliest_year, 2018, 2023)) |>
-  write_csv(here::here("data", "wos_jn_by_year.csv"))
+write_csv(wos_jn_by_year, here::here("data", "wos_jn_by_year.csv"))
 #' Check distribution         
 # wos_jn_by_year |>
 #  filter(between(earliest_year, 2018, 2023)) |>
@@ -263,12 +262,11 @@ SELECT
   ta_oa_first_corresponding_author_articles
 FROM
   article_stats
+WHERE earliest_year BETWEEN 2019 AND 2023
 ORDER BY
   earliest_year DESC")
 #' Save results
-wos_ta_by_year |>
-  filter(between(earliest_year, 2018, 2023)) |>
-  write_csv(here::here("data", "wos_ta_by_year.csv"))
+write_csv(wos_ta_by_year, here::here("data", "wos_ta_by_year.csv"))
 
 
 #' by journal
@@ -392,12 +390,11 @@ SELECT
   ta_oa_first_corresponding_author_articles
 FROM
   article_stats
+WHERE earliest_year BETWEEN 2018 AND 2023
 ORDER BY
   earliest_year DESC")
 #' Save results
-wos_jn_ta_by_year |>
-  filter(between(earliest_year, 2018, 2023)) |>
-  write_csv(here::here("data", "wos_jn_ta_by_year.csv"))
+write_csv(wos_jn_ta_by_year, here::here("data", "wos_jn_ta_by_year.csv"))
 
 ### Scopus
 
@@ -409,7 +406,8 @@ scp_by_year <- dbGetQuery(bq_con, "WITH
     REGEXP_CONTAINS(scp.oa_status, 'hybrid') AS is_oa,
     REGEXP_CONTAINS(item_type, '^Article|^Review') AS core
   FROM
-    `hoa-article.hoa_comparision.scp_jct_items` AS scp ),
+    `hoa-article.hoa_comparision.scp_jct_items` AS scp
+   WHERE first_pubyear BETWEEN 2019 AND 2023),
   article_counts AS (
   SELECT
     earliest_year,
@@ -463,86 +461,70 @@ FROM
 ORDER BY
   earliest_year DESC")
 #' Save results
-scp_by_year |>
-  # Would be great to filter by year using BQ
-  filter(between(earliest_year, 2018, 2023)) |>
-  write_csv(here::here("data", "scp_by_year.csv"))
+write_csv(here::here(scp_by_year, "data", "scp_by_year.csv"))
 
-scp_jn_by_year <- dbGetQuery(bq_con, "  -- Step 1: Extract relevant data with distinct item_id
-WITH
-  items_by_year AS (
+scp_jn_by_year <- dbGetQuery(bq_con, "WITH
+  tt AS (
   SELECT
     DISTINCT scp.item_id,
     first_pubyear AS earliest_year,
-    REGEXP_CONTAINS(scp.oa_status, 'hybrid') AS is_oa,
-    REGEXP_CONTAINS(item_type, '^Article|^Review') AS core,
+    CASE
+      WHEN REGEXP_CONTAINS(oa_status, 'hybrid') THEN scp.item_id
+      ELSE NULL
+  END
+    AS is_oa,
+    CASE
+      WHEN REGEXP_CONTAINS(item_type, 'Article|^Review$') THEN TRUE
+      ELSE FALSE
+  END
+    AS is_core,
     scp.issn_l
   FROM
-    `hoa-article.hoa_comparision.scp_jct_items` AS scp ),
-  -- Step 2: Aggregate article counts by year and issn_l
-  article_counts AS (
+    `hoa-article.hoa_comparision.scp_jct_items` AS scp),
+  -- Just core
+  core_pubs AS (
   SELECT
-    issn_l,
-    earliest_year,
-    COUNT(DISTINCT item_id) AS n_articles,
-    SUM(CASE
-        WHEN core = TRUE THEN 1
-        ELSE 0
-    END
-      ) AS n_core_articles,
-    SUM(CASE
-        WHEN is_oa = TRUE THEN 1
-        ELSE 0
-    END
-      ) AS n_oa_articles,
-    SUM(CASE
-        WHEN is_oa = TRUE AND core = TRUE THEN 1
-        ELSE 0
-    END
-      ) AS n_core_oa_articles
-  FROM
-    items_by_year
-  GROUP BY
-    issn_l,
-    earliest_year ),
-  -- Step 3: Calculate OA percentages for all articles
-  all_oa AS (
-  SELECT
-    issn_l,
-    earliest_year,
-    'all' AS pub_type,
-    n_articles,
-    n_oa_articles,
-    SAFE_DIVIDE(n_oa_articles, n_articles) AS p
-  FROM
-    article_counts ),
-  -- Step 4: Calculate OA percentages for core articles
-  core_oa AS (
-  SELECT
-    issn_l,
+    DISTINCT issn_l,
     earliest_year,
     'core' AS pub_type,
-    n_core_articles AS n_articles,
-    n_core_oa_articles AS n_oa_articles,
-    SAFE_DIVIDE(n_core_oa_articles, n_core_articles) AS p
+    COUNT(DISTINCT item_id) AS n,
+    COUNT(DISTINCT is_oa) AS oa_articles,
   FROM
-    article_counts )
-  -- Step 5: Combine and sort results
-SELECT
+    tt
+  WHERE
+    is_core IS TRUE
+  GROUP BY
+    issn_l,
+    earliest_year),
+  -- All
+  all_pubs AS (
+  SELECT
+    DISTINCT issn_l,
+    earliest_year,
+    'all' AS pub_type,
+    COUNT(DISTINCT item_id) AS n,
+    COUNT(DISTINCT is_oa) AS oa_articles
+  FROM
+    tt
+  GROUP BY
+    issn_l,
+    earliest_year),
+combined AS (SELECT
   *
 FROM
-  all_oa
+  core_pubs
 UNION ALL
 SELECT
   *
 FROM
-  core_oa
+  all_pubs
 ORDER BY
   issn_l,
-  earliest_year DESC")
-scp_jn_by_year |>
-  filter(between(earliest_year, 2018, 2023)) |>
-  write_csv(here::here("data", "scp_jn_by_year.csv"))
+  earliest_year)
+SELECT *
+FROM combined
+WHERE earliest_year BETWEEN 2019 AND 2023")
+write_csv(scp_jn_by_year, here::here("data", "scp_jn_by_year.csv"))
 
 #' Focus on TA articles
 
@@ -644,7 +626,7 @@ scp_ta_by_year <- dbGetQuery(bq_con, "WITH
   GROUP BY
     first_pubyear )
 SELECT
-  first_pubyear,
+  first_pubyear as earliest_year,
   pubtype,
   ta_articles,
   ta_oa_articles,
@@ -659,6 +641,7 @@ SELECT
   ta_oa_first_corresponding_author_articles
 FROM
   article_stats
+WHERE first_pubyear BEWTEEN 2019 AND 2023
 ORDER BY
   first_pubyear DESC")
 
@@ -771,7 +754,7 @@ scp_ta_jn_by_year <- dbGetQuery(bq_con, "WITH
     first_pubyear )
 SELECT
   issn_l,
-  first_pubyear,
+  first_pubyear as earliest_year,
   pubtype,
   ta_articles,
   ta_oa_articles,
@@ -783,72 +766,150 @@ SELECT
   ta_oa_first_corresponding_author_articles
 FROM
   article_stats
+WHERE first_pubyear BETWEEN 2019 AND 2023
 ORDER BY
   first_pubyear DESC,
   issn_l")
 
-scp_ta_jn_by_year |>
-  filter(between(first_pubyear, 2018, 2023)) |>
-  write_csv(here::here("data", "scp_ta_jn_by_year.csv"))
+write_csv(first_pubyear, here::here("data", "scp_ta_jn_by_year.csv"))
 
 ### Country Affiliations
 
 #' ## Web of Science
 wos_country_aff <- dbGetQuery(bq_con, "WITH
-  items_by_year AS (
+  tt AS (
   SELECT
     DISTINCT wos.item_id,
-    wos.issn_l,
     COALESCE(CAST(REGEXP_EXTRACT(wos.wos_pubdate_online, r'^[0-9]{4}') AS NUMERIC), wos.pubyear) AS earliest_year,
-    REGEXP_CONTAINS(wos.oa_status, 'hybrid') AS is_oa,
-    REGEXP_CONTAINS(wos.item_type, 'Article|^Review$') AS core,
-    aff.countrycode,
-    aff.author_seq_nr,
-    aff.corresponding
+    CASE
+      WHEN author_seq_nr = 1 THEN wos.item_id
+      ELSE NULL
+  END
+    AS is_first_author,
+    CASE
+      WHEN corresponding = TRUE THEN wos.item_id
+      ELSE NULL
+  END
+    AS is_corresponding_author,
+    CASE
+      WHEN REGEXP_CONTAINS(oa_status, 'hybrid') THEN wos.item_id
+      ELSE NULL
+  END
+    AS is_oa,
+    CASE
+      WHEN REGEXP_CONTAINS(item_type, 'Article|^Review$') THEN TRUE
+      ELSE FALSE
+  END
+    AS is_core,
+    wos.issn_l,
+    aff.countrycode
   FROM
     `hoa-article.hoa_comparision.wos_jct_items` AS wos
   LEFT JOIN
     `hoa-article.hoa_comparision.wos_jct_affiliations` AS aff
   ON
     wos.item_id = aff.item_id
-  WHERE
-    REGEXP_CONTAINS(wos.item_type, 'Article|^Review$') = TRUE),
-  article_counts AS (
+    ),
+  -- Just core
+  core_pubs AS (
   SELECT
-    issn_l,
+    DISTINCT issn_l,
     earliest_year,
-    COUNT(DISTINCT item_id) AS n_articles,
-    SUM(
-    IF
-      (is_oa = TRUE, 1, 0)) AS n_oa_articles,
     countrycode,
-    author_seq_nr,
-    corresponding
+    'core' AS pub_type,
+    COUNT(DISTINCT item_id) AS n,
+    COUNT(DISTINCT is_oa) AS oa_articles,
+    COUNT(DISTINCT is_first_author) AS first_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_first_author
+        ELSE NULL
+    END
+      ) AS oa_first_author_articles,
+    COUNT(DISTINCT is_corresponding_author) AS corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_corresponding_author
+        ELSE NULL
+    END
+      ) AS oa_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS first_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL AND is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS oa_first_corresponding_author_articles
   FROM
-    items_by_year
+    tt
+  WHERE
+    is_core IS TRUE
   GROUP BY
     issn_l,
     earliest_year,
+    countrycode),
+  -- All
+  all_pubs AS (
+  SELECT
+    DISTINCT issn_l,
+    earliest_year,
     countrycode,
-    author_seq_nr,
-    corresponding
-  HAVING
-    earliest_year BETWEEN 2019
-    AND 2023)
-SELECT
-  issn_l,
-  earliest_year,
-  n_articles,
-  n_oa_articles,
-  countrycode,
-  author_seq_nr,
-  corresponding
+    'all' AS pub_type,
+    COUNT(DISTINCT item_id) AS n,
+    COUNT(DISTINCT is_oa) AS oa_articles,
+    COUNT(DISTINCT is_first_author) AS first_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_first_author
+        ELSE NULL
+    END
+      ) AS oa_first_author_articles,
+    COUNT(DISTINCT is_corresponding_author) AS corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_corresponding_author
+        ELSE NULL
+    END
+      ) AS oa_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS first_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL AND is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS oa_first_corresponding_author_articles
+  FROM
+    tt
+  GROUP BY
+    issn_l,
+    earliest_year,
+    countrycode),
+combined AS (SELECT
+  *
 FROM
-  article_counts
+  core_pubs
+UNION ALL
+SELECT
+  *
+FROM
+  all_pubs
 ORDER BY
   issn_l,
   earliest_year,
-  n_articles DESC")
+  countrycode)
+SELECT *
+FROM combined
+WHERE earliest_year BETWEEN 2019 AND 2023")
 #' 
 write_csv(wos_country_aff, here::here("data", "wos_country_aff.csv"))
 
@@ -981,65 +1042,144 @@ WHERE
     earliest_year BETWEEN 2019
     AND 2023
 ORDER BY
-  issn_l, earliest_year DESC, countrycode")
+  issn_l, earliest_year, countrycode")
 
 write_csv(wos_jn_country_ta_by_year, here::here("data", "wos_jn_country_ta_by_year.csv"))
 
 #' Scopus
 #' 
 scp_country_aff <- dbGetQuery(bq_con, "WITH
-  items_by_year AS (
+  tt AS (
   SELECT
     DISTINCT scp.item_id,
     scp.first_pubyear AS earliest_year,
-    REGEXP_CONTAINS(scp.oa_status, 'hybrid') AS is_oa,
-    REGEXP_CONTAINS(item_type, '^Article|^Review') AS core,
+    CASE
+      WHEN author_seq_nr = 1 THEN scp.item_id
+      ELSE NULL
+  END
+    AS is_first_author,
+    CASE
+      WHEN corresponding = TRUE THEN scp.item_id
+      ELSE NULL
+  END
+    AS is_corresponding_author,
+    CASE
+      WHEN REGEXP_CONTAINS(oa_status, 'hybrid') THEN scp.item_id
+      ELSE NULL
+  END
+    AS is_oa,
+    CASE
+      WHEN REGEXP_CONTAINS(item_type, '^Article|^Review') THEN TRUE
+      ELSE FALSE
+  END
+    AS is_core,
     scp.issn_l,
-    aff.countrycode,
-    aff.author_seq_nr,
-    aff.corresponding
+    aff.countrycode
   FROM
     `hoa-article.hoa_comparision.scp_jct_items` AS scp
   LEFT JOIN
     `hoa-article.hoa_comparision.scp_jct_affiliations` AS aff
   ON
-    scp.item_id = aff.item_id),
-  article_counts AS (
+    scp.item_id = aff.item_id
+  WHERE scp.first_pubyear BETWEEN 2019 AND 2023
+    ),
+  -- Just core
+  core_pubs AS (
   SELECT
-    issn_l,
+    DISTINCT issn_l,
     earliest_year,
-    COUNT(DISTINCT item_id) AS n_articles,
-    SUM(
-    IF
-      (is_oa = TRUE, 1, 0)) AS n_oa_articles,
     countrycode,
-    author_seq_nr,
-    corresponding
+    'core' AS pub_type,
+    COUNT(DISTINCT item_id) AS n,
+    COUNT(DISTINCT is_oa) AS oa_articles,
+    COUNT(DISTINCT is_first_author) AS first_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_first_author
+        ELSE NULL
+    END
+      ) AS oa_first_author_articles,
+    COUNT(DISTINCT is_corresponding_author) AS corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_corresponding_author
+        ELSE NULL
+    END
+      ) AS oa_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS first_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL AND is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS oa_first_corresponding_author_articles
   FROM
-    items_by_year
+    tt
+  WHERE
+    is_core IS TRUE
   GROUP BY
     issn_l,
     earliest_year,
+    countrycode),
+  -- All
+  all_pubs AS (
+  SELECT
+    DISTINCT issn_l,
+    earliest_year,
     countrycode,
-    author_seq_nr,
-    corresponding
-  HAVING
-    earliest_year BETWEEN 2019
-    AND 2023)
+    'all' AS pub_type,
+    COUNT(DISTINCT item_id) AS n,
+    COUNT(DISTINCT is_oa) AS oa_articles,
+    COUNT(DISTINCT is_first_author) AS first_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_first_author
+        ELSE NULL
+    END
+      ) AS oa_first_author_articles,
+    COUNT(DISTINCT is_corresponding_author) AS corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL THEN is_corresponding_author
+        ELSE NULL
+    END
+      ) AS oa_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS first_corresponding_author_articles,
+    COUNT(DISTINCT
+      CASE
+        WHEN is_oa IS NOT NULL AND is_first_author IS NOT NULL AND is_corresponding_author IS NOT NULL THEN item_id
+        ELSE NULL
+    END
+      ) AS oa_first_corresponding_author_articles
+  FROM
+    tt
+  GROUP BY
+    issn_l,
+    earliest_year,
+    countrycode)
 SELECT
-  issn_l,
-  earliest_year,
-  n_articles,
-  n_oa_articles,
-  countrycode,
-  author_seq_nr,
-  corresponding
+  *
 FROM
-  article_counts
+  core_pubs
+UNION ALL
+SELECT
+  *
+FROM
+  all_pubs
 ORDER BY
   issn_l,
   earliest_year,
-  n_articles DESC")
+  countrycode")
 
 write_csv(scp_country_aff, here::here("data", "scp_country_aff.csv"))
 
@@ -1154,7 +1294,7 @@ scp_jn_country_ta_by_year <- dbGetQuery(bq_con, "WITH
 SELECT
   issn_l,
   countrycode,
-  first_pubyear,
+  first_pubyear AS earliest_year,
   pubtype,
   ta_articles,
   ta_oa_articles,
@@ -1173,7 +1313,7 @@ WHERE
     first_pubyear BETWEEN 2019
     AND 2023
 ORDER BY
-  issn_l, first_pubyear DESC, countrycode")
+  issn_l, earliest_year, countrycode")
 
 write_csv(scp_jn_country_ta_by_year, here::here("data", "scp_jn_country_ta_by_year.csv"))
 
