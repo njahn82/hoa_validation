@@ -1316,3 +1316,94 @@ ORDER BY
 
 write_csv(scp_jn_country_ta_by_year, here::here("data", "scp_jn_country_ta_by_year.csv"))
 
+#' hoadata
+
+## hoad jn by year
+
+hoad_jn_by_year <- hoaddata::jn_ind |>
+  mutate(cr_year = as.numeric(as.character(cr_year))) |>
+  filter(between(cr_year, 2019, 2023)) |>
+  distinct(issn_l, cr_year, jn_all)  |>
+  arrange(issn_l, cr_year)
+
+# hoad_country_aff 
+hoad_country_all <- hoaddata::jn_aff |>
+  filter(between(cr_year, 2019, 2023)) |>
+  distinct(issn_l, cr_year, country_code, articles_total) |>
+  rename(articles = articles_total)
+
+hoad_country_oa <- hoaddata::jn_aff |>
+  filter(between(cr_year, 2019, 2023), !is.na(cc)) |>
+  distinct(issn_l, cr_year, country_code, cc, articles_under_cc_variant) |>
+  group_by(issn_l, cr_year, country_code) |>
+  summarise(oa_articles = sum(articles_under_cc_variant))
+
+hoad_country_aff <- left_join(hoad_country_all, hoad_country_oa, by = c("issn_l", "cr_year", "country_code")) |>
+  mutate(across(where(is.numeric), ~replace_na(.x, 0))) |>
+  arrange(issn_l, cr_year, country_code)
+write_csv(hoad_country_aff, here::here("data", "hoad_country_aff.csv"))
+# hoad ta
+# Use BigQuery
+library(bigrquery)
+library(DBI)
+bq_con <- dbConnect(
+  bigrquery::bigquery(),
+  project = "subugoe-collaborative",
+  billing = "subugoe-collaborative"
+)
+hoad_ta_country_df <- dbGetQuery(bq_con, "SELECT
+  DISTINCT main.doi,
+  main.cr_year,
+  main.issn_l,
+  country_code,
+  CASE
+    WHEN CC IS NULL THEN FALSE
+    ELSE TRUE
+END
+  is_oa
+FROM
+  `hoa-article.hoaddata_sep24.ta_oa_inst` AS main
+LEFT JOIN
+  `subugoe-collaborative.openalex.institutions` AS oalex
+ON
+  main.ror = oalex.ror
+WHERE
+  ta_active = TRUE
+  AND cr_year BETWEEN 2019 AND 2023")
+
+hoad_ta_by_year_all <- hoad_ta_country_df |>
+  group_by(issn_l, cr_year) |>
+  summarise(ta_articles = n_distinct(doi))
+
+hoad_ta_by_year_oa <-  hoad_ta_country_df |>
+  filter(is_oa == TRUE) |>
+  group_by(issn_l, cr_year) |>
+  summarise(oa_articles = n_distinct(doi))
+
+hoad_ta_by_year <- left_join(hoad_ta_by_year_all, hoad_ta_by_year_oa, 
+                             by = c("issn_l", "cr_year")) |>
+  mutate(across(where(is.numeric), ~replace_na(.x, 0))) |>
+  arrange(issn_l, cr_year)
+
+write_csv(hoad_ta_by_year, here::here("data", "hoad_ta_by_year.csv"))
+
+# by country
+
+hoad_jn_country_ta_by_year_all <- hoad_ta_country_df |>
+  group_by(issn_l, cr_year, country_code) |>
+  summarise(ta_articles = n_distinct(doi))
+
+hoad_jn_country_ta_by_year_oa <-  hoad_ta_country_df |>
+  filter(is_oa == TRUE) |>
+  group_by(issn_l, cr_year, country_code) |>
+  summarise(oa_articles = n_distinct(doi))
+
+hoad_jn_country_ta_by_year <- left_join(hoad_jn_country_ta_by_year_all, 
+                                        hoad_jn_country_ta_by_year_oa, 
+                                        by = c("issn_l", "cr_year", "country_code")) |>
+  mutate(across(where(is.numeric), ~replace_na(.x, 0))) |>
+  # To ISO three letter country code
+  mutate(country_code = countrycode::countrycode(country_code, "iso2c", "iso3c")) |>
+  arrange(issn_l, cr_year, country_code)
+
+write_csv(hoad_jn_country_ta_by_year, here::here("data", "hoad_jn_country_ta_by_year.csv"))
