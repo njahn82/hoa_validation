@@ -1325,6 +1325,8 @@ hoad_jn_by_year <- hoaddata::jn_ind |>
   filter(between(cr_year, 2019, 2023)) |>
   distinct(issn_l, cr_year, jn_all)  |>
   arrange(issn_l, cr_year)
+write_csv(hoad_jn_by_year, here::here("data", "hoad_jn_by_year.csv"))
+
 
 # hoad_country_aff 
 hoad_country_all <- hoaddata::jn_aff |>
