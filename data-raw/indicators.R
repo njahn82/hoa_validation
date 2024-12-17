@@ -1341,6 +1341,8 @@ hoad_country_oa <- hoaddata::jn_aff |>
   summarise(oa_articles = sum(articles_under_cc_variant))
 
 hoad_country_aff <- left_join(hoad_country_all, hoad_country_oa, by = c("issn_l", "cr_year", "country_code")) |>
+  # To ISO three letter country code
+  mutate(country_code = countrycode::countrycode(country_code, "iso2c", "iso3c")) |>
   mutate(across(where(is.numeric), ~replace_na(.x, 0))) |>
   arrange(issn_l, cr_year, country_code)
 write_csv(hoad_country_aff, here::here("data", "hoad_country_aff.csv"))
@@ -1409,3 +1411,42 @@ hoad_jn_country_ta_by_year <- left_join(hoad_jn_country_ta_by_year_all,
   arrange(issn_l, cr_year, country_code)
 
 write_csv(hoad_jn_country_ta_by_year, here::here("data", "hoad_jn_country_ta_by_year.csv"))
+
+### Country stats spreadsheet
+
+#### Scopus
+scp_aff <- readr::read_csv("data/scp_country_aff.csv")
+scp_ta <- readr::read_csv("data/scp_jn_country_ta_by_year.csv")
+
+scp_df <- left_join(scp_aff, scp_ta, by = c("issn_l", "countrycode", "earliest_year", "pub_type" = "pubtype")) |>
+  mutate(earliest_year = as.character(earliest_year)) |>
+  filter(pub_type == "core") |>
+  rename_with(.cols = where(is.numeric), function(x){paste0("scp_", x)}) |>
+  select(-pub_type)
+
+#### Web of Science
+wos_aff <- readr::read_csv("data/wos_country_aff.csv")
+wos_ta <- readr::read_csv("data/wos_jn_country_ta_by_year.csv")
+
+wos_df <- left_join(wos_aff, wos_ta, by = c("issn_l", "countrycode", "earliest_year", "pub_type" = "pubtype"))
+
+wos_df <- left_join(wos_aff, wos_ta, by = c("issn_l", "countrycode", "earliest_year", "pub_type" = "pubtype")) |>
+  mutate(earliest_year = as.character(earliest_year)) |>
+  filter(pub_type == "core") |>
+  rename_with(.cols = where(is.numeric), function(x){paste0("wos_", x)}) |>
+  select(-pub_type)
+
+#### HOAD
+hoad_aff <- readr::read_csv("data/hoad_country_aff.csv")
+hoad_ta <- readr::read_csv("data/hoad_jn_country_ta_by_year.csv") |>
+  rename(ta_oa_articles = oa_articles)
+
+hoad_df <- left_join(hoad_aff, hoad_ta, by = c("issn_l", "country_code", "cr_year")) |>
+  mutate(earliest_year = as.character(cr_year)) |>
+  rename_with(.cols = where(is.numeric), function(x){paste0("hoad_", x)}) |>
+  select(-hoad_cr_year)
+
+my_df <- left_join(hoad_df, scp_df, by = c("issn_l", "country_code" = "countrycode", "earliest_year")) |>
+  left_join(wos_df, by =   c("issn_l", "country_code" = "countrycode", "earliest_year")) 
+
+write_csv(my_df, here::here("data", "jn_country_stats_all.csv"))
