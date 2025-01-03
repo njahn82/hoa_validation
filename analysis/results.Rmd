@@ -542,7 +542,7 @@ wos_ta_df <- wos_jn_by_year |>
   # Focus on core
   filter(pub_type == "core") |>
   mutate(src = "Web of Science") |>
-  select(-pub_type, -p)
+  select(-pub_type)
 
 # Scopus
 scp_jn_by_year <-  readr::read_csv(here::here("data", "scp_jn_by_year.csv")) 
@@ -552,11 +552,11 @@ scp_jn_ta_by_year <- readr::read_csv(here::here("data", "scp_ta_jn_by_year.csv")
 scp_ta_df <-  scp_jn_by_year |>
   # only hybrid journals with at least one oa between 2018 - 2023
   filter(issn_l %in% scp_active_jns_with_oa$issn_l) |>
-  left_join(scp_jn_ta_by_year, by = c("issn_l", "earliest_year" = "first_pubyear", "pub_type" = "pubtype")) |>
+  left_join(scp_jn_ta_by_year, by = c("issn_l", "earliest_year", "pub_type" = "pubtype")) |>
   # Focus on core
   filter(pub_type == "core") |>
   mutate(src = "Scopus") |>
-  select(-pub_type, -p)
+  select(-pub_type)
 
 # HOAD
 hoad_jn_by_year_ <- active_jns_with_oa |>

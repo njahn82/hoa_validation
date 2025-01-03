@@ -69,9 +69,9 @@ active_jns_with_oa <- active_jns |>
 ```
 
 - Number of hybrid journals: 13,820
-- Number of active hybrid journals between 2019 and 2023: 12,886
+- Number of active hybrid journals between 2019 and 2023: 12,888
 - Number of active hybrid journals with at least one OA between 2019 and
-  2023: 11,349
+  2023: 11,348
 
 #### Web of Science
 
@@ -221,7 +221,7 @@ jn_upset_articles <- jn_upset_ |>
 
 # Backup
 jn_upset_articles
-#> # A tibble: 12,917 × 11
+#> # A tibble: 12,920 × 11
 #>    issn_l     n_cr Crossref n_wos WoS   n_scp Scopus     n doi_in_wos_and_scopus
 #>    <chr>     <int> <lgl>    <int> <lgl> <int> <lgl>  <int>                 <dbl>
 #>  1 0001-0782  1467 TRUE      1625 TRUE   1488 TRUE    1467                  1306
@@ -234,7 +234,7 @@ jn_upset_articles
 #>  8 0001-4338   793 TRUE       838 TRUE    839 TRUE     793                   793
 #>  9 0001-4346  1108 TRUE      1102 TRUE   1076 TRUE    1108                  1071
 #> 10 0001-4370   526 TRUE       542 TRUE    545 TRUE     526                   525
-#> # ℹ 12,907 more rows
+#> # ℹ 12,910 more rows
 #> # ℹ 2 more variables: doi_in_scopus <dbl>, doi_in_wos <dbl>
 write_csv(jn_upset_articles, here::here("data/jn_upset_articles.csv"))
 ```
@@ -622,7 +622,7 @@ wos_ta_df <- wos_jn_by_year |>
   # Focus on core
   filter(pub_type == "core") |>
   mutate(src = "Web of Science") |>
-  select(-pub_type, -p)
+  select(-pub_type)
 
 # Scopus
 scp_jn_by_year <-  readr::read_csv(here::here("data", "scp_jn_by_year.csv")) 
@@ -632,11 +632,11 @@ scp_jn_ta_by_year <- readr::read_csv(here::here("data", "scp_ta_jn_by_year.csv")
 scp_ta_df <-  scp_jn_by_year |>
   # only hybrid journals with at least one oa between 2018 - 2023
   filter(issn_l %in% scp_active_jns_with_oa$issn_l) |>
-  left_join(scp_jn_ta_by_year, by = c("issn_l", "earliest_year" = "first_pubyear", "pub_type" = "pubtype")) |>
+  left_join(scp_jn_ta_by_year, by = c("issn_l", "earliest_year", "pub_type" = "pubtype")) |>
   # Focus on core
   filter(pub_type == "core") |>
   mutate(src = "Scopus") |>
-  select(-pub_type, -p)
+  select(-pub_type)
 
 # HOAD
 hoad_jn_by_year_ <- active_jns_with_oa |>
