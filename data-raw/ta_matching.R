@@ -36,23 +36,6 @@ bigrquery::bq_dataset_query("hoa-article.hoa_comparision",
                                    destination_table = "hoa-article.hoa_comparision.jct_full",
                                    billing = "subugoe-collaborative")
 
-#' Upload ESAC data
-data_url <- "https://keeper.mpdl.mpg.de/f/7fbb5edd24ab4c5ca157/?dl=1"
-tmp <- tempfile()
-download.file(data_url, tmp)
-esac <- readxl::read_xlsx(tmp, skip = 2) |>
-  janitor::clean_names()
-esac_countries <- esac |>
-  select(id, country) |>
-  separate_rows(country, sep = ",") |>
-  mutate(country = trimws(country)) |>
-  mutate(country_code = countrycode::countrycode(country, origin = "country.name", dest = "iso3c")) |>
-  mutate(country_code = ifelse(country == "Kosovo", "XKK", country_code))
-#' Upload to BQ
-if (bigrquery::bq_table_exists("hoa-article.hoa_comparision.esac_countries")) 
-  bigrquery::bq_table_delete("hoa-article.hoa_comparision.esac_countries") 
-bigrquery::bq_table_upload("hoa-article.hoa_comparision.esac_countries", esac_countries)
-
 ## Web of Science
 
 #' Upload Web of Science article-level affilaition data and the matching table to Cloud Storage
@@ -132,12 +115,7 @@ wos_jct_match_sql <- "WITH
   END
     AS ta_flag
   FROM
-    wos_ror_jct
-  INNER JOIN
-    `hoa-article.hoa_comparision.esac_countries` AS esac
-  ON
-    wos_ror_jct.countrycode = esac.country_code
-    AND wos_ror_jct.esac_id = esac.id )
+    wos_ror_jct)
   -- Select only the articles that are identified as published under a transformative agreement
 SELECT
   DISTINCT *
@@ -156,7 +134,7 @@ bigrquery::bq_dataset_query("hoa-article.hoa_comparision",
 
 ## Scopus
 
-#' Upload Web of Science article-level affilaition data and the matching table to Cloud Storage
+#' Upload Web of Science article-level affiliation data and the matching table to Cloud Storage
 #'  and import to BigQuery
 #' `gcloud storage cp ~/Documents/thesis/hoa_validation/data-raw/scp_jct_affiliations.csv gs://bigschol`
 #' `gcloud storage cp ~/Documents/thesis/hoa_validation/data-raw/scp_wos_matching.csv gs://bigschol`
@@ -234,12 +212,7 @@ scp_jct_match_sql <- "WITH
   END
     AS ta_flag
   FROM
-    scp_ror_jct
-  INNER JOIN
-    `hoa-article.hoa_comparision.esac_countries` AS esac
-  ON
-    scp_ror_jct.countrycode = esac.country_code
-    AND scp_ror_jct.esac_id = esac.id )
+    scp_ror_jct)
   -- Select only the articles that are identified as published under a transformative agreement
 SELECT
   DISTINCT *
