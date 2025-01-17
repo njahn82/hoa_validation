@@ -570,7 +570,7 @@ jn_age <- jn_ind |>
 DOI coverage check
 
 ``` r
-jn_overlap <- jn_upset |> 
+jn_overlap <- jn_upset_articles |> 
   filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE)
 
 miss_doi <- cr_df |>
@@ -641,10 +641,10 @@ scp_ta_df <-  scp_jn_by_year |>
 # HOAD
 hoad_jn_by_year_ <- active_jns_with_oa |>
   mutate(cr_year = as.numeric(as.character(cr_year))) |>
-  distinct(issn_l, cr_year, n_articles = jn_all)
+  distinct(issn_l, cr_year, n = jn_all)
 hoad_oa_jn_by_year <- hoaddata::cc_articles |>
   group_by(issn_l, cr_year) |>
-  summarise(n_oa_articles = n_distinct(doi))
+  summarise(oa_articles = n_distinct(doi))
 
 hoad_jn_by_year <- inner_join(hoad_jn_by_year_, hoad_oa_jn_by_year, by = c("issn_l", "cr_year"))
 
@@ -667,7 +667,7 @@ hoad_ta_df <- hoad_jn_by_year |>
   # https://stackoverflow.com/a/73621978
   {\(.) {replace(.,is.na(.),0)}}() |>
   mutate(src = "HOAD") |>
-  distinct(issn_l, earliest_year = cr_year, n_oa_articles, n_articles, ta_articles = ta_first_author_articles, ta_first_author_articles, ta_oa_articles = ta_oa_first_author_articles, ta_oa_first_author_articles, src) 
+  distinct(issn_l, earliest_year = cr_year, n, oa_articles, ta_articles = ta_first_author_articles, ta_first_author_articles, ta_oa_articles = ta_oa_first_author_articles, ta_oa_first_author_articles, src) 
 
 uptake_df <- bind_rows(wos_ta_df, scp_ta_df, hoad_ta_df) |>
   mutate_if(is.numeric, ~replace(., is.na(.), 0))
@@ -679,8 +679,8 @@ uptake_by_year <- uptake_df |>
   mutate(earliest_year = as.character(earliest_year)) |>
   group_by(earliest_year, src) |>
   summarize(
-    n_articles = sum(n_articles),
-    n_oa_articles = sum(n_oa_articles),
+    n_articles = sum(n),
+    n_oa_articles = sum(oa_articles),
     ta_oa_first_author_articles = sum(ta_oa_first_author_articles),
     ta_oa_corresponding_author_articles = sum(ta_oa_corresponding_author_articles)
   )
@@ -835,8 +835,8 @@ uptake_jn_five_jns <- uptake_df |>
   filter(earliest_year != "2018") |>
   group_by(issn_l, src) |>
   summarize(
-    n_articles = sum(n_articles),
-    n_oa_articles = sum(n_oa_articles),
+    n_articles = sum(n),
+    n_oa_articles = sum(oa_articles),
     ta_oa_first_author_articles = sum(ta_oa_first_author_articles),
     ta_oa_corresponding_author_articles = sum(ta_oa_corresponding_author_articles)
   )
@@ -883,8 +883,8 @@ uptake_publisher_by_year <- uptake_publisher |>
   mutate(earliest_year = as.character(earliest_year)) |>
   group_by(earliest_year, src, publisher) |>
   summarize(
-    n_articles = sum(n_articles),
-    n_oa_articles = sum(n_oa_articles),
+    n_articles = sum(n),
+    n_oa_articles = sum(oa_articles),
     ta_oa_first_author_articles = sum(ta_oa_first_author_articles),
     ta_oa_corresponding_author_articles = sum(ta_oa_corresponding_author_articles)
   )
