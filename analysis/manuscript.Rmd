@@ -1,0 +1,442 @@
+---
+output:
+  pdf_document:
+    fig_caption: yes
+    keep_tex: yes
+    template: apa6.sty
+    extra_dependencies: ["flafter"]
+csl: apa.csl
+bibliography: references.bib
+---
+
+
+```{r, setup, echo=FALSE}
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = TRUE,
+  cache.lazy = FALSE,
+  echo = FALSE,
+  fig.width = 6,
+  fig.asp = 0.618,
+  out.width = "99%",
+  fig.align = "center",
+  dpi = 300,
+  dev = c("png", "cairo_ps", "pdf"),
+  fig.path = "fig/",
+  fig.pos = "ht!", out.extra = ""
+)
+options(scipen = 999, digits = 2)
+knitr::knit_hooks$set(
+  inline = function(x) {
+    if (is.numeric(x)) {
+      return(prettyNum(x, big.mark = ","))
+    } else{
+      return(x)
+    }
+  }
+)
+```
+
+```{r dependencies}
+library(tidyverse, warn.conflicts = FALSE)
+library(bigrquery)
+library(kableExtra)
+library(patchwork)
+```
+
+# Introduction
+
+This study aims to demonstrate the suitability of open scholarly data sources for assessing the impact of transformative agreements on hybrid open access.
+To achieve this, a replication study was conducted by comparing results from hoaddata, an openly available and continuously updated dataset on hybrid open access uptake based on Crossref, OpenAlex, and the cOAlition S Journal Checker Tool, with the established bibliometric databases Web of Science and Scopus.
+
+This study focuses on the coverage of hybrid journal portfolios included in transformative agreements between 2019 and 2023.
+Special attention is given to potential differences in open access uptake by country when comparing first-author affiliation data to corresponding authorships.
+This is crucial because the lack of publicly available invoicing data corresponding to authorships plays an essential role in determining whether an open-access article is supported through transformative agreements.
+Data on corresponding authorships have been available on the Web of Science and Scopus for much longer than in open databases such as OpenAlex, where this information is still being roled out at the time of writing.
+Because of this weakness, open approaches such as hoaddata and related research use first-authorship data instead.
+
+By conducting a large-scale comparative analysis, this study aims to
+
+1. Determine the strengths and weaknesses of using open data sources in monitoring the impact of transformative agreements on hybrid open access publishing.
+2. Assess the coverage and accuracy of open data sources compared with established bibliometric databases.
+3. Evaluate the reliability of first author affiliation data as a proxy for corresponding authorship in the context of open access uptake analysis.  
+
+# Background -- Evidence base to measure the effects of transformative agreements  
+
+## Anforderungen an das Monitoring  
+
+- esac guidelines 
+- gemeinsamkeiten und unterschiede zu apc (listenpreise, tatsächliche zahlungen, zentrales invoicing, rabatte, waivers) 
+- insitutionen covern cas, jedoch kann es zu unterschiedlichen verrechnugnsformen führen (antielig mit förderer, splitting innerhaklbd er einrichtung)  
+
+## Bibliometrische Evidenzen  
+
+- allgmeeiner uptake 
+- wachstum apcs 
+- wachstum verträge (konsortien, forschung) 
+- konsequenzen  
+
+# Data and methods
+
+The aim of this study is to demonstrate the suitability of open scholarly data sources for assessing the impact of transformative agreements on hybrid open access.
+To achieve this, a replication study is conducted by comparing results  from hoaddata, an openly available dataset on hybrid open access uptake, with the established bibliometric databases Web of Science and Scopus.
+Replication studies, which can be found in the Life, Natural and Social Sciences, typically employ the same or comparable methods as the original study to determine whether consistent results can be obtained (https://pmc.ncbi.nlm.nih.gov/articles/PMC10019630/). 
+
+This study compares results drawn from the openly available and regularly updated hoaddata, an R package leveraging the open scholarly data sources Crossref and OpenAlex, with the in-house database of the German Competence Network for Bibliometrics (Kompetenznetzwerk Bibliometrie, KB), which comprises Web of Science and Scopus snapshots.
+After describing the initial data sources used, the necessary pre-processing steps to obtain eligible articles from transformative agreements using author roles (first and corresponding) and affiliation data are described.
+Overall, xxxx hybrid journals from xxx agreements formed the basis of this study. This study covered journal articles published between 2019 and 2023.   
+
+## Dataset characteristics  
+
+### {hoaddata}  
+
+### Web of Science  
+
+### Scopus  
+
+## Data processing steps  
+
+### journal matching 
+
+### authorship records 
+
+###  Identifying eligible articles under transformative agreements  
+
+## Data records 
+
+```{r dataset_filtering, cache=TRUE}
+## HOAD
+hoad_jns <- hoaddata::jct_hybrid_jns |>
+  filter(issn_l != "0027-8424")
+
+# Full OA journals detected through OA proportion > .95
+hoad_oa_excluded <- bq_table_download("hoa-article.hoaddata_sep24.cc_oa_prop") |>
+  distinct(issn_l)
+
+active_jns <- hoad_jns |>
+  # Only active hybrid journals from JCT
+  inner_join(hoaddata::jn_ind, by = "issn_l") |>
+  filter(!cr_year %in% c("2017", "2018", "2024"))
+
+active_jns_with_oa <- active_jns |> 
+  filter(!is.na(cc))
+
+# Get indicators for all articles without applying paratext adn supplement detection
+hoad_all <- read_csv(here::here("data", "cr_all_ind.csv"))
+
+## Web of Science
+wos_jct_items_df <- readr::read_csv(here::here("data-raw", "wos_jct_items_df.csv"))
+
+wos_hybrid_jns <- wos_jct_items_df |>
+  # No PNAS
+  filter(issn_l != "0027-8424") |>
+  # No Full OA detected by OA prop
+  filter(!issn_l %in% hoad_oa_excluded$issn_l)
+
+wos_active_jns <- wos_hybrid_jns |>
+  # Use online first, if available
+  mutate(online_year = lubridate::year(wos_pubdate_online)) |>
+  mutate(pub_year = ifelse(!is.na(online_year), online_year, pubyear)) |>
+  filter(pub_year %in% 2019:2023)
+
+wos_active_jns_with_oa <- wos_active_jns |> 
+  filter(grepl("hybrid", oa_status))
+
+# wos core 
+wos_active_core <- wos_active_jns |>
+  filter(grepl("Article|^Review$", item_type))
+
+wos_active_core_oa <- wos_active_jns |>
+   filter(grepl("hybrid", oa_status))
+
+## Scopus
+
+scp_jct_items_df <- readr::read_csv(here::here("data-raw", "scp_jct_items_df.csv"))
+
+scp_hybrid_jns <- scp_jct_items_df |>
+  # No PNAS
+  filter(issn_l != "0027-8424") |>
+  # No Full OA detected by OA prop
+  filter(!issn_l %in% hoad_oa_excluded$issn_l)
+
+scp_active_jns <- scp_hybrid_jns |>
+   # Use online first, if available
+  mutate(pub_year = ifelse(!is.na(first_pubyear), first_pubyear, pubyear)) |>
+  filter(pub_year %in% 2019:2023)
+
+scp_active_jns_with_oa <- scp_active_jns |> 
+  filter(grepl("hybrid", oa_status))
+
+# core
+scp_active_core <- scp_active_jns |>
+   filter(grepl("^Article|^Review", item_type))
+
+scp_active_core_oa <- scp_active_core |>
+    filter(grepl("hybrid", oa_status))
+
+```
+
+```{r journals_overview_table, cache=TRUE}
+### Journals
+ind_active_jns <- c(`hoad` = hoad_all$active_journals, 
+                    `wos` = length(unique(wos_active_jns$issn_l)),
+                    `scp` = length(unique(scp_active_jns$issn_l)))
+ind_active_jns_core <- c(`hoad` = length(unique(active_jns$issn_l)), 
+                    `wos` = length(unique(wos_active_core$issn_l)),
+                    `scp` = length(unique(scp_active_core$issn_l)))
+ind_active_jns_core_with_oa <-  c(`hoad` = length(unique(active_jns_with_oa$issn_l)), 
+                    `wos` = length(unique(wos_active_core_oa$issn_l)),
+                    `scp` = length(unique(scp_active_core_oa$issn_l)))
+
+jns_ind <- bind_rows(ind_active_jns = ind_active_jns,
+          ind_active_jns_core = ind_active_jns_core,
+          ind_active_jns_core_with_oa = ind_active_jns_core_with_oa, .id = "indicator")
+```
+
+```{r article_overview_table, cache=TRUE}
+### Article Volume
+
+
+## hoad
+
+# DOI set too large to track it with Git, see 001_data_gathering how the data
+# was obtained from Google BQ
+cr_df <- readr::read_csv(here::here("data-raw/hoad_dois_all_19_23.csv"))
+
+ind_articles_hoad <- cr_df |>
+  filter(issn_l %in% active_jns_with_oa$issn_l) |>
+  distinct(doi) |>
+  nrow()
+
+## WoS
+ind_articles_wos <- wos_active_jns |>
+  filter(issn_l %in% wos_active_jns_with_oa$issn_l) |>
+  distinct(item_id) |>
+  nrow()
+
+# core
+ind_core_articles_wos <- wos_active_jns |>
+  filter(issn_l %in% wos_active_jns_with_oa$issn_l) |>
+  filter(grepl("Article|^Review$", item_type)) |>
+  distinct(item_id) |>
+  nrow()
+# doi
+ind_articles_wos_doi <- wos_active_jns |>
+  filter(issn_l %in% wos_active_jns_with_oa$issn_l) |>
+  distinct(doi) |>
+  nrow()
+
+ind_core_articles_wos_doi <- wos_active_jns |>
+  filter(issn_l %in% wos_active_jns_with_oa$issn_l) |>
+  filter(grepl("Article|^Review$", item_type)) |>
+  distinct(doi) |>
+  nrow()
+## scopus
+ind_articles_scp <- scp_active_jns |>
+  filter(issn_l %in% scp_active_jns_with_oa$issn_l) |>
+  distinct(item_id) |>
+  nrow()
+# core
+ind_core_articles_scp <- scp_active_jns |>
+  filter(issn_l %in% scp_active_jns_with_oa$issn_l) |>
+  filter(grepl("^Article|^Review", item_type)) |>
+  distinct(item_id) |>
+  nrow()
+# doi
+ind_articles_scp_doi <- scp_active_jns |>
+  filter(issn_l %in% scp_active_jns_with_oa$issn_l) |>
+  distinct(doi) |>
+  nrow()
+
+ind_core_articles_scp_doi <- scp_active_jns |>
+  filter(issn_l %in% scp_active_jns_with_oa$issn_l) |>
+  filter(grepl("Article|^Review$", item_type)) |>
+  distinct(doi) |>
+  nrow()
+
+# Bringing it all together
+ind_articles_total <- c(`hoad` = hoad_all$active_journals_all,
+                        `wos` = ind_articles_wos,
+                        `scp` = ind_articles_scp)
+ind_articles_core <- c(`hoad` = ind_articles_hoad,
+                        `wos` = ind_core_articles_wos,
+                        `scp` = ind_core_articles_scp)
+ind_articles_doi <- c(`hoad` = hoad_all$active_journals_all,
+                        `wos` = ind_articles_wos_doi,
+                        `scp` = ind_articles_scp_doi)
+ind_articles_core_doi <- c(`hoad` = ind_articles_hoad,
+                        `wos` = ind_core_articles_wos_doi,
+                        `scp` = ind_core_articles_scp_doi)
+
+articles_ind <- bind_rows(ind_articles_total = ind_articles_total,
+                          ind_articles_core = ind_articles_core,
+                          ind_articles_doi = ind_articles_doi,
+                          ind_articles_core_doi = ind_articles_core_doi, .id = "indicator" )
+
+## oa just core with doi
+
+### hoad
+ind_oa_articles_hoad <- hoaddata::cc_articles |>
+  filter(between(cr_year, 2019, 2023)) |>
+  filter(issn_l %in% active_jns$issn_l) |>
+  distinct(doi) |>
+  nrow()
+
+### wos
+
+ind_oa_articles_wos_all <- wos_active_jns |>
+  filter(issn_l %in% wos_active_jns_with_oa$issn_l) |>
+  filter(grepl("hybrid", oa_status)) |>
+  distinct(item_id) |>
+  nrow()
+
+ind_oa_articles_wos_core <- wos_active_jns |>
+  filter(issn_l %in% wos_active_jns_with_oa$issn_l) |>
+  filter(grepl("Article|^Review$", item_type)) |>
+  filter(grepl("hybrid", oa_status)) |>
+  distinct(item_id) |>
+  nrow()
+
+### scp
+ind_oa_articles_scp_all <- scp_active_jns |>
+  filter(issn_l %in% scp_active_jns_with_oa$issn_l) |>
+   filter(grepl("hybrid", oa_status)) |>
+  distinct(item_id) |>
+  nrow()
+ind_oa_articles_scp_core <- scp_active_jns |>
+  filter(issn_l %in% scp_active_jns_with_oa$issn_l) |>
+  filter(grepl("Article|^Review$", item_type)) |>
+  filter(grepl("hybrid", oa_status)) |>
+  distinct(item_id) |>
+  nrow()
+
+
+ind_oa_articles_all <- c(`hoad` = hoad_all$ind_oa_articles_all,
+                                             `wos` = ind_oa_articles_wos_all,
+                                             `scp` = ind_oa_articles_scp_all
+                     )
+ind_oa_articles_core <-  c(`hoad` = ind_oa_articles_hoad,
+                                             `wos` = ind_oa_articles_wos_core,
+                                             `scp` = ind_oa_articles_scp_core
+                     )
+  
+oa_articles_ind <- bind_rows(ind_oa_articles_all = ind_oa_articles_all,
+                          ind_oa_articles_core = ind_oa_articles_core, .id = "indicator")
+```
+
+```{r ind_affiliations}
+
+### affiliations
+
+### WOS
+wos_active_core_with_oa_item_ids <-  wos_active_jns |>
+  filter(issn_l %in% wos_active_jns_with_oa$issn_l) |>
+  filter(grepl("Article|^Review$", item_type)) |>
+  distinct(item_id, oa_status)
+
+wos_aff <- readr::read_csv(here::here("data-raw", "wos_jct_affiliations.csv"))
+
+wos_aff_df <- wos_aff |>
+  inner_join(wos_active_core_with_oa_item_ids, by = "item_id")
+
+wos_first_au_with_affiliation <- wos_aff_df |>
+  filter(author_seq_nr == 1, !is.na(vendor_org_id)) |>
+  distinct(item_id) |>
+  nrow()
+
+wos_cor_au_with_affiliation <- wos_aff_df |>
+  filter(corresponding == TRUE, !is.na(vendor_org_id)) |>
+  distinct(item_id) |>
+  nrow()
+
+# Scopus
+scp_active_core_with_oa_item_ids <- scp_active_jns |>
+  filter(issn_l %in% scp_active_jns_with_oa$issn_l) |>
+  filter(grepl("^Article|^Review", item_type)) |>
+  distinct(item_id, oa_status) 
+
+scp_aff <-  readr::read_csv(here::here("data-raw", "scp_jct_affiliations.csv"))
+
+scp_aff_df <- scp_aff |>
+  inner_join(scp_active_core_with_oa_item_ids, by = "item_id")
+
+scp_first_au_with_affiliation <- scp_aff_df |>
+  filter(author_seq_nr == 1, !is.na(vendor_org_id)) |>
+  distinct(item_id) |>
+  nrow()
+
+scp_cor_au_with_affiliation <- scp_aff_df |>
+  filter(corresponding == TRUE, !is.na(vendor_org_id)) |>
+  distinct(item_id) |>
+  nrow()
+
+# hoad
+aff_oalex_stats <- readr::read_csv(here::here("data", "aff_oalex_stats.csv"))
+
+aff_ind <- bind_rows(
+  first_aff = c(hoad = unlist(aff_oalex_stats$first_author_with_ror), 
+                wos = wos_first_au_with_affiliation,
+                scp = scp_first_au_with_affiliation),
+  cor_aff = c(hoad = unlist(aff_oalex_stats$corresponding_authors_inst),
+              wos = wos_cor_au_with_affiliation,
+              scp = scp_cor_au_with_affiliation), .id = "indicator"
+)
+
+
+```
+
+!<-- -- internal  -- external  - matching table institutions - journal-level data - country affiliation data  -->
+
+```{r methods_overview_table, cache=TRUE}
+methods_overview_table_df <- bind_rows(
+  # Journals
+  jns_ind,
+  # Articles
+  articles_ind,
+  # OA
+  oa_articles_ind,
+  # Affiliation and Auhtor roles
+  aff_ind
+) |>
+  # Human-readable indicator labels
+  mutate(
+    indicator = case_when(
+      indicator == "ind_active_jns" ~ "Active journals",
+      indicator == "ind_active_jns_core" ~ "Active journals (core)",
+      indicator == "ind_active_jns_core_with_oa" ~ "Active journals (core) with OA",
+      indicator == "ind_articles_total" ~ "Total published articles ",
+      indicator == "ind_articles_core" ~ "Core articles",
+      indicator == "ind_articles_doi" ~ "Articles with DOI",
+      indicator == "ind_articles_core_doi" ~ "Core articles with DOI",
+      indicator == "ind_oa_articles_all" ~ "OA articles",
+      indicator == "ind_oa_articles_core" ~ "Core OA articles",
+      indicator == "first_aff" ~ "First author articles",
+      indicator == "cor_aff" ~ "Corresponding author articles",
+    )
+  )
+
+kableExtra::kbl(
+  methods_overview_table_df,
+  booktabs = TRUE, 
+  format.args = list(big.mark = ","), 
+  digits = 1, 
+  escape = TRUE, 
+  position = "H",
+  caption ="Coverage of hybrid journals in transformative agreements 2019-23.",
+  col.names = c("", "HOAD", "Web of Science", "Scopus")
+) |>
+  kable_styling(position = "center") |>
+  row_spec(0, bold = TRUE) |>
+  pack_rows("Hybrid journal metrics", 1, 3) |>
+  pack_rows("Publication metrics", 4, 5) |>
+  pack_rows("Digital Object Identifier (DOI) coverage", 6, 7) |>
+  pack_rows("Open Access (OA) metrics", 8, 9) |>
+  pack_rows("Core articles with affiliation data", 10, 11) 
+```
+
+# results  
+
+# discussion

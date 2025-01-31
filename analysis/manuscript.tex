@@ -1,0 +1,228 @@
+\documentclass[a4paper,man,floatsintext,longtable,noextraspace,12pt]{apa6}
+
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{hyperref}
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+% make captions italic
+
+% number lines
+% \usepackage{lineno}
+% \linenumbers
+            
+% bibliography
+
+% tightlist
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\shorttitle{}
+
+\begin{document}
+\thispagestyle{otherpage}
+
+%\maketitle
+
+% Change \title, \date, remove \author:
+\begin{large}
+\textbf{Replication: Hybrid Open Access in Transformative Agreements}
+\end{large}
+
+% Add below \maketitle:
+\newcommand{\orcid}{%
+  \begingroup\normalfont
+  \includegraphics[height=6px]{orcid_logo.png}%
+  \endgroup
+}
+Najko Jahn\textsuperscript{1}\textsuperscript{*} (\orcid{} \href{https://orcid.org/0000-0001-5105-1463}{\color{black}{0000-0001-5105-1463}}) \\
+
+\textsuperscript{1} Göttingen State and University Library, University of Göttingen, Germany. \\
+
+\textsuperscript{*} Correspondence: \href{mailto:najko.jahn@sub.uni-goettingen.de}{\color{black}{najko.jahn@sub.uni-goettingen.de}} 
+
+\section*{Abstract}
+{}
+{\textbf{Keywords}: hybrid open access, transformative agreements, scholarly publishing, big deals, bibliometrics}
+
+\newpage
+
+% QSS wants numbered sections
+\setcounter{secnumdepth}{2}
+
+\section{Introduction}\label{introduction}
+
+This study aims to demonstrate the suitability of open scholarly data
+sources for assessing the impact of transformative agreements on hybrid
+open access. To achieve this, a replication study was conducted by
+comparing results from hoaddata, an openly available and continuously
+updated dataset on hybrid open access uptake based on Crossref,
+OpenAlex, and the cOAlition S Journal Checker Tool, with the established
+bibliometric databases Web of Science and Scopus.
+
+This study focuses on the coverage of hybrid journal portfolios included
+in transformative agreements between 2019 and 2023. Special attention is
+given to potential differences in open access uptake by country when
+comparing first-author affiliation data to corresponding authorships.
+This is crucial because the lack of publicly available invoicing data
+corresponding to authorships plays an essential role in determining
+whether an open-access article is supported through transformative
+agreements. Data on corresponding authorships have been available on the
+Web of Science and Scopus for much longer than in open databases such as
+OpenAlex, where this information is still being roled out at the time of
+writing. Because of this weakness, open approaches such as hoaddata and
+related research use first-authorship data instead.
+
+By conducting a large-scale comparative analysis, this study aims to
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Determine the strengths and weaknesses of using open data sources in
+  monitoring the impact of transformative agreements on hybrid open
+  access publishing.
+\item
+  Assess the coverage and accuracy of open data sources compared with
+  established bibliometric databases.
+\item
+  Evaluate the reliability of first author affiliation data as a proxy
+  for corresponding authorship in the context of open access uptake
+  analysis.
+\end{enumerate}
+
+\section{Background -- Evidence base to measure the effects of
+transformative
+agreements}\label{background-evidence-base-to-measure-the-effects-of-transformative-agreements}
+
+\subsection{Anforderungen an das
+Monitoring}\label{anforderungen-an-das-monitoring}
+
+\begin{itemize}
+\tightlist
+\item
+  esac guidelines
+\item
+  gemeinsamkeiten und unterschiede zu apc (listenpreise, tatsächliche
+  zahlungen, zentrales invoicing, rabatte, waivers)
+\item
+  insitutionen covern cas, jedoch kann es zu unterschiedlichen
+  verrechnugnsformen führen (antielig mit förderer, splitting
+  innerhaklbd er einrichtung)
+\end{itemize}
+
+\subsection{Bibliometrische Evidenzen}\label{bibliometrische-evidenzen}
+
+\begin{itemize}
+\tightlist
+\item
+  allgmeeiner uptake
+\item
+  wachstum apcs
+\item
+  wachstum verträge (konsortien, forschung)
+\item
+  konsequenzen
+\end{itemize}
+
+\section{Data and methods}\label{data-and-methods}
+
+The aim of this study is to demonstrate the suitability of open
+scholarly data sources for assessing the impact of transformative
+agreements on hybrid open access. To achieve this, a replication study
+is conducted by comparing results from hoaddata, an openly available
+dataset on hybrid open access uptake, with the established bibliometric
+databases Web of Science and Scopus. Replication studies, which can be
+found in the Life, Natural and Social Sciences, typically employ the
+same or comparable methods as the original study to determine whether
+consistent results can be obtained
+(\url{https://pmc.ncbi.nlm.nih.gov/articles/PMC10019630/}).
+
+This study compares results drawn from the openly available and
+regularly updated hoaddata, an R package leveraging the open scholarly
+data sources Crossref and OpenAlex, with the in-house database of the
+German Competence Network for Bibliometrics (Kompetenznetzwerk
+Bibliometrie, KB), which comprises Web of Science and Scopus snapshots.
+After describing the initial data sources used, the necessary
+pre-processing steps to obtain eligible articles from transformative
+agreements using author roles (first and corresponding) and affiliation
+data are described. Overall, xxxx hybrid journals from xxx agreements
+formed the basis of this study. This study covered journal articles
+published between 2019 and 2023.
+
+\subsection{Dataset characteristics}\label{dataset-characteristics}
+
+\subsubsection{\{hoaddata\}}\label{hoaddata}
+
+\subsubsection{Web of Science}\label{web-of-science}
+
+\subsubsection{Scopus}\label{scopus}
+
+\subsection{Data processing steps}\label{data-processing-steps}
+
+\subsubsection{journal matching}\label{journal-matching}
+
+\subsubsection{authorship records}\label{authorship-records}
+
+\subsubsection{Identifying eligible articles under transformative
+agreements}\label{identifying-eligible-articles-under-transformative-agreements}
+
+\subsection{Data records}\label{data-records}
+
+!\textless-- -- internal -- external - matching table institutions -
+journal-level data - country affiliation data --\textgreater{}
+
+\begin{table}[H]
+\centering
+\caption{\label{tab:methods_overview_table}Coverage of hybrid journals in transformative agreements 2019-23.}
+\centering
+\begin{tabular}[t]{lrrr}
+\toprule
+\textbf{} & \textbf{HOAD} & \textbf{Web of Science} & \textbf{Scopus}\\
+\midrule
+\addlinespace[0.3em]
+\multicolumn{4}{l}{\textbf{Hybrid journal metrics}}\\
+\hspace{1em}Active journals & 12,890 & 8,655 & 11,888\\
+\hspace{1em}Active journals (core) & 12,888 & 8,655 & 11,878\\
+\hspace{1em}Active journals (core) with OA & 11,348 & 8,392 & 11,313\\
+\addlinespace[0.3em]
+\multicolumn{4}{l}{\textbf{Publication metrics}}\\
+\hspace{1em}Total published articles & 9,740,015 & 8,616,053 & 8,117,644\\
+\hspace{1em}Core articles & 8,158,425 & 6,708,083 & 7,317,703\\
+\addlinespace[0.3em]
+\multicolumn{4}{l}{\textbf{Digital Object Identifier (DOI) coverage}}\\
+\hspace{1em}Articles with DOI & 9,740,015 & 7,713,796 & 8,105,112\\
+\hspace{1em}Core articles with DOI & 8,158,425 & 6,695,661 & 7,314,327\\
+\addlinespace[0.3em]
+\multicolumn{4}{l}{\textbf{Open Access (OA) metrics}}\\
+\hspace{1em}OA articles & 998,699 & 1,112,758 & 974,099\\
+\hspace{1em}Core OA articles & 969,817 & 1,019,784 & 922,578\\
+\addlinespace[0.3em]
+\multicolumn{4}{l}{\textbf{Core articles with affiliation data}}\\
+\hspace{1em}First author articles & 7,242,542 & 6,294,855 & 7,232,017\\
+\hspace{1em}Corresponding author articles & 5,534,207 & 6,291,441 & 6,898,487\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{results}\label{results}
+
+\section{discussion}\label{discussion}
+
+\end{document}
