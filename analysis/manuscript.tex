@@ -28,6 +28,39 @@
 % \linenumbers
             
 % bibliography
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+  {\begin{list}{}{%
+   \setlength{\itemindent}{0pt}
+   \setlength{\leftmargin}{0pt}
+   \setlength{\parsep}{0pt}
+   % turn on hanging indent if param 1 is 1
+   \ifodd #1
+    \setlength{\leftmargin}{\cslhangindent}
+    \setlength{\itemindent}{-1\cslhangindent}
+   \fi
+   % set entry spacing
+   \setlength{\itemsep}{#2\baselineskip}}}
+  {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
 
 % tightlist
 \providecommand{\tightlist}{%
@@ -145,34 +178,100 @@ Monitoring}\label{anforderungen-an-das-monitoring}
 
 The aim of this study is to demonstrate the suitability of open
 scholarly data sources for assessing the impact of transformative
-agreements on hybrid open access. To achieve this, a replication study
-is conducted by comparing results from hoaddata, an openly available
-dataset on hybrid open access uptake, with the established bibliometric
-databases Web of Science and Scopus. Replication studies, which can be
-found in the Life, Natural and Social Sciences, typically employ the
-same or comparable methods as the original study to determine whether
-consistent results can be obtained
-(\url{https://pmc.ncbi.nlm.nih.gov/articles/PMC10019630/}).
+agreements on hybrid open access. To achieve this, results from
+hoaddata, an openly available collection of open research information
+regarding hybrid open access, was compared with the established
+bibliometric databases Web of Science and Scopus. After describing the
+initial data sources used, the necessary pre-processing steps to obtain
+eligible articles from transformative agreements using open access
+evidence, author roles (first and corresponding) and affiliation data
+are presented. Overall, xxxx hybrid journals from xxx agreements that
+published at least one open access article between 2019 and 2023. formed
+the basis of this study.
 
-This study compares results drawn from the openly available and
-regularly updated hoaddata, an R package leveraging the open scholarly
-data sources Crossref and OpenAlex, with the in-house database of the
-German Competence Network for Bibliometrics (Kompetenznetzwerk
-Bibliometrie, KB), which comprises Web of Science and Scopus snapshots.
-After describing the initial data sources used, the necessary
-pre-processing steps to obtain eligible articles from transformative
-agreements using author roles (first and corresponding) and affiliation
-data are described. Overall, xxxx hybrid journals from xxx agreements
-formed the basis of this study. This study covered journal articles
-published between 2019 and 2023.
+\subsection{Data sources}\label{data-sources}
 
-\subsection{Dataset characteristics}\label{dataset-characteristics}
+\subsubsection{hoaddata}\label{hoaddata}
 
-\subsubsection{\{hoaddata\}}\label{hoaddata}
+hoaddata, developed and maintained by the author, is an R data package
+comprising information about the uptake of hybrid open access since 2017
+from several openly available data sources. It combines article-level
+metadata from Crossref and OpenAlex with transformative agreement
+information from the cOAlition S Journal Checker Tool (JCT), which links
+journal and institutional data to agreements in the ESAC registry.
+
+More specifically, hoaddata uses Crossref, a DOI registration agency,
+for obtaining journal publication volume and open access status through
+Creative Commons licence information relative to the published version
+(``version of record''). Because of limited affiliation metadata in
+Crossref (\url{https://doi.org/10.31222/osf.io/smxe5}), hoaddata sources
+first-author affiliations from OpenAlex. While the country in which a
+first-author was located was used to aggregate country-level statistics,
+Research Organization Registry (ROR) identifiers (ROR-ID) were used in
+conjunction with ESAC registry information on the duration of an
+agreement was used to estimate whether an article was published under
+active transformative agreements. This matching benefited from the
+availability of the ROR-IDs in both sources. To improve the matching,
+JCT data were enriched to include associated institutions, such as
+unviersity hospitals.
+
+hoaddata follows good practices for computational reproducibility using
+R. The package, which includes data, code, a test suite and
+documentation, is openly available on GitHub. To ensure computational
+reproducibility while aggregating the data, a GitHub Actions continuous
+integration and delivery (CI/CD) workflow interfaces with the SUB
+Göttingen's open scholarly data warehouse based on Google BigQuery,
+which provides high-performant programmatic access to monthly snapshots
+of Crossref and OpenAlex. The package has been regularly updated since
+2022 and the version including the computation log is available on
+GitHub.
+
+hoaddata is used as a data basis of the Hybrid Open Access Dashboard, a
+data analytics services for library consortia and publishers to track
+the uptake of hybrid open access through transformative agreements. It
+was also used in bibliometric research (Jahn 2025).
 
 \subsubsection{Web of Science}\label{web-of-science}
 
+Clarivate Analytics' Web of Science (WoS) is a well-established
+proprietary bibliometric database consisting of several collections
+(Birkle et al., 2020). The collections considered in this study were the
+Science Citation Index Expanded (SCIE), the Social Sciences Citation
+Index (SSCI) and the Arts \& Humanities Citation Index (AHCI).
+
+The WoS provides important data points for studying spending on open
+access: author affiliations and roles, differentiation of journal
+articles into document types representing different types of journal
+contributions, such as original articles or reviews, and open access
+status information derived from OurResearch's Unpaywall, the same
+provider as Openalex. However, it lacks information about journals and
+articles under transformative agreements.
+
+For programmatic access to article-level data, the database of the
+Kompetenznetzwerk Bibliometrie (KB) in Germany is used to access
+bibliometric data. The KB processes raw XML data provided by Clarivate
+Analytics, which is provided as an in-house PostgreSQL database under a
+uniform schema. To support reproducibility, KB maintains annual
+snapshots of the database. Accordingly, this study used the annual
+snapshot from April 2024, which is considered to cover almost the entire
+previous publication year (Schmidt et al., 2024).
+
 \subsubsection{Scopus}\label{scopus}
+
+Elsevier's Scopus, launched in 2004, is another widely used proprietary
+bibliometric database for measuring research (Baas et al., 2020).
+Similar to the Web of Science, Scopus is selective with regard to the
+journals it indexes. However, its coverage is substantially more
+extensive than that of the Web of Science Core collection (Singh et al.,
+2021; Visser et al., 2021). With detailed metadata about article types,
+open access status information derived from Unpaywall, author roles, and
+disambiguated affiliations, Scopus also contains important data to
+assess open access uptake, although no direct information regarding
+transformative agreements was available at the time of the study.
+
+This study used the Scopus annual snapshot of April 2024 as provided by
+the KB. The same KB curation effort was applied to the Scopus raw data
+as for the Web of Science (Schmidt et al., 2024).
 
 \subsection{Data processing steps}\label{data-processing-steps}
 
@@ -184,9 +283,6 @@ published between 2019 and 2023.
 agreements}\label{identifying-eligible-articles-under-transformative-agreements}
 
 \subsection{Data records}\label{data-records}
-
-!\textless-- -- internal -- external - matching table institutions -
-journal-level data - country affiliation data --\textgreater{}
 
 \begin{table}[H]
 \centering
@@ -223,6 +319,44 @@ journal-level data - country affiliation data --\textgreater{}
 
 \section{results}\label{results}
 
-\section{discussion}\label{discussion}
+\section*{discussion}\label{discussion}
+\addcontentsline{toc}{section}{discussion}
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{1}{0}
+\bibitem[\citeproctext]{ref-Baas_2020}
+Baas, J., Schotten, M., Plume, A., Côté, G., \& Karimi, R. (2020).
+Scopus as a curated, high-quality bibliometric data source for academic
+research in quantitative science studies. \emph{Quantitative Science
+Studies}, \emph{1}(1), 377--386.
+\url{https://doi.org/10.1162/qss_a_00019}
+
+\bibitem[\citeproctext]{ref-Birkle_2020}
+Birkle, C., Pendlebury, D. A., Schnell, J., \& Adams, J. (2020). Web of
+science as a data source for research on scientific and scholarly
+activity. \emph{Quantitative Science Studies}, \emph{1}(1), 363--376.
+\url{https://doi.org/10.1162/qss_a_00018}
+
+\bibitem[\citeproctext]{ref-schmidt_2024_13935407}
+Schmidt, M., Rimmert, C., Stephen, D., Lenke, C., Donner, P., Gärtner,
+S., Taubert, N., Bausenwein, T., \& Stahlschmidt, S. (2024). \emph{The
+data infrastructure of the {German Kompetenznetzwerk Bibliometrie}: An
+enabling intermediary between raw data and analysis}. Zenodo.
+\url{https://doi.org/10.5281/zenodo.13935407}
+
+\bibitem[\citeproctext]{ref-Singh_2021}
+Singh, V. K., Singh, P., Karmakar, M., Leta, J., \& Mayr, P. (2021). The
+journal coverage of web of science, scopus and dimensions: A comparative
+analysis. \emph{Scientometrics}, \emph{126}(6), 5113--5142.
+\url{https://doi.org/10.1007/s11192-021-03948-5}
+
+\bibitem[\citeproctext]{ref-Visser_2021}
+Visser, M., Eck, N. J. van, \& Waltman, L. (2021). Large-scale
+comparison of bibliographic data sources: {Scopus, Web of Science,
+Dimensions, Crossref, and Microsoft Academic}. \emph{Quantitative
+Science Studies}, \emph{2}(1), 20--41.
+\url{https://doi.org/10.1162/qss_a_00112}
+
+\end{CSLReferences}
 
 \end{document}
