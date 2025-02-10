@@ -139,12 +139,36 @@ This study used the Scopus annual snapshot of April 2024 as provided by the KB. 
 
 ## Data processing steps  
 
-### journal matching 
+This study examined the adoption of open access for hybrid journals included in transformative agreements, which published at least one journal article in the five-year period 2019-2023. 
+The journal data source used was a unified dataset covering various snapshots of the Transformative Agreements Public Data from the cOAlition S Journal Checker Tool (JCT), a well-established source to help authors identify suitable open access publishing venues. 
+These snapshots, archived weekly by the author using a cron job via a publicly available GitHub repository, cover agreements active from July 2021 to July 2024. 
+After enriching the JCT journal data with the linking ISSN (ISSN-L) according to the ISSN Registry Agency, a comprehensive exclusion of fully open access journals, including flipped journals covering multiple journal lists (DOAJ, OpenAlex, Bielefeld) and article-level investigations, was applied as described elsewhere. 
+In total, xxxx hybrid journals could be linked to xxx agreements listed in the ESAC Transformative Agreements Registry, which formed to basis for obtaining article-level data including author affiliations, open access status ans document types.
 
-### authorship records 
+For each of the databases examined, article metadata such as publication identifier, document types (where available), author roles and institutional affiliations, publication date and open access information were retrieved for each journal, using all ISSN variants linked to an ISSN-L according to the ISSN Registry Agency. 
+The publication period was determined using the earliest year of publication. 
+In the case of Crossref, the article data source for hoaddata, this was the publication date, although variations were observed (check ref).
+For Web of Science and Scopus, the earliest publication date was used where available. In the latter case, the KB determined the earliest known publication date by tracking versions of the raw data.
+
+<!-- literature to check https://direct.mit.edu/qss/article/3/1/99/109079/The-prevalence-and-impact-of-university-->
+
+Affiliation data, including author roles, are essential for linking articles to transformative agreements. Therefore, author affiliations were retrieved for the first and corresponding author at the article level for each of the databases examined.
+In order to account for different address variants in bibliometric databases, the database-specific IDs for affiliations were used. 
+For hoaddata these were the ROR IDs from OpenAlex, for Web of Science the affiliation enhanced names and for Scopus the Scopus Affiliation Identifier, an eight-digit ID number.
+In addition, the country of the author's address, represented by ISO country codes, was retrieved.
+
+At the time of our study, there was no bibliometric database that included information on whether an article was published under a transformative agreement. 
+Here, eligible articles were identified by matching hybrid journals and participating institutions from the Transformative Agreement Data Dump with the databases examined per active agreement.
+This matching process also took into account the duration of the agreements according to the ESAC registry.
+While in the case of hoaddata, which uses OpenAlex as an affiliated data source, matching was straightforward due to the availability of the ROR ID in both sources, neither Web of Science nor Scopus supported ROR at the time of the study. 
+Instead, xxxx articles identified under a transformative agreement in hoaddata were processed to map the ROR ID associated with the first author to the proprietary affiliation identifier in Web of Science and Scopus representing the affiliation of the first author. 
+Due to multiple affiliations, different organisational hierarchies encoded in the different organisational ID systems, and to deal with conflicting matches, an algorithm then sorted the ROR-ID and proprietary affiliation identifier pairs in descending order and selected the most frequent combination per ROR-ID as a match. 
+
+On the basis of the matching tables thus compiled, articles eligible under transformative agreements could also be retrieved from the Web of Science and Scopus, although they did not contain the ROR IDs used by the JCT.
 
 ###  Identifying eligible articles under transformative agreements  
 
+### adn which of them were os
 
 ## Data records 
 
