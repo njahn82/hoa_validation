@@ -43,6 +43,14 @@ library(tidyverse, warn.conflicts = FALSE)
 library(bigrquery)
 library(kableExtra)
 library(patchwork)
+library(ComplexUpset)
+
+# Themes
+my_upset_theme <-
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        plot.title.position="plot",
+        plot.title = element_text(hjust = 0, vjust = 1, face = "bold"))
 ```
 
 # Introduction
@@ -316,5 +324,101 @@ For first authors, the proportion was `r methods_overview_table_df |> filter(ind
 Accordingly, only first author data for hoaddata are considered in the following analysis. 
 
 # Results  
+
+First, I will present a coverage analysis. 
+Then, I investigate hybrid open access uptake using the same methods for each database and the compare results against each other in order to assess the suitablility of the biblioemtric databases to examine transofrmative agreements. 
+
+## Coverage comparision
+
+Overall, % (n = ) of hybrid journals included in transformative agreements were indexed in all three databases (Fig A).
+These were followed by the combination between hoaddata and Scopus, which indexes more journals than the investiaged Web of Science collection SCIE, SSCI and the Arts & Humanities Citation Index AHCI. 
+Around % of journals were only indexed by hoaddata. 
+Journals 
+
+Note that there were 32 journals were indexed in WoS or Scopus.
+Upon isnepction, these were due to diasmbiguity of ISSNs matching (errors ISSN).  
+
+
+```{r coverage_results, fig.asp=0.75}
+jn_upset_articles <- readr::read_csv(here::here("data", "jn_upset_articles.csv"))
+# Helper function to make text labels the same size as axis labels as seen in
+# <https://wjschne.github.io/posts/making-text-labels-the-same-size-as-axis-labels-in-ggplot2/>
+# Todo: Learn how to invoke it
+jn_upset_articles |> group_by(Crossref, WoS, Scopus) |> summarize(across(.cols = where(is.numeric),.fns =sum, na.rm = TRUE)) 
+
+
+ggtext_size <- function(base_size, ratio = 0.8) {
+  ratio * base_size / ggplot2::.pt
+}
+
+bar_width <- 0.7
+size <- get_size_mode("exclusive_intersection")
+
+upset_overview <- ComplexUpset::upset(
+  jn_upset_articles,
+  c("Crossref", "WoS", "Scopus"),
+  # Only journals in Crossref
+  min_size = 30,
+  set_sizes = FALSE,
+  stripes = "transparent",
+  # wrap = TRUE,
+  name = "Data Source Coverage",
+  base_annotations = list(
+    "Journals" = (
+      ComplexUpset::intersection_size(
+        counts = TRUE,
+        text = list(size = 8 / .pt),
+        text_mapping = aes(
+          label = paste0(!!upset_text_percentage(), '\n(', format(!!size, big.mark = ","), ')'),
+          colour = ifelse(!!size > 5000, 'on_bar', 'on_background'),
+          y = ifelse(!!size > 5000, !!size - 4000, !!size)
+        ), width = bar_width
+      ) +
+        scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+        ggtitle("A")
+    )
+  ),
+  annotations = list(
+    "Journal size\n(log scale)" = (
+      ggplot(mapping = aes(x = intersection, y = n)) +
+        geom_boxplot(outliers = FALSE, width = bar_width) +
+        scale_y_log10(labels =  scales::number_format(big.mark = ",")) +
+        ggtitle("C")
+    ),
+    "Articles" = (
+      ggplot(mapping = aes(y = n_cr)) +
+        geom_bar(
+          stat = "identity",
+          color = "grey80",
+          width = bar_width,
+          aes(fill = "in Crossref only")
+        ) +
+        geom_bar(
+          aes(y = doi_in_wos_and_scopus, fill = "Shared"),
+          stat = "identity",
+          width = bar_width,
+          color = "#0093c7"
+        ) +
+        scale_fill_manual(
+          values = c(
+            `in Crossref only` = "grey80",
+            `Shared` = "#0093c7"
+          ),
+          name = "DOI"
+        ) +
+        scale_y_continuous(labels =  scales::number_format(big.mark = ",")) +
+        ggtitle("B")
+    )
+  ),
+  matrix = (intersection_matrix(geom = geom_point(
+    shape = "square", size = 2
+  )))
+)
+upset_overview & my_upset_theme
+```
+
+This study compares results drawn from the openly available and regularly updated hoaddata, an R package leveraging the open scholarly data sources Crossref and OpenAlex, with the in-house database of the German Competence Network 
+Overall, xxxx hybrid journals included in xxx agreements that published at least one open access article between 2019 and 2023. 
+
 
 # discussion

@@ -1,10 +1,12 @@
 ### Data preprocessing for the manuscript
 
-## Why? It just takes too long to render the manuscript.
+## Why? It just takes too long to render everything in the manuscript.
 
 library(tidyverse, warn.conflicts = FALSE)
 library(bigrquery)
 library(here)
+
+# METHOD -------
 
 ## HOAD
 hoad_jns <- hoaddata::jct_hybrid_jns |>
@@ -288,3 +290,60 @@ save(# Journals
   file = here::here("data", "manuscript_data.Rda")
   )
 
+# Results --------
+
+## Overlap -------
+
+# DOI set too large to track it with Git, see 001_data_gathering how the data
+# was obtained from Google BQ
+cr_df <- readr::read_csv(here::here("data-raw/hoad_dois_all_19_23.csv"))
+
+cr_active_upset <- cr_df |>
+  filter(issn_l %in% active_jns_with_oa$issn_l) |>
+  group_by(issn_l) |>
+  summarise(n_cr = n_distinct(doi)) |>
+  mutate(Crossref = TRUE)
+wos_active_upset <- wos_active_core |>
+  filter(issn_l %in% wos_active_core_oa$issn_l) |>
+  group_by(issn_l) |>
+  summarise(n_wos = n_distinct(item_id)) |>
+  mutate(WoS = TRUE)
+scp_active_upset <- scp_active_core |>
+  filter(issn_l %in% scp_active_core_oa$issn_l) |>
+  group_by(issn_l) |>
+  summarise(n_scp = n_distinct(item_id)) |>
+  mutate(Scopus = TRUE)
+
+jn_upset_ <- dplyr::full_join(cr_active_upset, wos_active_upset, by = "issn_l") |>
+  dplyr::full_join(scp_active_upset, by = "issn_l") |>
+  mutate(across(c(Crossref, WoS, Scopus), ~ replace_na(.x, FALSE))) |>
+  # Journal 5-years article volume
+  mutate(n = case_when(!is.na(n_cr) ~ n_cr, !is.na(n_scp) ~ n_scp, TRUE ~ n_wos))
+
+## DOI overlap
+scp_dois <- scp_active_core |>
+  filter(issn_l %in% scp_active_core_oa$issn_l) |> 
+  pull(doi)
+wos_dois <- scp_active_core |>
+  filter(issn_l %in% scp_active_core_oa$issn_l) |>
+  pull(doi)
+
+doi_overlap_df <- cr_df |>
+#  filter(issn_l %in% active_jns_with_oa$issn_l) |>
+  mutate(
+    in_wos_and_scopus = ifelse(doi %in% scp_dois & doi %in% wos_dois, 1, 0),
+    in_scopus = ifelse(doi %in% scp_dois, 1, 0),
+    in_wos =  ifelse(doi %in% wos_dois, 1, 0)
+  )
+doi_overlap <- doi_overlap_df |>
+  group_by(issn_l) |>
+  summarise(
+    doi_in_wos_and_scopus = sum(in_wos_and_scopus),
+    doi_in_scopus = sum(in_scopus),
+    doi_in_wos = sum(in_wos)
+  )
+
+jn_upset_articles <- jn_upset_ |>
+  left_join(doi_overlap, by = "issn_l")
+
+write_csv(jn_upset_articles, here::here("data/jn_upset_articles.csv"))

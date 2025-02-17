@@ -502,6 +502,50 @@ analysis.
 
 \section{Results}\label{results}
 
+First, I will present a coverage analysis. Then, I investigate hybrid
+open access uptake using the same methods for each database and the
+compare results against each other in order to assess the suitablility
+of the biblioemtric databases to examine transofrmative agreements.
+
+\subsection{Coverage comparision}\label{coverage-comparision}
+
+Overall, \% (n = ) of hybrid journals included in transformative
+agreements were indexed in all three databases (Fig A). These were
+followed by the combination between hoaddata and Scopus, which indexes
+more journals than the investiaged Web of Science collection SCIE, SSCI
+and the Arts \& Humanities Citation Index AHCI. Around \% of journals
+were only indexed by hoaddata. Journals
+
+Note that there were 32 journals were indexed in WoS or Scopus. Upon
+isnepction, these were due to diasmbiguity of ISSNs matching (errors
+ISSN).
+
+\begin{verbatim}
+#> # A tibble: 7 x 10
+#> # Groups:   Crossref, WoS [4]
+#>   Crossref WoS   Scopus    n_cr   n_wos   n_scp       n doi_in_wos_and_scopus
+#>   <lgl>    <lgl> <lgl>    <dbl>   <dbl>   <dbl>   <dbl>                 <dbl>
+#> 1 FALSE    FALSE TRUE         0       0   99354   99354                 93230
+#> 2 FALSE    TRUE  FALSE        0    5495       0    5495                     9
+#> 3 FALSE    TRUE  TRUE         0  228954  231554  231554                225943
+#> 4 TRUE     FALSE FALSE   177110       0       0  177110                   559
+#> 5 TRUE     FALSE TRUE    657697       0  529707  657697                494884
+#> 6 TRUE     TRUE  FALSE    10049    8919       0   10049                  1191
+#> 7 TRUE     TRUE  TRUE   7313569 6477606 6469446 7313569               6161590
+#> # i 2 more variables: doi_in_scopus <dbl>, doi_in_wos <dbl>
+\end{verbatim}
+
+\begin{center}
+\includegraphics[width=0.99\linewidth,height=\textheight,keepaspectratio]{fig/coverage_results-1.png}
+\end{center}
+
+This study compares results drawn from the openly available and
+regularly updated hoaddata, an R package leveraging the open scholarly
+data sources Crossref and OpenAlex, with the in-house database of the
+German Competence Network Overall, xxxx hybrid journals included in xxx
+agreements that published at least one open access article between 2019
+and 2023.
+
 \section*{discussion}\label{discussion}
 \addcontentsline{toc}{section}{discussion}
 
