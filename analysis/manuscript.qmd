@@ -253,7 +253,7 @@ The matching also took into account the duration of agreements according to the 
 ## Data records 
 
 As a result of the comprehensive data processing described above, datasets on open access in hybrid journals included in transformative agreements were produced for each database at country and journal level by year.
-@tbl-methods_overview_tab provides a general overview of the coverage between 2019 and 2023 per database.
+Table @tbl-methods_overview_tab provides a general overview of the coverage between 2019 and 2023 per database.
 It shows that the majority of hybrid journals published at least one original article or review marked as core during the five-year period.
 These journals formed the basis for the subsequent aggregation of publication metrics.  
 
