@@ -1,8 +1,8 @@
 ---
-output:
-  pdf_document:
+format:
+  pdf:
+    keep-tex: true
     fig_caption: yes
-    keep_tex: yes
     template: apa6.sty
     extra_dependencies: ["flafter"]
 csl: apa.csl
@@ -16,8 +16,6 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   warning = FALSE,
   message = FALSE,
-  cache = TRUE,
-  cache.lazy = FALSE,
   echo = FALSE,
   fig.width = 6,
   fig.asp = 0.618,
@@ -255,11 +253,13 @@ The matching also took into account the duration of agreements according to the 
 ## Data records 
 
 As a result of the comprehensive data processing described above, datasets on open access in hybrid journals included in transformative agreements were produced for each database at country and journal level by year.
-Table \ref{tab:methods_overview_table} provides a general overview of the coverage between 2019 and 2023 per database.
+@tbl-methods_overview_tab provides a general overview of the coverage between 2019 and 2023 per database.
 It shows that the majority of hybrid journals published at least one original article or review marked as core during the five-year period.
 These journals formed the basis for the subsequent aggregation of publication metrics.  
 
-```{r methods_overview_table}
+```{r methods_overview_tab}
+#| label: tbl-methods_overview_tab
+#| tbl-cap: "Coverage of hybrid journals in transformative agreements 2019-23."
 load(here::here("data", "manuscript_data.Rda"))
 methods_overview_table_df <- bind_rows(
   # Journals
@@ -295,7 +295,6 @@ kableExtra::kbl(
   digits = 1, 
   escape = TRUE, 
   position = "H",
-  caption ="Coverage of hybrid journals in transformative agreements 2019-23.",
   col.names = c("", "HOAD", "Web of Science", "Scopus")
 ) |>
   kable_styling(position = "center") |>
