@@ -324,26 +324,48 @@ jn_upset_ <- dplyr::full_join(cr_active_upset, wos_active_upset, by = "issn_l") 
 scp_dois <- scp_active_core |>
   filter(issn_l %in% scp_active_core_oa$issn_l) |> 
   pull(doi)
-wos_dois <- scp_active_core |>
-  filter(issn_l %in% scp_active_core_oa$issn_l) |>
+wos_dois <- wos_active_core |>
+  filter(issn_l %in% wos_active_core_oa$issn_l) |>
+  pull(doi)
+cr_dois <- cr_df |>
+  filter(issn_l %in% active_jns_with_oa$issn_l) |>
   pull(doi)
 
 doi_overlap_df <- cr_df |>
-#  filter(issn_l %in% active_jns_with_oa$issn_l) |>
+ # filter(issn_l %in% active_jns_with_oa$issn_l) |>
   mutate(
-    in_wos_and_scopus = ifelse(doi %in% scp_dois & doi %in% wos_dois, 1, 0),
+    in_wos_or_scopus = ifelse(doi %in% c(scp_dois, wos_dois), 1, 0),
+    in_cr = ifelse(doi %in% cr_dois, 1, 0),
     in_scopus = ifelse(doi %in% scp_dois, 1, 0),
     in_wos =  ifelse(doi %in% wos_dois, 1, 0)
   )
 doi_overlap <- doi_overlap_df |>
   group_by(issn_l) |>
   summarise(
-    doi_in_wos_and_scopus = sum(in_wos_and_scopus),
+    doi_in_wos_or_scopus = sum(in_wos_or_scopus),
     doi_in_scopus = sum(in_scopus),
-    doi_in_wos = sum(in_wos)
+    doi_in_wos = sum(in_wos),
+    doi_cr = sum(in_cr)
   )
 
 jn_upset_articles <- jn_upset_ |>
   left_join(doi_overlap, by = "issn_l")
 
 write_csv(jn_upset_articles, here::here("data/jn_upset_articles.csv"))
+
+# Check articles exclusively in crossref
+intersection_jns <- jn_upset_articles |>
+  filter(WoS == TRUE, Scopus == TRUE, Crossref == TRUE) |>
+  distinct(issn_l)
+  
+cr_df |> 
+  filter(issn_l %in% intersection_jns$issn_l) |>
+  filter(doi %in% c(wos_dois, scp_dois)) |>
+  distinct(doi)
+
+cr_df |> 
+  filter(issn_l %in% intersection_jns$issn_l) |>
+  filter(!doi %in% c(wos_dois, scp_dois)) |>
+  distinct(doi) |>
+  write_csv(here::here("data-raw", "missing_dois_in_active_jns.csv"))
+
