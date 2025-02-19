@@ -326,6 +326,8 @@ Then, I investigate hybrid open access uptake using the same methods for each da
 
 ## Coverage comparision
 
+### Overview
+
 ```{r}
 jn_upset_articles <- readr::read_csv(here::here("data", "jn_upset_articles.csv"))
 
@@ -440,13 +442,144 @@ The largest set of hybrid journals, which includes all three data sources, also 
 In total, these journals recorded `r upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum()` overlapping articles, represented by the blue bar. They represent `r round(upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum() / methods_overview_table_df |> filter(indicator == "Core articles with DOI") |> pull(wos) * 100)`% of core articles with DOI indexed in the Web of Science sample, and `r round(upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum() / methods_overview_table_df |> filter(indicator == "Core articles with DOI") |> pull(scp) * 100)`% in Scopus.
 Another `r upset_data |> filter(Crossref == TRUE, WoS == FALSE, Scopus == TRUE) |> pull(n_cr) |> sum()` articles were exclusive to both Scopus and hoaddata. Exclusively in hoaddata were `r upset_data |> filter(Crossref == TRUE, WoS == FALSE, Scopus == FALSE) |> pull(n_cr) |> sum()` articles, and exclusively in the proprietary databases were `r upset_data |> filter(Crossref == FALSE, Scopus == TRUE) |> pull(overlap) |> sum(na.rm = TRUE)` articles. 
 
+```{r miss_dois_check}
+miss_dois <- readr::read_csv(here::here("data-raw", "missing_dois_in_active_jns.csv"))
+miss_dois_val <- readr::read_csv(here::here("data-raw", "miss_dois_in_active_jns_ckeck.csv"))
+```
 Figure \ref{fig-upset_coverage_results}B also shows DOIs that were only available via hoaddata (grey area).
-After validation at the DOI level using the KB databases and manual inspection, the main reasons for missing DOI coverage in the proprietary database were insufficient classification of journal content as original research articles and reviews in hoaddata. Particulalry, Letters and Editorials could not be fully detected.
-Paratext recognition also failed in some cases to identify non-scientific content such as journal covers or reviewer lists, which are generally not covered by Scopus and Web of Science. 
+In case of hybrid ournals covered by all three data sources, `r miss_dois |> nrow()` DOIs were only present in hoaddata.
+After validation at the DOI level using the KB databases and manual inspection, the main reasons for missing DOI coverage in the proprietary database were insufficient classification of journal content as original research articles and reviews in hoaddata. Particulalry, letters and editorials could not be fully detected.
+Paratext recognition failed in `r round(miss_dois_val |> filter(is.na(scp_item_type), is.na(wos_item_type)) |> pull(n_doi) / miss_dois |> nrow() * 100)`% of DOIs to identify non-scientific content such as front matters or reviewer lists, which are generally not indexed by Scopus and Web of Science. 
 To a lesser extent, differences in publication and indexing dates were a reason for non-overlapping DOIs. 
 
-Using DOIs also the size of journals were calculated (Fig C). It highlights thate large spread in the intersection between all three datasett. Journals are, on average, smaller than those just covered by one or two sources.In particular journals exlcusively covered by hoaddata are significant smaller than those covered by all three sources. 
+Using overlapping DOIs, the publication volume between 2019 and 2023 was also calculated for each journal. 
+Figure \ref{fig-upset_coverage_results}C shows the distribution for each combination. It shows that there is a large spread across the journals covered by all three data sources. 
+Furthermore, journals in this set published more on average than journals covered by only one or two data sources. 
+In particular, the journals covered exclusively by hoaddata are substantially smaller than those covered by all three sources. 
+Upon inspection, these are often newly launched journals, which explains the relatively low five-year publication volume.
 
+### Coverage by publisher portfolio
 
+```{r publisher_coverage_data_prep}
+# Add ESAC portfolio names
+esac <- hoaddata::jct_hybrid_jns |>
+  distinct(issn_l, esac_publisher) |>
+  mutate(
+    publisher = case_when(
+      esac_publisher == "Elsevier" ~ "Elsevier",
+      esac_publisher == "Springer Nature" ~ "Springer Nature",
+      esac_publisher == "Wiley" ~ "Wiley",
+      is.character(esac_publisher) ~ "Other"
+    )) |>
+  mutate(publisher =
+           forcats::fct_relevel(
+             publisher,
+             c("Elsevier", "Springer Nature", "Wiley", "Other") 
+           )) |>
+  mutate(publisher = forcats::fct_rev(publisher)) |>
+  distinct(issn_l, publisher)
+
+jn_upset_publisher <- inner_join(upset_data, esac, by = "issn_l") |>
+  # Because of Journal transfer, restrict choice to one portfolio
+  distinct(issn_l, .keep_all = TRUE)
+```
+
+Figre shows the coverage of hybrid journals in transformative agreements by publisher portfolio according to the ESAC registry.
+
+```{r upset_publisher_plot, fig.asp=0.75}
+size = get_size_mode('exclusive_intersection')
+
+upset_publisher_plot <- ComplexUpset::upset(
+  jn_upset_publisher,
+  c("Crossref", "WoS", "Scopus"),
+  # Only journals in Crossref
+  min_size = 30,
+  width_ratio = 0.4,
+  stripes = "transparent",
+  name = "Data Source Coverage",
+  base_annotations = NULL,
+  annotations = list(
+    "Journal size\n(log-scale)" = (
+      ggplot(mapping = aes(x = intersection, y = overlap, fill = fct_rev(publisher))) +
+        geom_boxplot(outliers = FALSE, width = bar_width) +
+        scale_fill_manual(
+          "",
+          values = c(
+            "Elsevier" = "#e9711c",
+            "Springer Nature" = "#486a7e",
+            "Wiley" = "#068853",
+            "Other" = "#b3b3b3"
+          ), guide = "none") +
+        scale_y_log10(labels = scales::number_format(big.mark = ",")) +
+        ggtitle("C")
+    ),
+    "Articles" = (
+      ggplot(mapping = aes(y = overlap, fill = publisher, color = publisher)) +
+        geom_bar(stat = "identity", width = bar_width) +
+        scale_fill_manual(
+          "",
+          values = c(
+            "Elsevier" = "#e9711c",
+            "Springer Nature" = "#486a7e",
+            "Wiley" = "#068853",
+            "Other" = "#b3b3b3a0"
+          ), guide = "none") +
+        scale_color_manual(
+          values = c(
+            "Elsevier" = "#e9711c",
+            "Springer Nature" = "#486a7e",
+            "Wiley" = "#068853",
+            "Other" = "#b3b3b3"
+          ), guide = "none"
+        ) + 
+        scale_y_continuous(labels =  scales::number_format(big.mark = ",")) +
+        ggtitle("B") 
+    ),
+    "Publisher" = (
+      ggplot(mapping = aes(fill = publisher)) +
+        geom_bar(stat = "count", position = "fill", width = bar_width) + 
+        scale_y_continuous("Journals", labels = scales::percent_format()) +
+        scale_fill_manual(
+          "",
+          values = c(
+            "Elsevier" = "#e9711c",
+            "Springer Nature" = "#486a7e",
+            "Wiley" = "#068853",
+            "Other" = "#b3b3b3"
+          ), guide = "none") +
+        ggtitle("A")
+    )
+  ),
+  set_sizes = (
+    upset_set_size(
+      geom = geom_bar(aes(fill = publisher), width = 0.8), 
+      position = "right"
+    ) +
+    scale_fill_manual(
+      "",
+      values = c(
+        "Elsevier" = "#e9711c",
+        "Springer Nature" = "#486a7e",
+        "Wiley" = "#068853",
+        "Other" = "#b3b3b3"
+      )
+    ) +
+    scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+    guides(fill = guide_legend(reverse = TRUE)) +
+    ylab("Journals")
+  ),
+  guides = "over",
+  matrix = (
+    intersection_matrix(
+      geom = geom_point(
+        shape = "square",
+        size = 2
+      )
+    )
+  )
+)
+
+upset_publisher_plot & my_upset_theme 
+```
 
 # discussion
