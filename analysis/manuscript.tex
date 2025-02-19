@@ -250,12 +250,12 @@ data.
 \subsubsection{hoaddata}\label{hoaddata}
 
 hoaddata, developed and maintained by the author to support open access
-monitoring and research (Jahn, 2025), is an R data package comprising
-information about the uptake of hybrid open access since 2017 collected
-from several openly available data sources. It combines article-level
-metadata from Crossref and OpenAlex with transformative agreement
-information from the cOAlition S Journal Checker Tool (JCT), which links
-journal and institutional data to agreements in the ESAC registry.
+monitoring and research (Jahn, 2025), is an R data package collecting
+information on hybrid open access uptake from multiple openly available
+data sources. It combines article-level metadata from Crossref and
+OpenAlex with transformative agreement information from the cOAlition S
+Journal Checker Tool (JCT), which links journal and institutional data
+to agreements in the ESAC registry.
 
 As discussed elsewhere (Jahn, 2025), hoaddata uses a unified dataset of
 historic JCT snapshots since July 2021, which were enriched with ISSN
@@ -339,15 +339,15 @@ hybrid journals in transformative agreements according to the JCT,
 covering agreements active from July 2021 to July 2024 according to the
 ESAC registry.
 
-Article metadata was retrieved from each databse using all ISSN variants
-linked to an ISSN-L. The metadata included DOIs, publication dates,
-article types, open access information as well as author roles and
-institutional affiliations. Publication years were determined using the
-earliest known date of publication in a journal. articles in hoaddata,
-this corresponded to Crossref's issued date. For Web of Science and
-Scopus, the earliest publication date was used where available, with
-Scopus dates specifically determined by the KB through version tracking
-of the raw data.
+Article metadata were retrieved from each database using all ISSN
+variants linked to an ISSN-L. The metadata included DOIs, publication
+dates, article types, open access information as well as author roles
+and institutional affiliations. Publication years were determined using
+the earliest known date of publication in a journal. articles in
+hoaddata, this corresponded to Crossref's issued date. For Web of
+Science and Scopus, the earliest publication date was used where
+available, with Scopus dates specifically determined by the KB through
+version tracking of the raw data.
 
 Many transformative agreements typically cover only certain types of
 journal articles, in particular original research articles including
@@ -484,15 +484,16 @@ Science publication metrics were aggregated using the database
 identifier. A subsequent comparison of DOI coverage shows that non-core
 articles in Web of Science often lacked a DOI. This was particularly the
 case for meeting abstracts, which are notably prevalent in Health
-Sciences journals (Melero-Fuentes et al., 2025). Open access indicators
-were aggregated by DOI, as Unpaywall only collects information on open
-access status for articles with a DOI. A closer look at the core
-articles with affiliation data reveals a lack of data on corresponding
-authors in the case of OpenAlex, the affiliation data source used by
-hoaddata, compared to Web of Science and Scopus. Only about two-thirds
-of the articles examined provided corresponding author affiliations. For
-first authors, the proportion was 89\%. Therefore, only first author
-data for hoaddata were considered in the following analysis.
+Sciences journals (Melero-Fuentes et al., 2025) and are not indexed by
+Scopus (Donner, 2017). Open access indicators were aggregated by DOI, as
+Unpaywall only collects information on open access status for articles
+with a DOI. A closer look at the core articles with affiliation data
+reveals a lack of data on corresponding authors in the case of OpenAlex,
+the affiliation data source used by hoaddata, compared to Web of Science
+and Scopus. Only about two-thirds of the articles examined provided
+corresponding author affiliations. For first authors, the proportion was
+89\%. Therefore, only first author data for hoaddata were considered in
+the following analysis.
 
 \section{Results}\label{results}
 
@@ -526,22 +527,38 @@ the analysis.
 
 Journal coverage analysis revealed that 66\% (n = 7,970) of hybrid
 journals included in transformative agreements were indexed in all three
-databases ( \ref{fig-upset_coverage_results}A). The second-largest set
-consisted of journals indexed in both hoaddata and Scopus, comprising
-21\% (n = 2,595) of hybrid journals. Notably, 6\% (n = 739) of journals
-were exclusively contained in hoaadata, while 3\% (n = 354) were only
-found in the proprietory databases Scopus and Web of Science. Upon
-insepction, this latter group represents hybrid journals for which no
-open access evidence could be retrieved from Crossref, which serves as
-the open access evidence source for hoaddata.
+databases (Figure \ref{fig-upset_coverage_results}A). The second-largest
+set consisted of journals indexed in both hoaddata and Scopus,
+comprising 21\% (n = 2,595) of hybrid journals. Notably, 6\% (n = 739)
+of journals were exclusively contained in hoaadata, while 6\% (n = 748)
+were only found in the proprietory database Scopus. Of these, 354 were
+also available in the Web of Science. Upon inspection, this group of
+hybrid journals included only in the proprietary data sources mainly
+represents hybrid journals for which no open access evidence could be
+retrieved from Crossref, which served as the open access evidence source
+for hoaddata.
 
-In terms of article coverage, Fig B shows the DOI overlap,
-distinguihsing between a shared corpus and just those where a DOI was
-only available through hoaddata. Upon inspection, reasons for lackign
-DOI coverage in proprietory database were different publication dates
-and differenc ein document type definitions. As such, demosntrates
-certain uncertainies using the open approach. Overall, The majority of
-articles can be found
+In terms of article coverage, Figure \ref{fig-upset_coverage_results}B
+shows the total publication volume per combination in terms of DOI
+availability. The largest set of hybrid journals, which includes all
+three data sources, also contains the largest number of articles. In
+total, these journals recorded 6,289,687 overlapping articles,
+represented by the blue bar. They represent 94\% of core articles with
+DOI indexed in the Web of Science sample, and 86\% in Scopus. Another
+657,697 articles are exclusive to both Scopus and hoaddata. Exclusively
+in hoaddata were 177,110 articles, and exclusively in the proprietary
+databases were 325,194 articles.
+
+Figure \ref{fig-upset_coverage_results}B also shows DOIs that were only
+available via hoaddata (grey area). After validation at the DOI level
+using the KB databases and manual inspection, the main reasons for
+missing DOI coverage in the proprietary database were insufficient
+classification of journal content as original research articles and
+reviews in hoaddata. Paratext recognition also failed in some cases to
+identify non-scientific content such as journal covers or reviewer
+lists, which are generally not covered by Scopus and Web of Science. To
+a lesser extent, differences in publication and indexing dates were a
+reason for non-overlapping DOIs.
 
 Using DOIs also the size of journals were calculated (Fig C). It
 highlights thate large spread in the intersection between all three
@@ -549,13 +566,6 @@ datasett. Journals are, on average, smaller than those just covered by
 one or two sources.In particular journals exlcusively covered by
 hoaddata are significant smaller than those covered by all three
 sources.
-
-This study compares results drawn from the openly available and
-regularly updated hoaddata, an R package leveraging the open scholarly
-data sources Crossref and OpenAlex, with the in-house database of the
-German Competence Network Overall, xxxx hybrid journals included in xxx
-agreements that published at least one open access article between 2019
-and 2023.
 
 \section*{discussion}\label{discussion}
 \addcontentsline{toc}{section}{discussion}
@@ -574,6 +584,11 @@ Birkle, C., Pendlebury, D. A., Schnell, J., \& Adams, J. (2020). Web of
 science as a data source for research on scientific and scholarly
 activity. \emph{Quantitative Science Studies}, \emph{1}(1), 363--376.
 \url{https://doi.org/10.1162/qss_a_00018}
+
+\bibitem[\citeproctext]{ref-Donner_2017}
+Donner, P. (2017). Document type assignment accuracy in the journal
+citation index data of {Web of Science}. \emph{Scientometrics},
+\emph{113}(1), 219--236. \url{https://doi.org/10.1007/s11192-017-2483-y}
 
 \bibitem[\citeproctext]{ref-van_Eck_2022}
 Eck, N. J. van, \& Waltman, L. (2022). \emph{Crossref as a source of

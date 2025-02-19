@@ -147,7 +147,7 @@ Overall, xxxx hybrid journals from xxx agreements formed the basis of this study
 
 ### hoaddata 
 
-hoaddata, developed and maintained by the author to support open access monitoring and research [@Jahn_2025], is an R data package comprising information about the uptake of hybrid open access since 2017 collected from several openly available data sources.
+hoaddata, developed and maintained by the author to support open access monitoring and research [@Jahn_2025], is an R data package collecting information on hybrid open access uptake from multiple openly available data sources.
 It combines article-level metadata from Crossref and OpenAlex with transformative agreement information from the cOAlition S Journal Checker Tool (JCT), which links journal and institutional data to agreements in the ESAC registry.
 
 As discussed elsewhere [@Jahn_2025], hoaddata uses a unified dataset of historic JCT snapshots since July 2021, which were enriched with ISSN variants linked to an ISSN-L and associated ROR-IDs representing university hospitals or institutes of large research organisations, according to OpenAlex' institution entity.
@@ -202,7 +202,7 @@ A comprehensive exclusion of fully open access journals was performed, following
 This involved checking multiple journal lists (DOAJ, OpenAlex, Bielefeld) and article-level investigations.
 The JCT institution data was enriched with ROR-IDs from associated institutions, such as university hospitals or institutes of large research organisations such as the Max Planck Society, according to OpenAlex' institution entity.
 <!-- In total, xxxx hybrid journals could be linked to xxx agreements listed in the ESAC Transformative Agreements Registry, which formed to basis for obtaining article-level data including author affiliations, open access status ans document types. -->
-Article metadata was retrieved from each databse using all ISSN variants linked to an ISSN-L. The metadata included DOIs, publication dates, article types, open access information as well as author roles and institutional affiliations.
+Article metadata were retrieved from each database using all ISSN variants linked to an ISSN-L. The metadata included DOIs, publication dates, article types, open access information as well as author roles and institutional affiliations.
 Publication years were determined using the earliest known date of publication in a journal.
 articles in hoaddata, this corresponded to Crossref's issued date.<!--, although variations were observed (check ref)-->
 For Web of Science and Scopus, the earliest publication date was used where available, with Scopus dates specifically determined by the KB through version tracking of the raw data.
@@ -312,7 +312,7 @@ kableExtra::kbl(
 
 While hoaddata only covers articles with a DOI, Scopus and Web of Science publication metrics were aggregated using the database identifier.
 A subsequent comparison of DOI coverage shows that non-core articles in Web of Science often lacked a DOI.
-This was particularly the case for meeting abstracts, which are notably prevalent in Health Sciences journals [@Melero_Fuentes_2025].
+This was particularly the case for meeting abstracts, which are notably prevalent in Health Sciences journals [@Melero_Fuentes_2025] and are not indexed by Scopus [@Donner_2017].
 Open access indicators were aggregated by DOI, as Unpaywall only collects information on open access status for articles with a DOI.
 A closer look at the core articles with affiliation data reveals a lack of data on corresponding authors in the case of OpenAlex, the affiliation data source used by hoaddata, compared to Web of Science and Scopus.
 Only about two-thirds of the articles examined provided corresponding author affiliations.
@@ -392,7 +392,7 @@ upset_overview <- ComplexUpset::upset(
   ),
   annotations = list(
     "Journal size\n(log scale)" = (
-      ggplot(mapping = aes(x = intersection, y = n)) +
+      ggplot(mapping = aes(x = intersection, y = overlap)) +
         geom_boxplot(outliers = FALSE, width = bar_width) +
         scale_y_log10(labels =  scales::number_format(big.mark = ",")) +
         ggtitle("C")
@@ -403,7 +403,7 @@ upset_overview <- ComplexUpset::upset(
           stat = "identity",
           color = "grey80",
           width = bar_width,
-          aes(fill = "All")
+          aes(fill = "Surplus")
         ) +
         geom_bar(
           aes(y = overlap, fill = "Shared"),
@@ -413,7 +413,7 @@ upset_overview <- ComplexUpset::upset(
         ) +
         scale_fill_manual(
           values = c(
-            `All` = "grey80",
+            `Surplus` = "grey80",
             `Shared` = "#0091c8"
           ),
           name = "DOI"
@@ -429,20 +429,24 @@ upset_overview <- ComplexUpset::upset(
 )
 upset_overview & my_upset_theme
 ```
-Journal coverage analysis revealed that `r round(nrow(union_jns) / nrow(all_jns) * 100)`% (n = `r nrow(union_jns)`) of hybrid journals included in transformative agreements were indexed in all three databases ( \ref{fig-upset_coverage_results}A).
+Journal coverage analysis revealed that `r round(nrow(union_jns) / nrow(all_jns) * 100)`% (n = `r nrow(union_jns)`) of hybrid journals included in transformative agreements were indexed in all three databases (Figure \ref{fig-upset_coverage_results}A).
 The second-largest set consisted of journals indexed in both hoaddata and Scopus, comprising `r round( jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == TRUE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == TRUE) |>  nrow()`) of hybrid journals.
-Notably, `r round(jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == FALSE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == FALSE) |>  nrow()`) of journals were exclusively contained in hoaadata, while `r round( jn_upset_articles |> filter(WoS == TRUE, Crossref == FALSE, Scopus == TRUE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(WoS == TRUE, Crossref == FALSE, Scopus == TRUE) |>  nrow()`) were only found in the proprietory databases Scopus and Web of Science.
-Upon insepction, this latter group mainly represents hybrid journals for which no open access evidence could be retrieved from Crossref, which serves as the open access evidence source for hoaddata.
+Notably, `r round(jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == FALSE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == FALSE) |>  nrow()`) of journals were exclusively contained in hoaadata, while `r round( jn_upset_articles |> filter(Crossref == FALSE, Scopus == TRUE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(Crossref == FALSE, Scopus == TRUE) |>  nrow()`) were only found in the proprietory database Scopus. 
+Of these, `r jn_upset_articles |> filter(WoS == TRUE, Crossref == FALSE, Scopus == TRUE) |>  nrow()` were also available in the Web of Science.
+Upon inspection, this group of hybrid journals included only in the proprietary data sources mainly represents hybrid journals for which no open access evidence could be retrieved from Crossref, which served as the open access evidence source for hoaddata.
 
-In terms of article coverage, Fig B shows the DOI overlap, distinguihsing between a shared corpus and just those where a DOI was only available through hoaddata.
-Upon inspection, reasons for lackign DOI coverage in proprietory database were different publication dates and differenc ein document type definitions. 
-As such, demosntrates certain uncertainies using the open approach.
-Overall, The majority of articles can be found
+In terms of article coverage, Figure \ref{fig-upset_coverage_results}B shows the total publication volume per combination in terms of DOI availability.
+The largest set of hybrid journals, which includes all three data sources, also contains the largest number of articles. 
+In total, these journals recorded `r upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum()` overlapping articles, represented by the blue bar. They represent `r round(upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum() / methods_overview_table_df |> filter(indicator == "Core articles with DOI") |> pull(wos) * 100)`% of core articles with DOI indexed in the Web of Science sample, and `r round(upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum() / methods_overview_table_df |> filter(indicator == "Core articles with DOI") |> pull(scp) * 100)`% in Scopus.
+Another `r upset_data |> filter(Crossref == TRUE, WoS == FALSE, Scopus == TRUE) |> pull(n_cr) |> sum()` articles were exclusive to both Scopus and hoaddata. Exclusively in hoaddata were `r upset_data |> filter(Crossref == TRUE, WoS == FALSE, Scopus == FALSE) |> pull(n_cr) |> sum()` articles, and exclusively in the proprietary databases were `r upset_data |> filter(Crossref == FALSE, Scopus == TRUE) |> pull(overlap) |> sum(na.rm = TRUE)` articles. 
+
+Figure \ref{fig-upset_coverage_results}B also shows DOIs that were only available via hoaddata (grey area).
+After validation at the DOI level using the KB databases and manual inspection, the main reasons for missing DOI coverage in the proprietary database were insufficient classification of journal content as original research articles and reviews in hoaddata. Particulalry, Letters and Editorials could not be fully detected.
+Paratext recognition also failed in some cases to identify non-scientific content such as journal covers or reviewer lists, which are generally not covered by Scopus and Web of Science. 
+To a lesser extent, differences in publication and indexing dates were a reason for non-overlapping DOIs. 
 
 Using DOIs also the size of journals were calculated (Fig C). It highlights thate large spread in the intersection between all three datasett. Journals are, on average, smaller than those just covered by one or two sources.In particular journals exlcusively covered by hoaddata are significant smaller than those covered by all three sources. 
 
-This study compares results drawn from the openly available and regularly updated hoaddata, an R package leveraging the open scholarly data sources Crossref and OpenAlex, with the in-house database of the German Competence Network 
-Overall, xxxx hybrid journals included in xxx agreements that published at least one open access article between 2019 and 2023. 
 
 
 # discussion
