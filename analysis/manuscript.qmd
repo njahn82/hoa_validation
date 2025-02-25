@@ -396,7 +396,7 @@ upset_overview <- ComplexUpset::upset(
     "Journal size\n(log scale)" = (
       ggplot(mapping = aes(x = intersection, y = overlap)) +
         geom_boxplot(outliers = FALSE, width = bar_width) +
-        scale_y_log10(labels =  scales::number_format(big.mark = ",")) +
+        scale_y_log10(labels =  scales::number_format(big.mark = ","), limits = c(1, 10000)) +
         ggtitle("C")
     ),
     "Articles" = (
@@ -422,6 +422,7 @@ upset_overview <- ComplexUpset::upset(
         ) +
         scale_y_continuous(labels =  scales::number_format(big.mark = ","),
                            breaks = c(0, 2500000, 5000000, 7500000)) +
+        guides(fill = guide_legend(reverse = TRUE)) +
         ggtitle("B")
     )
   ),
@@ -477,16 +478,19 @@ esac <- hoaddata::jct_hybrid_jns |>
              c("Elsevier", "Springer Nature", "Wiley", "Other") 
            )) |>
   mutate(publisher = forcats::fct_rev(publisher)) |>
-  distinct(issn_l, publisher)
+  distinct(issn_l, publisher, esac_publisher)
 
 jn_upset_publisher <- inner_join(upset_data, esac, by = "issn_l") |>
   # Because of Journal transfer, restrict choice to one portfolio
   distinct(issn_l, .keep_all = TRUE)
 ```
 
-Figre shows the coverage of hybrid journals in transformative agreements by publisher portfolio according to the ESAC registry.
+Figure \ref{fig-upset_coverage_results_publisher} shows the coverage of hybrid journals in transformative agreements by publisher portfolio according to the ESAC registry.
 
 ```{r upset_publisher_plot, fig.asp=0.75}
+#| fig-cap: "Upset graph publisher"
+#| label: fig-upset_coverage_results_publisher
+#| 
 size = get_size_mode('exclusive_intersection')
 
 upset_publisher_plot <- ComplexUpset::upset(
@@ -510,7 +514,7 @@ upset_publisher_plot <- ComplexUpset::upset(
             "Wiley" = "#068853",
             "Other" = "#b3b3b3"
           ), guide = "none") +
-        scale_y_log10(labels = scales::number_format(big.mark = ",")) +
+          scale_y_log10(labels =  scales::number_format(big.mark = ",")) +
         ggtitle("C")
     ),
     "Articles" = (
@@ -566,7 +570,7 @@ upset_publisher_plot <- ComplexUpset::upset(
     ) +
     scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
     guides(fill = guide_legend(reverse = TRUE)) +
-    ylab("Journals")
+    ylab("Journals") 
   ),
   guides = "over",
   matrix = (
