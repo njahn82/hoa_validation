@@ -190,16 +190,15 @@ Monitoring}\label{anforderungen-an-das-monitoring}
 
 \section{Data and methods}\label{data-and-methods}
 
-This study aims to demonstrate the suitability of open scholarly data
-sources for assessing the impact of transformative agreements on hybrid
-open access. As shown in Figure \ref{fig:workflow}, the methodology
-involved comparing hoaddata, an openly available collection of open
-research information on hybrid open access, with the bibliometric
-databases Web of Science and Scopus. This section introduces the initial
-data sources followed by a presentation of the necessary pre-processing
-steps to obtain eligible articles from transformative agreements by
-using author roles (first and corresponding) and harmonised affiliation
-data.
+This study investigates the suitability of open scholarly data sources
+for assessing the impact of transformative agreements on hybrid open
+access. As shown in Figure \ref{fig:workflow}, the methodology involved
+comparing hoaddata, an openly available collection of open research
+information on hybrid open access, with the bibliometric databases Web
+of Science and Scopus. This section introduces the initial data sources,
+followed by a presentation of the necessary data processing steps to
+obtain eligible articles from transformative agreements by using author
+roles (first and corresponding) and harmonised affiliation data.
 
 \begin{figure}[htbp]
 \centering
@@ -258,31 +257,32 @@ Journal Checker Tool (JCT), which links journal and institutional data
 to agreements in the ESAC registry.
 
 As discussed elsewhere (Jahn, 2025), hoaddata uses a unified dataset of
-historic JCT snapshots since July 2021, which were enriched with ISSN
-variants linked to an ISSN-L and associated ROR-IDs representing
-university hospitals or institutes of large research organisations,
-according to OpenAlex' institution entity. A comprehensive exclusion of
-fully open access journals using multiple journal lists (DOAJ, OpenAlex,
-Bielefeld) was performed to identify hybrid journals. hoaddata relies on
-Crossref for obtaining journal publication volume and open access status
-through Creative Commons licence information relative to the published
-version (``version of record''). Because of limited affiliation metadata
-in Crossref (Eck \& Waltman, 2022), hoaddata sources first-author
-affiliations from OpenAlex.
+historic JCT snapshots, which were safeguarded since July 2021. Journal
+data were enriched with ISSN variants linked to an ISSN-L and insitution
+data with associated ROR-IDs representing university hospitals or
+institutes of large research organisations, according to OpenAlex'
+institution entity. A comprehensive exclusion of fully open access
+journals using multiple journal lists (DOAJ, OpenAlex, Bielefeld) was
+performed to identify hybrid journals. hoaddata relies on Crossref for
+obtaining journal publication volume and open access status through
+Creative Commons licence information relative to the published version
+(``version of record''). Because of limited affiliation metadata in
+Crossref (Eck \& Waltman, 2022), hoaddata sources affiliation metadata
+from OpenAlex.
 
 hoaddata follows good practices for computational reproducibility using
 R (Marwick et al., 2018). The package, which includes data, code, a test
 suite and documentation, is openly available on GitHub. To ensure
 computational reproducibility while aggregating the data, a GitHub
-Actions continuous integration and delivery (CI/CD) workflow interfaces
-with the SUB Göttingen's open scholarly data warehouse based on Google
-BigQuery, which provides high-performant programmatic access to monthly
-snapshots of Crossref and OpenAlex. The workflow has run regularly to
-fetch updates from these data sources since 2022. The package version
-used in this study is 0.3, containing data from the Crossref 2024-08
-dump provided to Crossref Metadata Plus subscribers and the OpenAlex
-2024-08-29 monthly dump. This version including the computation log is
-available on GitHub
+Actions continuous integration and delivery (CI/CD) workflow handles
+data retrieval from the SUB Göttingen's open scholarly data warehouse
+based on Google BigQuery, which provides high-performant programmatic
+access to monthly snapshots of Crossref and OpenAlex. The workflow has
+run regularly to fetch updates from these data sources since 2022. The
+package version used in this study is 0.3, containing data from the
+Crossref 2024-08 dump provided to Crossref Metadata Plus subscribers and
+the OpenAlex 2024-08-29 monthly dump. This version including the
+computation log is available on GitHub
 (https://github.com/subugoe/hoaddata/releases/tag/v.0.3).
 
 \subsubsection{Web of Science}\label{web-of-science}
@@ -299,7 +299,7 @@ access: author affiliations and roles, differentiation of journal
 articles into document types representing different types of journal
 contributions, such as original articles or reviews, and open access
 status information derived from OurResearch's Unpaywall, the same
-provider as Openalex. However, it lacks information about journals and
+provider as OpenAlex. However, it lacks information about journals and
 articles under transformative agreements.
 
 For programmatic access to article-level data, this study used the
@@ -343,11 +343,11 @@ Article metadata were retrieved from each database using all ISSN
 variants linked to an ISSN-L. The metadata included DOIs, publication
 dates, article types, open access information as well as author roles
 and institutional affiliations. Publication years were determined using
-the earliest known date of publication in a journal. articles in
-hoaddata, this corresponded to Crossref's issued date. For Web of
-Science and Scopus, the earliest publication date was used where
-available, with Scopus dates specifically determined by the KB through
-version tracking of the raw data.
+the earliest known date of publication in a journal. In hoaddata, this
+corresponded to Crossref's issued date. For Web of Science and Scopus,
+the earliest publication date was used where available, with Scopus
+dates specifically determined by the KB through version tracking of the
+raw data.
 
 Many transformative agreements typically cover only certain types of
 journal articles, in particular original research articles including
@@ -372,11 +372,11 @@ supplements Crossref metadata by parsing publisher websites directly,
 addressing cases where publishers do not provide machine-readable
 Creative Commons license information (Piwowar et al., 2018). This
 additional parsing remains necessary despite transformative agreement
-workflows requiring license information during DOI registration
-(Geschuhn \& Stone, 2017). Both Web of Science and Scopus defined hybrid
-open access consistently as content available under Creative Commons
-licenses on publisher platforms, distinguishing it from bronze open
-access that lack such explicit license information.
+workflows recommend the depositing license information during DOI
+registration (Geschuhn \& Stone, 2017). Both Web of Science and Scopus
+defined hybrid open access consistently as content available under
+Creative Commons licenses on publisher platforms, distinguishing it from
+bronze open access that lack such explicit license information.
 
 \subsubsection{Harmonising author affiliations across
 databases}\label{harmonising-author-affiliations-across-databases}
@@ -402,7 +402,7 @@ ROR ID and proprietary identifier pairs to handle multiple affiliations
 and organisational hierarchy differences.
 
 This process linked 6,375 ROR IDs to 4,894 Scopus Affiliation IDs, and
-6,034 ROR IDs to 4,894 enhanced affiliation strings in the Web of
+6,034 ROR IDs to 2,422 enhanced affiliation strings in the Web of
 Science. Quality evaluation through random sampling of 50 pairs revealed
 an error rate of 22\% for Web of Science (11 mismatches) and 6\% for
 Scopus (3 mismatches). Upon inspection, these mismatches primarily
@@ -436,8 +436,8 @@ level by year. Table~\ref{tbl-methods_overview_tab} provides a general
 overview of the coverage between 2019 and 2023 per database. It shows
 that the majority of hybrid journals published at least one original
 research article or review marked as core during the five-year period.
-These journals formed the basis for the subsequent aggregation of
-publication metrics.
+These journals formed the basis for the subsequent calculation of
+article-level indicators.
 
 \begin{table}
 
@@ -452,12 +452,12 @@ transformative agreements 2019-23.}
 \textbf{} & \textbf{HOAD} & \textbf{Web of Science} & \textbf{Scopus}\\
 \midrule
 \addlinespace[0.3em]
-\multicolumn{4}{l}{\textbf{Hybrid journal metrics}}\\
+\multicolumn{4}{l}{\textbf{Hybrid journal coverage}}\\
 \hspace{1em}Active journals & 12,890 & 8,655 & 11,888\\
 \hspace{1em}Active journals (core) & 12,888 & 8,655 & 11,878\\
 \hspace{1em}Active journals (core) with OA & 11,348 & 8,392 & 11,313\\
 \addlinespace[0.3em]
-\multicolumn{4}{l}{\textbf{Publication metrics}}\\
+\multicolumn{4}{l}{\textbf{Publication volume}}\\
 \hspace{1em}Total published articles & 9,740,015 & 8,616,053 & 8,117,644\\
 \hspace{1em}Core articles & 8,158,425 & 6,708,083 & 7,317,703\\
 \addlinespace[0.3em]
@@ -480,7 +480,7 @@ transformative agreements 2019-23.}
 \end{table}%
 
 While hoaddata only covers articles with a DOI, Scopus and Web of
-Science publication metrics were aggregated using the database
+Science publication indicators were calculated using their database
 identifier. A subsequent comparison of DOI coverage shows that non-core
 articles in Web of Science often lacked a DOI. This was particularly the
 case for meeting abstracts, which are notably prevalent in Health
@@ -552,21 +552,21 @@ in hoaddata were 177,110 articles, and exclusively in the proprietary
 databases were 325,194 articles.
 
 Figure \ref{fig-upset_coverage_results}B also shows DOIs that were only
-available via hoaddata (grey area). In case of hybrid ournals covered by
-all three data sources, 1,023,882 DOIs were only present in hoaddata.
+available via hoaddata (grey area). In case of hybrid journals covered
+by all three data sources, 1,023,882 DOIs were only present in hoaddata.
 After validation at the DOI level using the KB databases and manual
 inspection, the main reasons for missing DOI coverage in the proprietary
 database were insufficient classification of journal content as original
-research articles and reviews in hoaddata. Particulalry, letters and
-editorials could not be fully detected. Paratext recognition failed in
-37\% of DOIs to identify non-scientific content such as front matters or
-reviewer lists, which are generally not indexed by Scopus and Web of
-Science. To a lesser extent, differences in publication and indexing
-dates were a reason for non-overlapping DOIs.
+research articles and reviews during the compilation of hoaddata.
+Particulalry, letters and editorials could not be fully detected.
+Paratext recognition failed in 37\% of DOIs to identify non-scientific
+content such as front matters or reviewer lists, which are generally not
+indexed by Scopus and Web of Science. To a lesser extent, differences in
+publication and indexing dates were a reason for non-overlapping DOIs.
 
 Using overlapping DOIs, the publication volume between 2019 and 2023 was
 also calculated for each journal. Figure
-\ref{fig-upset_coverage_results}C shows the distribution for each
+\ref{fig-upset_coverage_results}C illustrates the distribution for each
 combination. It shows that there is a large spread across the journals
 covered by all three data sources. Furthermore, journals in this set
 published more on average than journals covered by only one or two data
@@ -578,9 +578,24 @@ relatively low five-year publication volume.
 \subsubsection{Coverage by publisher
 portfolio}\label{coverage-by-publisher-portfolio}
 
-Figure \ref{fig-upset_coverage_results_publisher} shows the coverage of
-hybrid journals in transformative agreements by publisher portfolio
-according to the ESAC registry.
+Figure \ref{fig-upset_coverage_results_publisher} illustrates the
+coverage of hybrid journals in transformative agreements by publisher
+portfolio according to the ESAC registry between 2019 and 2023. Elsevier
+was best represented in the union set of all investigated databases,
+with 1,672 hybrid journals with at least one open access article that
+published 2,345,205 articles between the five-year period. Springer
+Nature followed with 1,561 hybrid journals publishing 1,058,564
+articles, and Wiley with 1,151 hybrid journals and 770,546 articles. The
+remaining 54 publishers recorded a total of 6,476 hybrid journals that
+published 2,115,372 articles.
+
+Notably, the three largest publishers--Elsevier, Springer Nature and
+Wiley--were well represented in the exclusive intersection of all three
+data sources examined. In terms of journal coverage, they accounted for
+4,384 (55\%) of the hybrid journals included in the intersection. This
+dominance is even more pronounced in terms of article coverage, with
+these publishers having a joint indexing coverage of 4,174,315 articles
+(66\%).
 
 \begin{figure}[ht!]
 
@@ -594,6 +609,11 @@ according to the ESAC registry.
 publisher}
 
 \end{figure}%
+
+When considering journals exlcusively covered by Scopus and Web of
+Science
+
+When considering journals exlcusively covered by hoaddata
 
 \section*{discussion}\label{discussion}
 \addcontentsline{toc}{section}{discussion}
