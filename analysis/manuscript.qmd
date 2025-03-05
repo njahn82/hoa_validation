@@ -489,20 +489,28 @@ jn_upset_publisher <- inner_join(upset_data, esac, by = "issn_l") |>
   distinct(issn_l, .keep_all = TRUE)
 
 jn_upset_publisher_ind <- 
-  jn_upset_publisher |> 
+  jn_upset_publisher |>
   filter(Crossref == TRUE, Scopus == TRUE, WoS == TRUE) |> 
-  group_by(publisher) |> 
-  summarise(n_journals = n_distinct(issn_l), articles = sum(overlap))
+  group_by(publisher) |>
+  summarise(n_journals = n_distinct(issn_l), articles = sum(overlap, na.rm = TRUE))
+
+jn_upset_publisher_all <- 
+  jn_upset_publisher |>
+  group_by(publisher) |>
+  summarise(n_journals = n_distinct(issn_l), articles = sum(overlap, na.rm = TRUE))
+
+jn_upset_publisher_all <- jn_upset_publisher |>
+  summarise(n_journals_all = n_distinct(issn_l), articles_all = sum(overlap, na.rm = TRUE)) |>
+  bind_cols(jn_upset_publisher_all) |>
+  mutate(prop_jn = n_journals / n_journals_all,
+         prop_art = articles / articles_all)
 ```
 
-Figure \ref{fig-upset_coverage_results_publisher} illustrates the coverage of hybrid journals in transformative agreements by publisher portfolio according to the ESAC registry between 2019 and 2023.
-Elsevier was best represented in the union set of all investigated databases, with `r jn_upset_publisher_ind |> filter(publisher == "Elsevier") |> pull(n_journals)` hybrid journals with at least one open access article that published `r jn_upset_publisher_ind |> filter(publisher == "Elsevier") |> pull(articles)` articles between the five-year period. Springer Nature followed with `r jn_upset_publisher_ind |> filter(publisher == "Springer Nature") |> pull(n_journals)` hybrid journals publishing `r jn_upset_publisher_ind |> filter(publisher == "Springer Nature") |> pull(articles)` articles, and Wiley with `r jn_upset_publisher_ind |> filter(publisher == "Wiley") |> pull(n_journals)` hybrid journals and `r jn_upset_publisher_ind |> filter(publisher == "Wiley") |> pull(articles)` articles.
-The remaining `r jn_upset_publisher |> filter(publisher == "Other") |> distinct(esac_publisher) |> nrow()` publishers recorded  a total of `r jn_upset_publisher |> filter(publisher == "Other") |> distinct(issn_l) |> nrow()` hybrid journals that published  `r jn_upset_publisher_ind |> filter(publisher == "Other") |> pull(articles)` articles.
-
-Notably, the three largest publishers--Elsevier, Springer Nature and Wiley--were well represented in the exclusive intersection of all three data sources examined.
-In terms of journal coverage, they accounted for `r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(n_journals) |> sum()` (`r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(n_journals) |> sum() / nrow(union_jns)*100`%) of the hybrid journals included in the intersection.
-This dominance is even more pronounced in terms of article coverage, with these publishers having a joint indexing coverage of `r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(articles) |> sum()` articles (`r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(articles) |> sum() / upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum()*100`%), as measured by shared DOIs. 
-
+Figure \ref{fig-upset_coverage_results_publisher} presents the coverage of hybrid journals in transformative agreements across data sources from 2019 to 2023 with a focus on publisher portfolios.
+The analysis highlights the dominance of the three largest publishers--Elsevier, Springer Nature, and Wiley--, which collectively accounted for `r 100 - jn_upset_publisher_all |> filter(publisher == "Other") |> pull(prop_jn)*100`% of hybrid journals and `r 100 - jn_upset_publisher_all |> filter(publisher == "Other") |> pull(prop_art)*100`% of articles published during this five-year period.
+In terms of article volume, Elsevier led with `r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(articles)` artricles (`r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(prop_art)*100`% of the total) published across `r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(n_journals)` hybrid journals(`r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(prop_jn)*100`% of the total). 
+Springer Nature followed with `r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(articles)` articles (`r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(prop_art)*100`%) in `r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(n_journals)` hybrid journals (`r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(prop_jn)*100`%), while Wiley recorded `r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(articles)` articles (`r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(prop_art)*100`%) in`r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(n_journals)` hybrid journals (`r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(prop_jn)*100`%).
+The remaining `r jn_upset_publisher |> filter(publisher == "Other") |> distinct(esac_publisher) |> nrow()` publishers collectively accounted for `r jn_upset_publisher_all |> filter(publisher == "Other") |> pull(articles)` articles (`r jn_upset_publisher_all |> filter(publisher == "Other") |> pull(prop_art)*100`%) in `r jn_upset_publisher_all |> filter(publisher == "Other") |> pull(n_journals)` hybrid journals (`r jn_upset_publisher_all |> filter(publisher == "Other") |> pull(prop_jn)*100`%).
 
 
 ```{r upset_publisher_plot, fig.asp=0.75}
@@ -604,9 +612,38 @@ upset_publisher_plot <- ComplexUpset::upset(
 upset_publisher_plot & my_upset_theme 
 ```
 
-When considering journals exlcusively covered by Scopus and Web of Science
+The three largest publishers--Elsevier, Springer Nature and Wiley--were best represented in the exclusive intersection of all three data sources  (hoaddata, Scopus, and Web of Science).
+Together, they comprised `r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(n_journals) |> sum()` hybrid journals (`r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(n_journals) |> sum() / nrow(union_jns)*100`% of the intersectional set) and dominated article coverage with `r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(articles) |> sum()` (`r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(articles) |> sum() / upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum()*100`%), as determined through shared DOIs.
+When examining publication volume per journal, (\ref{fig-upset_coverage_results_publisher}C), Elsevier published, on average, the largest journals, followed by Springer Nature and Wiley.
 
-When considering journals exlcusively covered by hoaddata
+A comparative analysis of publisher portfolios across different indexing sets demonstrates that publisher were not represented uniformly. 
+Springer Nature exhibited `r jn_upset_publisher |> filter(esac_publisher == "Springer Nature", WoS == FALSE, Crossref == TRUE, Scopus == TRUE) |> distinct(issn_l) |> nrow()` hybrid journals exclusively indexed in both hoaddata and Scopus.
+This set included journals from the Chinese Academy of Science, German-language medical journals, and Eastern European publications including the *Journal of Mathematical Sciences*, which also publishes English-language translations of Russian-language works. 
+Additionally, this subset included titles with a more broader disciplianry focus such as *SN Computer Science* and newly launched hybrid journals like *Nature Computational Science*, which started in 2021 and was indexed in Scopus but not yet in Web of Science.
+The set also captured ceased journals, providing insights into the dynamic nature of journal portfolios and business strategies.
 
+
+```{r miss_portfolios}
+miss_tas <- jn_upset_publisher |> 
+  filter(Crossref == FALSE) |> 
+  group_by(esac_publisher) |> 
+  summarise(journals = n_distinct(issn_l),
+            n = sum(overlap, na.rm = TRUE)) |> 
+  arrange(desc(n)) 
+
+cr_tas <- jn_upset_publisher |>
+  filter(Crossref == TRUE) |> 
+  pull(esac_publisher)
+
+miss_publishers <- miss_tas |>
+  filter(!esac_publisher %in% cr_tas)
+```
+
+Further examination of publisher portfolios not covered by hoaddata but present in Scopus or Web of Science identified several publishers with missing Creative Commons (CC) license information in Crossref.
+In particular, `r miss_tas$esac_publisher[1]` represented `r miss_tas$journals[1]` journals with `r miss_tas$n[1]` articles, `r miss_tas$esac_publisher[2]` accounted for `r miss_tas$journals[2]` journals with `r miss_tas$n[2]` articles, and `r miss_tas$esac_publisher[3]` recorded `r miss_tas$journals[3]` journals and `r miss_tas$n[3]` articles.
+In total, `r nrow(miss_publishers)` publishers were not represented in Crossref.
+
+An inspection of individual journals uncovered discrepancies in Unpaywall's open access identification for certain publishers that typically deposit CC licenses with Crossref.
+Notably, some subscription-only journals contained one or two articles erroneously tagged as hybrid open access by Unpaywall, which were subsequently reflected in Scopus and Web of Science. Examples of such misclassifications include Elsevier's *Journal of Bioscience and Bioengineering* and Springer Nature's *Journal of Mechanical Science and Technology*. 
 
 # discussion
