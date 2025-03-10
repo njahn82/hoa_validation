@@ -278,6 +278,7 @@ aff_ind <- bind_rows(
               scp = scp_cor_au_with_affiliation), .id = "indicator"
 )
 
+
 # Save
 save(# Journals
   jns_ind,
@@ -369,3 +370,66 @@ cr_df |>
   distinct(doi) |>
   write_csv(here::here("data-raw", "missing_dois_in_active_jns.csv"))
 
+# TA OA Indicators
+# Web of Science
+wos_jn_by_year <- readr::read_csv(here::here("data", "wos_jn_by_year.csv")) 
+
+wos_jn_ta_by_year <- readr::read_csv(here::here("data", "wos_jn_ta_by_year.csv"))
+
+wos_ta_df <- wos_jn_by_year |>
+  # only hybrid journals with at least one oa between 2018 - 2023
+  filter(issn_l %in% wos_active_jns_with_oa$issn_l) |>
+  left_join(wos_jn_ta_by_year, by = c("issn_l", "earliest_year", "pub_type" = "pubtype")) |>
+  # Focus on core
+  filter(pub_type == "core") |>
+  mutate(src = "Web of Science") |>
+  select(-pub_type)
+
+# Scopus
+scp_jn_by_year <-  readr::read_csv(here::here("data", "scp_jn_by_year.csv")) 
+
+scp_jn_ta_by_year <- readr::read_csv(here::here("data", "scp_ta_jn_by_year.csv"))
+
+scp_ta_df <-  scp_jn_by_year |>
+  # only hybrid journals with at least one oa between 2018 - 2023
+  filter(issn_l %in% scp_active_jns_with_oa$issn_l) |>
+  left_join(scp_jn_ta_by_year, by = c("issn_l", "earliest_year", "pub_type" = "pubtype")) |>
+  # Focus on core
+  filter(pub_type == "core") |>
+  mutate(src = "Scopus") |>
+  select(-pub_type)
+
+# HOAD
+hoad_jn_by_year_ <- active_jns_with_oa |>
+  mutate(cr_year = as.numeric(as.character(cr_year))) |>
+  distinct(issn_l, cr_year, n = jn_all)
+hoad_oa_jn_by_year <- hoaddata::cc_articles |>
+  group_by(issn_l, cr_year) |>
+  summarise(oa_articles = n_distinct(doi))
+
+hoad_jn_by_year <- inner_join(hoad_jn_by_year_, hoad_oa_jn_by_year, by = c("issn_l", "cr_year"))
+
+hoad_jn_ta_by_year <- readr::read_csv(here::here("data-raw", "ta_oa_inst.csv"))
+
+hoad_ta_by_year <- hoad_jn_ta_by_year |>
+  filter(issn_l %in% active_jns_with_oa$issn_l, ta_active == TRUE) |>
+  group_by(issn_l, cr_year) |>
+  summarise(ta_first_author_articles = n_distinct(doi))
+
+hoad_ta_oa_by_year <- hoad_jn_ta_by_year |>
+  filter(issn_l %in% active_jns_with_oa$issn_l, ta_active == TRUE, !is.na(cc)) |>
+  group_by(issn_l, cr_year) |>
+  summarise(ta_oa_first_author_articles = n_distinct(doi))
+
+hoad_jn_ta_by_year_ <- left_join(hoad_ta_by_year, hoad_ta_oa_by_year)
+
+hoad_ta_df <- hoad_jn_by_year |>
+  left_join(hoad_jn_ta_by_year_) |>
+  # https://stackoverflow.com/a/73621978
+  {\(.) {replace(.,is.na(.),0)}}() |>
+  mutate(src = "HOAD") |>
+  distinct(issn_l, earliest_year = cr_year, n, oa_articles, ta_articles = ta_first_author_articles, ta_first_author_articles, ta_oa_articles = ta_oa_first_author_articles, ta_oa_first_author_articles, src) 
+
+uptake_df <- bind_rows(wos_ta_df, scp_ta_df, hoad_ta_df) |>
+  mutate_if(is.numeric, ~replace(., is.na(.), 0))
+write_csv(uptake_df, here::here("data", "uptake_df.csv"))

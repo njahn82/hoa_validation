@@ -648,9 +648,132 @@ Notably, some subscription-only journals contained one or two articles erroneous
 
 ## Replication
 
+```{r, rep_data}
+uptake_df <- readr::read_csv(here::here("data", "uptake_df.csv"))
+```
+
 This section examines the open access uptake in hybrid journals, focusing on the influence of transformative agreements across hoaddata, Scopus and Web of Science.
 A key objective of this analysis is to determine whether consistent results can be derived across these three data sources, despite their differing coverage and methodologies. 
-By identifying potential variations, this study evaluates the suitability of open data approaches, such as hoaddata, as alternatives to proprietary bibliometric databases like Scopus and Web of Science.
+
+```{r, plot_uptake_overview, fig.asp=.5}
+uptake_df <- readr::read_csv(here::here("data", "uptake_df.csv"))
+
+# Data prep
+uptake_by_year <- uptake_df |>
+  mutate(earliest_year = gsub("^20", "'", as.character(earliest_year))) |>
+  group_by(earliest_year, src) |>
+  summarize(
+    n_articles = sum(n),
+    n_oa_articles = sum(oa_articles),
+    ta_oa_first_author_articles = sum(ta_oa_first_author_articles),
+    ta_oa_corresponding_author_articles = sum(ta_oa_corresponding_author_articles)
+  )
+
+uptake_by_year_df <- uptake_by_year |>
+  pivot_longer(cols = c(ta_oa_first_author_articles, ta_oa_corresponding_author_articles))
+
+plot_oa_all <- ggplot(uptake_by_year_df, aes(x = earliest_year)) +
+  geom_line(aes(y = n_oa_articles / n_articles, group = src, color = src), linetype = "solid") +
+  geom_point(aes(y = n_oa_articles / n_articles, fill = src), alpha = 0.5, shape = 21) +
+  scale_fill_manual(NULL,
+    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c"),
+    guide = "none"
+  ) +
+  scale_color_manual(NULL,
+    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c")
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  labs(y = "Hybrid OA Uptake", x = NULL)
+
+plot_ta_oa <- ggplot(filter(uptake_by_year_df, value > 0), aes(x = earliest_year)) +
+  geom_line(aes(
+    y = value,
+    group = interaction(src, name),
+    color = src, # Color by src only
+    linetype = name
+  )) + # Use linetype for name
+  geom_point(aes(y = value, fill = src), alpha = 0.8, shape = 21) +
+  scale_color_manual(NULL, values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c")) +
+  scale_fill_manual(NULL,
+                    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c"),
+                    guide = "none") +
+  scale_linetype_manual(NULL,
+    values = c(
+      `ta_oa_first_author_articles` = "longdash",
+      `ta_oa_corresponding_author_articles` = "dotted"
+    ),
+    labels = c(
+      `ta_oa_first_author_articles` = "First",
+      `ta_oa_corresponding_author_articles` = "Corresponding"
+    )
+  ) +
+  scale_y_continuous(
+    labels = function(x) format(x, big.mark = ",", scientific = FALSE),
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  labs(y = "Hybrid OA via Agreement", x = "Publication Year")
+
+plot_ta_perc <- ggplot(filter(uptake_by_year_df, value > 0), aes(x = earliest_year)) +
+  geom_line(aes(
+    y = value / n_oa_articles,
+    group = interaction(src, name),
+    color = src, # Color by src only
+    linetype = name
+  )) + # Use linetype for name
+  geom_point(aes(y = value / n_oa_articles, fill = src), alpha = 0.8, shape = 21) +
+  scale_color_manual(NULL, values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c")) +
+  scale_fill_manual(NULL,
+                    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c"),
+                    guide = "none") +  
+  scale_linetype_manual(NULL,
+    values = c(
+      `ta_oa_first_author_articles` = "longdash",
+      `ta_oa_corresponding_author_articles` = "dotted"
+    ),
+    labels = c(
+      `ta_oa_first_author_articles` = "First",
+      `ta_oa_corresponding_author_articles` = "Corresponding"
+    )
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  labs(y = "% of Hybrid OA via Agreement", x = NULL)
+
+layout <- "ABC
+EEE"
+
+combined_plot <- wrap_plots(
+  E = guide_area(),
+  A = plot_oa_all,
+  B = plot_ta_oa,
+  C = plot_ta_perc,
+  heights = c(1, 0),
+  design = layout
+) &
+  theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      panel.border = element_rect(color = "grey50", fill = NA),
+      text = element_text(size = 10)
+    ) &
+  plot_annotation(tag_levels = "A")
+
+combined_plot + plot_layout(guides = "collect")
+```
+
+Following @Jahn_2025, Figure ...
+
+
+<!-- By identifying potential variations, this study evaluates the suitability of open data approaches, such as hoaddata, as alternatives to proprietary bibliometric databases like Scopus and Web of Science.-->
+
 
 Following @Jahn_2025, the impact of transformative agreements on hybrid open access is assessed by analysing the proportion of open access articles, both overall and those specifically enabled by transformative agreements. 
 The analysis covers the publication years 2019 to 2023, providing insights into temporal trends in the adoption of transformative agreements and their influence on open access in hybrid journals.
