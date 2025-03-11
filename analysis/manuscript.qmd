@@ -646,18 +646,22 @@ In total, `r nrow(miss_publishers)` publishers were not represented in Crossref.
 An inspection of individual journals uncovered discrepancies in Unpaywall's open access identification for certain publishers that typically deposit CC licenses with Crossref.
 Notably, some subscription-only journals contained one or two articles erroneously tagged as hybrid open access by Unpaywall, which were subsequently reflected in Scopus and Web of Science. Examples of such misclassifications include Elsevier's *Journal of Bioscience and Bioengineering* and Springer Nature's *Journal of Mechanical Science and Technology*. 
 
-## Replication
+## Open Access Indicator Comparision
 
+This section examines the uptake of open access in hybrid journals, focussing on the influence of transformative agreements across hoaddata, Scopus and Web of Science.
+The analysis aims to determine whether consistent results can be derived from these three data sources despite their differing coverage and methodologies. 
+Following @Jahn_2025, indicators include the number and proportion of open access articles, both overall and those specifically enabled by transformative agreements. 
+The analysis compares the development of these indicators over time between 2019 and 2023 across all three data sources.
 
-This section examines the open access uptake in hybrid journals, focusing on the influence of transformative agreements across hoaddata, Scopus and Web of Science.
-A key objective of this analysis is to determine whether consistent results can be derived across these three data sources, despite their differing coverage and methodologies. 
 
 ```{r, plot_uptake_overview, fig.asp=.5}
+#| fig-cap: "Open Access indicato"
+#| label: fig-uptake_overview
+#| 
 uptake_df <- readr::read_csv(here::here("data", "uptake_df.csv"))
 
 # Data prep
 uptake_by_year <- uptake_df |>
-  mutate(earliest_year = gsub("^20", "'", as.character(earliest_year))) |>
   group_by(earliest_year, src) |>
   summarize(
     n_articles = sum(n),
@@ -666,18 +670,24 @@ uptake_by_year <- uptake_df |>
     ta_oa_corresponding_author_articles = sum(ta_oa_corresponding_author_articles)
   )
 
+uptake_by_year_short <- uptake_by_year |>
+  mutate(oa_prop = n_oa_articles / n_articles,
+         ta_oa_prop = ta_oa_first_author_articles / n_oa_articles,
+         ta_oa_cor_prop = ta_oa_corresponding_author_articles / n_oa_articles)
+
 uptake_by_year_df <- uptake_by_year |>
+  mutate(earliest_year = gsub("^20", "'", as.character(earliest_year))) |>
   pivot_longer(cols = c(ta_oa_first_author_articles, ta_oa_corresponding_author_articles))
 
 plot_oa_all <- ggplot(uptake_by_year_df, aes(x = earliest_year)) +
   geom_line(aes(y = n_oa_articles / n_articles, group = src, color = src), linetype = "solid") +
   geom_point(aes(y = n_oa_articles / n_articles, fill = src), alpha = 0.5, shape = 21) +
   scale_fill_manual(NULL,
-    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c"),
+    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
     guide = "none"
   ) +
   scale_color_manual(NULL,
-    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c")
+   values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")
   ) +
   scale_y_continuous(
     labels = scales::percent_format(),
@@ -694,9 +704,9 @@ plot_ta_oa <- ggplot(filter(uptake_by_year_df, value > 0), aes(x = earliest_year
     linetype = name
   )) + # Use linetype for name
   geom_point(aes(y = value, fill = src), alpha = 0.8, shape = 21) +
-  scale_color_manual(NULL, values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c")) +
+  scale_color_manual(NULL, values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c"),
+                    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
                     guide = "none") +
   scale_linetype_manual(NULL,
     values = c(
@@ -723,9 +733,9 @@ plot_ta_perc <- ggplot(filter(uptake_by_year_df, value > 0), aes(x = earliest_ye
     linetype = name
   )) + # Use linetype for name
   geom_point(aes(y = value / n_oa_articles, fill = src), alpha = 0.8, shape = 21) +
-  scale_color_manual(NULL, values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c")) +
+  scale_color_manual(NULL, values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c"),
+                    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
                     guide = "none") +  
   scale_linetype_manual(NULL,
     values = c(
@@ -766,19 +776,34 @@ combined_plot <- wrap_plots(
 combined_plot + plot_layout(guides = "collect")
 ```
 
+### Overview
+
+Figure \ref{fig-uptake_overview}A shows a moderate growth of open access in hybrid journals, which is consistent across hoaddata (black line), Scopus (orange line) and Web of Science (blue line).
+In 2023, hybrid open access uptake reached  `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(oa_prop)*100`%  in hoaddata (n = `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(n_oa_articles)`) and Scopus (n = `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(n_oa_articles)`), and `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(oa_prop) * 100`%  in Web of Science (n = `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(n_oa_articles)`.
+
+The number and proportion of open access articles enabled through transformative agreements increased between 2019 and 2023 (Figures \ref{fig-uptake_overview}B and C).
+These trends remained consistent when estimating open access via first author (dashed line) and corresponding author (dotted line) affiliation metadata. 
+Using Scopus, it was possible to attribute `r uptake_by_year_short |> filter(src == "Scopus") |> pull(ta_oa_first_author_articles) |> sum()` open access articles to transformative agreements based on first author metadata (increasing from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`) and `r uptake_by_year_short |> filter(src == "Scopus") |> pull(ta_oa_corresponding_author_articles) |> sum()` using corresponding author metadata (from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(ta_oa_corresponding_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_corresponding_author_articles) |> sum()`).
+Web of Science recorded `r uptake_by_year_short |> filter(src == "Web of Science") |> pull(ta_oa_first_author_articles) |> sum()` open access articles via transformative agreements using first author metadata ( growing from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`)  and  `r uptake_by_year_short |> filter(src == "Web of Science") |> pull(ta_oa_corresponding_author_articles) |> sum()` using corresponding author metadata (from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(ta_oa_corresponding_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_corresponding_author_articles) |> sum()`).
+The development over the years for hoadata is shown only for first authors due to unavailable corresponding author data. 
+In total, hoaddata linked `r uptake_by_year_short |> filter(src == "HOAD") |> pull(ta_oa_first_author_articles) |> sum()` open access articles to transformative agreements, making it the most comprehensive data source for first-author analysis. 
+However, hoaddata showed slower growth compared to the other two data sources, as illustrated by its fewer articles than Scopus in 2023. 
+Furthermore, Scopus and Web of Science recorded slighlty fewer articles for first author articles than those reported for corresponding authors.
+
+When considering the percentage of hybrid open access through transformative agreements relative to total open access, all data sources consistently indicate that between 2021 and 2022, the majority of open access was enabled by transformative agreements.
+This trend can be obsverved for both first and corresponding author affiliations.
+For first authors, the share of open access ranged between `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_prop) * 100` % (Web of Science),  `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_prop) * 100`% (Scopus) and  `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(ta_oa_prop) * 100`% (hoaddata).
+For corresponding authors, the share was slighly larger, with Web of Science recording `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_cor_prop) * 100` % and Scopus  `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_cor_prop) * 100`%)
+Nevertheless, substantial amounts of hybrid open access were still facilitated by means other than transformative agreements, likely through APCs invoiced to researchers and paid from research funds.
+
+Despite these similarities, the results also reveal notable differences. 
+Specifically, the Web of Science recorded substantially higher open access uptake in the early years compared to Scopus and hoaddata, before converging in 2023. This suggests that delayed open access, i.e., open access after an embargo period, was labeled as hybrid open access in the Web of Science.
+
+### Open access by publishers
+
+When considering open access trends by publisher, it becomes evident that in particular due to Elsevier, the largest publsiher in our sample. 
 Following @Jahn_2025, Figure ...
 
-
-<!-- By identifying potential variations, this study evaluates the suitability of open data approaches, such as hoaddata, as alternatives to proprietary bibliometric databases like Scopus and Web of Science.-->
-
-
-Following @Jahn_2025, the impact of transformative agreements on hybrid open access is assessed by analysing the proportion of open access articles, both overall and those specifically enabled by transformative agreements. 
-The analysis covers the publication years 2019 to 2023, providing insights into temporal trends in the adoption of transformative agreements and their influence on open access in hybrid journals.
-The analysis will present breakdowns by publishers and countries.
-
-A complicating factor in the comparision is the differing coverage of author affiliation data across the datasets.
-In hoaddata, which relies on OpenAlex for affiliation information, the lack of comprehensive corresponding author data restricts the analysis to first authors when estimating the influence of transformative agreements. 
-In contrast, Scopus and Web of Science provide more robust coverage of corresponding author affiliations, enabling a comparative assessment of how authorship roles--first versus corresponding authors--influence estimates of open access funding through transformative agreements.
 
 ```{r plot_publisher_uptake_overview, fig.asp=1.1}
 uptake_publisher <- uptake_df |>
@@ -802,11 +827,11 @@ publisher_plot_oa_all <- ggplot(uptake_by_year_publisher_df, aes(x = earliest_ye
   geom_line(aes(y = n_oa_articles / n_articles, group = src, color = src), linetype = "solid") +
   geom_point(aes(y = n_oa_articles / n_articles, fill = src), alpha = 0.5, shape = 21) +
   scale_fill_manual(NULL,
-    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c"),
+    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
     guide = "none"
   ) +
   scale_color_manual(NULL,
-    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c")
+    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")
   ) +
   scale_y_continuous(
     labels = scales::percent_format(),
@@ -824,9 +849,9 @@ publisher_plot_ta_oa <- ggplot(filter(uptake_by_year_publisher_df, value > 0), a
     linetype = name
   )) + # Use linetype for name
   geom_point(aes(y = value, fill = src), alpha = 0.8, shape = 21) +
-  scale_color_manual(NULL, values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c")) +
+  scale_color_manual(NULL, values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c"),
+                    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
                     guide = "none") +
   scale_linetype_manual(NULL,
     values = c(
@@ -854,9 +879,9 @@ publisher_plot_ta_perc <- ggplot(filter(uptake_by_year_publisher_df, value > 0),
     linetype = name
   )) + # Use linetype for name
   geom_point(aes(y = value / n_oa_articles, fill = src), alpha = 0.8, shape = 21) +
-  scale_color_manual(NULL, values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c")) +
+  scale_color_manual(NULL, values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`HOAD` = "#595959", `Scopus` = "#2066a8", `Web of Science` = "#ae282c"),
+                    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
                     guide = "none") +  
   scale_linetype_manual(NULL,
     values = c(
