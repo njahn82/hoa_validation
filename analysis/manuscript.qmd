@@ -648,10 +648,10 @@ Notably, some subscription-only journals contained one or two articles erroneous
 
 ## Open Access Indicator Comparision
 
-This section examines the uptake of open access in hybrid journals, focussing on the influence of transformative agreements across hoaddata, Scopus and Web of Science.
-The analysis aims to determine whether consistent results can be derived from these three data sources despite their differing coverage and methodologies. 
-Following @Jahn_2025, indicators include the number and proportion of open access articles, both overall and those specifically enabled by transformative agreements. 
-The analysis compares the development of these indicators over time between 2019 and 2023 across all three data sources.
+This section examines the uptake of open access in hybrid journals, focusing on the influence of transformative agreements across hoaddata, Scopus, and Web of Science.
+The analysis assesses whether consistent results can be derived from these data sources despite differences in coverage and methodologies. 
+Following @Jahn_2025, indicators were calculated for each data source and comprise the number and proportion of open access articles, including those enabled by transformative agreements, from 2019 to 2023.
+For Web of Science and Scopus, the impact of transformative agreements was estimated using both first and corresponding authorships, while hoaddata indicator calculation was limited to first-author affiliations.
 
 
 ```{r, plot_uptake_overview, fig.asp=.5}
@@ -778,40 +778,31 @@ combined_plot + plot_layout(guides = "collect")
 
 ### Overview
 
-Figure \ref{fig-uptake_overview}A shows a moderate growth of open access in hybrid journals, which is consistent across hoaddata (black line), Scopus (orange line) and Web of Science (blue line).
-In 2023, hybrid open access uptake reached  `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(oa_prop)*100`%  in hoaddata (n = `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(n_oa_articles)`) and Scopus (n = `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(n_oa_articles)`), and `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(oa_prop) * 100`%  in Web of Science (n = `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(n_oa_articles)`.
+Figure \ref{fig-uptake_overview}A shows a moderate growth of open access in hybrid journals, which is consistent across hoaddata (black line), Scopus (orange line), and Web of Science (blue line).
+According to hoaddata, hybrid open access uptake increased from `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2019) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2019) |> pull(n_oa_articles)`) in 2019 to `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(n_oa_articles)`) in 2023.
+Similarly, Scopus recorded an growth from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(n_oa_articles)`) in 2019 to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(n_oa_articles)`) in 2023.
+However, Web of Science recorded higher open access uptake in early years, before converging in 2023, from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(n_oa_articles)`) in 2019 to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(n_oa_articles)`) in 2023.
+This may reflect delayed open access being labeled as hybrid in Web of Science.
 
-The number and proportion of open access articles enabled through transformative agreements increased between 2019 and 2023 (Figures \ref{fig-uptake_overview}B and C).
-These trends remained consistent when estimating open access via first author (dashed line) and corresponding author (dotted line) affiliation metadata. 
-Using Scopus, it was possible to attribute `r uptake_by_year_short |> filter(src == "Scopus") |> pull(ta_oa_first_author_articles) |> sum()` open access articles to transformative agreements based on first author metadata (increasing from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`) and `r uptake_by_year_short |> filter(src == "Scopus") |> pull(ta_oa_corresponding_author_articles) |> sum()` using corresponding author metadata (from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(ta_oa_corresponding_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_corresponding_author_articles) |> sum()`).
-Web of Science recorded `r uptake_by_year_short |> filter(src == "Web of Science") |> pull(ta_oa_first_author_articles) |> sum()` open access articles via transformative agreements using first author metadata ( growing from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`)  and  `r uptake_by_year_short |> filter(src == "Web of Science") |> pull(ta_oa_corresponding_author_articles) |> sum()` using corresponding author metadata (from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(ta_oa_corresponding_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_corresponding_author_articles) |> sum()`).
-The development over the years for hoadata is shown only for first authors due to unavailable corresponding author data. 
-In total, hoaddata linked `r uptake_by_year_short |> filter(src == "HOAD") |> pull(ta_oa_first_author_articles) |> sum()` open access articles to transformative agreements, making it the most comprehensive data source for first-author analysis. 
-However, hoaddata showed slower growth compared to the other two data sources, as illustrated by its fewer articles than Scopus in 2023. 
-Furthermore, Scopus and Web of Science recorded slighlty fewer articles for first author articles than those reported for corresponding authors.
+Open access by transformative agreements increased between 2019 and 2023 (Figures \ref{fig-uptake_overview}B and C).
+Trends were consistent for first (dashed line) and corresponding author (dotted line) affiliations. 
+According to Scopus, `r uptake_by_year_short |> filter(src == "Scopus") |> pull(ta_oa_first_author_articles) |> sum()` open access articles could be attributed to transformative agreements based on first author metadata (increasing from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`) and `r uptake_by_year_short |> filter(src == "Scopus") |> pull(ta_oa_corresponding_author_articles) |> sum()` using corresponding author metadata (from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(ta_oa_corresponding_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_corresponding_author_articles) |> sum()`).
+Web of Science recorded `r uptake_by_year_short |> filter(src == "Web of Science") |> pull(ta_oa_first_author_articles) |> sum()` open access articles via transformative agreements using first author metadata (increasing from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`)  and  `r uptake_by_year_short |> filter(src == "Web of Science") |> pull(ta_oa_corresponding_author_articles) |> sum()` using corresponding author metadata (from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(ta_oa_corresponding_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_corresponding_author_articles) |> sum()`).
+hoaddata, lacking corresponding author data, linked `r uptake_by_year_short |> filter(src == "HOAD") |> pull(ta_oa_first_author_articles) |> sum()` articles to transformative agreements but showed slower growth than Scopus and Web of Science, from `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`.
 
-When considering the percentage of hybrid open access through transformative agreements relative to total open access, all data sources consistently indicate that between 2021 and 2022, the majority of open access was enabled by transformative agreements.
-This trend can be obsverved for both first and corresponding author affiliations.
-For first authors, the share of open access ranged between `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_prop) * 100` % (Web of Science),  `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_prop) * 100`% (Scopus) and  `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(ta_oa_prop) * 100`% (hoaddata).
-For corresponding authors, the share was slighly larger, with Web of Science recording `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_cor_prop) * 100` % and Scopus  `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_cor_prop) * 100`%)
-Nevertheless, substantial amounts of hybrid open access were still facilitated by means other than transformative agreements, likely through APCs invoiced to researchers and paid from research funds.
-
-Despite these similarities, the results also reveal notable differences. 
-Specifically, the Web of Science recorded substantially higher open access uptake in the early years compared to Scopus and hoaddata, before converging in 2023. This suggests that delayed open access, i.e., open access after an embargo period, was labeled as hybrid open access in the Web of Science.
+From 2021 (hoadata, Scopus) resp. 2022 (Web of Science),  transformative agreements enabled the majority of hybrid open access.
+For first authors, the share ranged between `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_prop) * 100` % (Web of Science),  `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_prop) * 100`% (Scopus), and  `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(ta_oa_prop) * 100`% (hoaddata) in 2023.
+For corresponding authors, the shares were slightly larger, with Web of Science recording `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_cor_prop) * 100` % and Scopus  `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_cor_prop) * 100`% in 2023.
+However, substantial hybrid open access was still facilitated outside transformative agreements, likely through APCs payed from discretionary research funds (ref).
 
 ### Open access by publishers
 
-When considering open access trends by publisher, it becomes evident that in particular due to Elsevier, the largest publsiher in our sample. 
-Following @Jahn_2025, Figure ...
-
-
-```{r plot_publisher_uptake_overview, fig.asp=1.1}
+```{r uptake_publisher} 
 uptake_publisher <- uptake_df |>
   inner_join(esac, by = "issn_l") |>
   filter(earliest_year != "2018")
 
 uptake_publisher_by_year <- uptake_publisher |>
-  mutate(earliest_year = gsub("^20", "'", as.character(earliest_year))) |>
   group_by(earliest_year, src, publisher) |>
   summarize(
     n_articles = sum(n),
@@ -820,9 +811,22 @@ uptake_publisher_by_year <- uptake_publisher |>
     ta_oa_corresponding_author_articles = sum(ta_oa_corresponding_author_articles)
   )
 
-uptake_by_year_publisher_df <- uptake_publisher_by_year |>
-  pivot_longer(cols = c(ta_oa_first_author_articles, ta_oa_corresponding_author_articles))
+uptake_by_publisher_short <- uptake_publisher_by_year |>
+  mutate(oa_prop = n_oa_articles / n_articles,
+         ta_oa_prop = ta_oa_first_author_articles / n_oa_articles,
+         ta_oa_cor_prop = ta_oa_corresponding_author_articles / n_oa_articles)
 
+
+uptake_by_year_publisher_df <- uptake_publisher_by_year |>
+  mutate(earliest_year = gsub("^20", "'", as.character(earliest_year))) |>
+  pivot_longer(cols = c(ta_oa_first_author_articles, ta_oa_corresponding_author_articles))
+```
+
+
+```{r plot_publisher_uptake_overview, fig.asp=1.1}
+#| fig-cap: "Open Access indicato"
+#| label: fig-uptake_publisher
+#| 
 publisher_plot_oa_all <- ggplot(uptake_by_year_publisher_df, aes(x = earliest_year)) +
   geom_line(aes(y = n_oa_articles / n_articles, group = src, color = src), linetype = "solid") +
   geom_point(aes(y = n_oa_articles / n_articles, fill = src), alpha = 0.5, shape = 21) +
@@ -926,4 +930,29 @@ publisher_combined_plot + plot_layout(guides = "collect")
 
 ```
 
+When considering open access trends by publisher (see \ref{fig-uptake_publisher}), the observed differences in early uptake rates between hoaddata and Scopus compared to Web of Science can be largely attributed to articles published in Elsevier hybrid journals, the largest publisher in our sample. 
+Both hoadata and Scopus reported an steady increase in open access uptake between 2019 and 2023 (hoaddata from `r uptake_by_publisher_short |> filter(src == "HOAD", publisher == "Elsevier", earliest_year == 2019) |> pull(oa_prop)*100`% to `r uptake_by_publisher_short |> filter(src == "HOAD", publisher == "Elsevier", earliest_year == 2023) |> pull(oa_prop)*100`%; Scopus from `r uptake_by_publisher_short |> filter(src == "Scopus", publisher == "Elsevier", earliest_year == 2019) |> pull(oa_prop)*100`% to `r uptake_by_publisher_short |> filter(src == "Scopus", publisher == "Elsevier", earliest_year == 2023) |> pull(oa_prop)*100`%).
+In contrast, Elsevier's share remained relatively constant, increasing only slightly from `r uptake_by_publisher_short |> filter(src == "Web of Science", publisher == "Elsevier", earliest_year == 2019) |> pull(oa_prop)*100`% to `r uptake_by_publisher_short |> filter(src == "Web of Science", publisher == "Elsevier", earliest_year == 2023) |> pull(oa_prop)*100`% according to the Web of Science.
+Upon inspection, this discrepancy primarily stemmed from articles provided under Elsevier's user license, used for the publisher's open archive. 
+These articles, made freely available after an embargo period, were tagged as hybrid open access in Web of Science, even though its documentation specified that only articles under a CC license variant were considered. 
+Previous research [@Jahn_2021; @Haustein_APC_2024] has shown that Elsevier provided a substantial portion of its articles under this license, explaining the relatively large and stable share of open access over the years.
+
+Differences in open access evidence are also evident for Wiley. 
+Specifically, Web of Science and Scopus recorded a drop in 2021 and 2022 compared to hoaddata. 
+For these two years, hoaddata reported `r uptake_publisher_by_year |> filter(publisher == "Wiley", src == "HOAD", earliest_year %in% 2021:2022) |> pull(n_oa_articles) |> sum() - uptake_publisher_by_year |> filter(publisher == "Wiley", src == "Scopus", earliest_year %in% 2021:2022) |> pull(n_oa_articles) |> sum()` more open access articles than Scopus and `r uptake_publisher_by_year |> filter(publisher == "Wiley", src == "HOAD", earliest_year %in% 2021:2022) |> pull(n_oa_articles) |> sum() - uptake_publisher_by_year |> filter(publisher == "Wiley", src == "Web of Science", earliest_year %in% 2021:2022) |> pull(n_oa_articles) |> sum()` more than Web of Science. 
+This discrepancy is presumably because of challenges in fetching full-texts by Unpaywall, the open access evidence source for Scopus and Web of Science.
+According to Unpaywall's software version history, Wiley's publisher platform redirects prevented Unpaywall from parsing license information from full-texts.[^unpaywallwiley]
+hoaddata, which relies solely on Crossref license information, was unaffected by these issues.
+
+Despite these differences in open access evidence, the three data sources show consistent temporal trends in hybrid open access enabled by transformative agreements (see Figure \ref{fig-uptake_publisher}B and C).
+Wiley emerged as the fastest-growing publisher in terms of open access uptake, with more than 30% of articles in hybrid journals reported as open access in 2023 across all data sources, followed by Springer Nature and Elsevier. 
+By 2023, the share of open access enabled by transformative agreements appeared to stabilise for all three publishers, with Wiley recording the largest share (see Figure \ref{fig-uptake_publisher}B). 
+Elsevier, however, showed a comparable late uptake, consistent with the publisher's historical reluctance to engage in negotations with library consortia. 
+Interestingly, the differences between first and corresponding author affiliations were more pronounced at the publisher level. 
+In Scopus, for example, the share of open access via transformative agreements measured by corresponding authorship was greater for Springer Nature in 2023 than when using first authorship.
+
+### Open access by country
+
 # discussion
+
+[^unpaywallwiley]: See Unpaywall version history related to Wiley fixes: <https://github.com/search?q=repo%3Aourresearch%2Foadoi+wiley&type=commits>
