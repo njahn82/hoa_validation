@@ -953,6 +953,249 @@ In Scopus, for example, the share of open access via transformative agreements m
 
 ### Open access by country
 
+```{r country_data_prep}
+jn_df <- readr::read_csv(here::here("data", "jn_country_stats_all.csv")) |>
+  filter(issn_l != "0027-8424")
+oecd <- readr::read_csv("https://raw.githubusercontent.com/njahn82/hoa_ta_effects/refs/heads/main/data/oecd.csv")
+
+country_df <- jn_df |>
+  select(-earliest_year) |>
+  group_by(country_code) |>
+  summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE))) |>
+  mutate(country_group = case_when(
+    country_code %in% oecd$iso3 ~ "OECD",
+    country_code %in% c("BRA", "RUS", "IND", "CHN", "ZAF") ~ "BRICS",
+    .default = "Other"
+  ))
+
+country_article_plot_df <- country_df |>
+  select(country_code, country_group, hoad_articles, scp_first_author_articles, scp_corresponding_author_articles, wos_first_author_articles, wos_corresponding_author_articles) |>
+  pivot_longer(c(scp_first_author_articles, scp_corresponding_author_articles, wos_first_author_articles, wos_corresponding_author_articles)) |>
+  mutate(scr = sub("_.*", "", name)) |>
+  mutate(indicator = sub("^[^_]*_", "", name)) |>
+  mutate(scr = case_when(
+    scr == "scp" ~ "Scopus",
+    scr == "wos" ~ "Web of Science"
+  )) |>
+  mutate(indicator = case_when(
+    indicator == "first_author_articles" ~ "First",
+    indicator == "corresponding_author_articles" ~ "Corresponding"
+  ))
+
+articles_plot <- country_article_plot_df |>
+  filter(!is.na(country_code), hoad_articles > 10000) |>
+  ggplot(aes(x = hoad_articles, y = value, fill = country_group)) +
+  geom_point(pch = 21, size = 2.5) +
+  ggrepel::geom_text_repel(aes(label = country_code), size = 2) +
+  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf")) +
+  facet_grid(vars(indicator), vars(scr)) +
+  geom_abline() +
+  coord_fixed(ratio = 1) +
+  scale_x_log10(guide = "axis_logticks", labels = scales::number_format(big.mark = ",")) +
+  scale_y_log10(guide = "axis_logticks", labels = scales::number_format(big.mark = ",")) +
+  theme_minimal(base_size = 10) +
+  labs(x = "Article volume (log-scale)\nhoaddata", y = "Article volume (log-scale)") +
+  theme(
+    axis.ticks.x = element_line(size = 0.2),
+    axis.ticks.y = element_line(size = 0.2),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  theme(
+    legend.position = "top",
+    aspect.ratio = 1,
+    panel.border = element_rect(color = "grey50", fill = NA),
+    axis.title = element_text(size = 10)
+  )
+
+## OA Uptake
+oa_prop_plot_df <- country_df |>
+  filter(!is.na(country_code), hoad_articles > 10000) |>
+  mutate(
+    hoad_oa_prop = hoad_oa_articles / hoad_articles,
+    scp_first_oa_prop = scp_oa_first_author_articles / scp_first_author_articles,
+    scp_corresponding_oa_prop = scp_oa_corresponding_author_articles / scp_corresponding_author_articles,
+    wos_first_oa_prop = wos_oa_first_author_articles / wos_first_author_articles,
+    wos_corresponding_oa_prop = wos_oa_corresponding_author_articles / wos_corresponding_author_articles
+  ) |>
+  select(country_code, country_group, contains("prop")) |>
+  pivot_longer(c(scp_first_oa_prop, scp_corresponding_oa_prop, wos_first_oa_prop, wos_corresponding_oa_prop)) |>
+  mutate(scr = sub("_.*", "", name)) |>
+  mutate(indicator = sub("^[^_]*_", "", name)) |>
+  mutate(scr = case_when(
+    scr == "scp" ~ "Scopus",
+    scr == "wos" ~ "Web of Science"
+  )) |>
+  mutate(indicator = case_when(
+    indicator == "first_oa_prop" ~ "First",
+    indicator == "corresponding_oa_prop" ~ "Corresponding"
+  ))
+
+oa_prop_plot <- ggplot(oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, fill = country_group)) +
+  geom_point(alpha = 1, pch = 21, size = 2.5) +
+  ggrepel::geom_text_repel(aes(label = country_code), size = 2) +
+  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
+  facet_grid(vars(indicator), vars(scr)) +
+  geom_abline() +
+  coord_fixed(ratio = 1) +
+  scale_x_continuous(
+    labels = scales::percent_format(),
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  theme_minimal(base_size = 10) +
+  labs(x = "Hybrid OA Uptake\nhoadata", y = "Hybrid OA Uptake") +
+    theme(
+    axis.ticks.x = element_line(size = 0.2),
+    axis.ticks.y = element_line(size = 0.2),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  theme(
+ #   strip.text.x = element_blank(),
+    legend.position = "top",
+    aspect.ratio = 1,
+    panel.border = element_rect(color = "grey50", fill = NA),
+    axis.title = element_text(size = 10)
+  )
+
+## Hybrid OA via agreement
+ta_oa_country_df <- country_df |>
+  filter(!is.na(country_code), hoad_articles > 10000) |>
+  select(country_code, country_group, hoad_ta_oa_articles, scp_ta_oa_first_author_articles, scp_ta_oa_corresponding_author_articles, wos_ta_oa_first_author_articles, wos_ta_oa_corresponding_author_articles) |>
+  pivot_longer(c(scp_ta_oa_first_author_articles, scp_ta_oa_corresponding_author_articles, wos_ta_oa_first_author_articles, wos_ta_oa_corresponding_author_articles)) |>
+  mutate(scr = sub("_.*", "", name)) |>
+  mutate(indicator = sub("^[^_]*_", "", name)) |>
+  mutate(scr = case_when(
+    scr == "scp" ~ "Scopus",
+    scr == "wos" ~ "Web of Science"
+  )) |>
+  mutate(indicator = case_when(
+    indicator == "ta_oa_first_author_articles" ~ "First",
+    indicator == "ta_oa_corresponding_author_articles" ~ "Corresponding"
+  ))
+
+## Hybrid OA vioa agreement share
+ta_oa_country_plot <- ta_oa_country_df |>
+  filter(hoad_ta_oa_articles > 1000) |>
+  ggplot(aes(x = hoad_ta_oa_articles, y = value, fill = country_group)) +
+  geom_point(pch = 21, size = 2.5) +
+  ggrepel::geom_text_repel(aes(label = country_code), size = 2) +
+  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
+  facet_grid(vars(indicator), vars(scr)) +
+  geom_abline() +
+  coord_fixed(ratio = 1) +
+  scale_x_log10(guide = "axis_logticks", labels = scales::number_format(big.mark = ",")) +
+  scale_y_log10(guide = "axis_logticks", labels = scales::number_format(big.mark = ",")) +
+  theme_minimal(base_size = 10) +
+  labs(x = "Hybrid OA via Agreement (log-scale)\nhoadata", y = "Hybrid OA via Agreement (log-scale)") +
+  theme(
+    axis.ticks.x = element_line(size = 0.2),
+    axis.ticks.y = element_line(size = 0.2),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  theme(
+    legend.position = "top",
+    aspect.ratio = 1,
+    panel.border = element_rect(color = "grey50", fill = NA),
+    axis.title = element_text(size = 10)
+  )
+
+## Hybrid OA vio agreement share
+ta_oa_prop_plot_df <- country_df |>
+  filter(hoad_ta_oa_articles > 1000) |>
+  mutate(
+    hoad_oa_prop = hoad_ta_oa_articles / hoad_oa_articles,
+    scp_first_oa_prop = scp_ta_oa_first_author_articles / scp_oa_first_author_articles,
+    scp_corresponding_oa_prop = scp_ta_oa_corresponding_author_articles / scp_oa_corresponding_author_articles,
+    wos_first_oa_prop = wos_ta_oa_first_author_articles / wos_oa_first_author_articles,
+    wos_corresponding_oa_prop = wos_ta_oa_corresponding_author_articles / wos_oa_corresponding_author_articles
+  ) |>
+  select(country_code, country_group, contains("prop")) |>
+  pivot_longer(c(scp_first_oa_prop, scp_corresponding_oa_prop, wos_first_oa_prop, wos_corresponding_oa_prop)) |>
+  mutate(scr = sub("_.*", "", name)) |>
+  mutate(indicator = sub("^[^_]*_", "", name)) |>
+  mutate(scr = case_when(
+    scr == "scp" ~ "Scopus",
+    scr == "wos" ~ "Web of Science"
+  )) |>
+  mutate(indicator = case_when(
+    indicator == "first_oa_prop" ~ "First",
+    indicator == "corresponding_oa_prop" ~ "Corresponding"
+  ))
+
+ta_oa_prop_plot <- ggplot(ta_oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, fill = country_group)) +
+  geom_point(alpha = 1, pch = 21, size = 2.5) +
+  ggrepel::geom_text_repel(aes(label = country_code), size = 2) +
+  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
+  facet_grid(vars(indicator), vars(scr)) +
+  geom_abline() +
+  coord_fixed(ratio = 1) +
+  scale_x_continuous(
+    labels = scales::percent_format(),
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  theme_minimal(base_size = 10) +
+  labs(y = "% of Hybrid OA via Agreement", x = "% of Hybrid OA via Agreement\nhoadata") +
+  theme(
+    axis.ticks.x = element_line(size = 0.2),
+    axis.ticks.y = element_line(size = 0.2),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
+  ) +
+  theme(
+#    strip.text.x = element_blank(),
+    legend.position = "bottom",
+    aspect.ratio = 1,
+    panel.border = element_rect(color = "grey50", fill = NA),
+    axis.title = element_text(size = 10)
+  )
+```
+
+
+
+```{r oa_country_comparision_plot_, fig.asp=1, fig.width = 8.5}
+layout <- "EE
+AC
+BD"
+
+combined_oa_country_plot_ <- wrap_plots(
+  E = guide_area(),
+  A = articles_plot,
+  B = oa_prop_plot,
+  C = ta_oa_country_plot,
+  D = ta_oa_prop_plot,
+  design = layout,
+  heights = c(0,1,1)
+) &
+    theme(
+      legend.position = "top",
+      panel.border = element_rect(color = "grey50", fill = NA),
+      text = element_text(size = 10))
+
+combined_oa_country_plot_ + plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = 'A')
+```
+
+
+results are consistent.
+most represented are chinese, usa and india in temrs of articles.
+however, in terms of oa, other country lead,
+these are in particular those with transformative agremments
+
+overall, briscs and oecd, however, notable expection is south africa
+
+en though correlation exisits, a closer lokk at some temproarl trend revela (dahsboard), which countries were affected by inconsitstent oa evidnecie.
+heres is wiley, and there is france.
+
 # discussion
 
 [^unpaywallwiley]: See Unpaywall version history related to Wiley fixes: <https://github.com/search?q=repo%3Aourresearch%2Foadoi+wiley&type=commits>
