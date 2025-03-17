@@ -44,6 +44,8 @@ library(bigrquery)
 library(kableExtra)
 library(patchwork)
 library(ComplexUpset)
+library(ggrepel)
+library(ggpp)
 
 # Themes
 my_upset_theme <-
@@ -982,11 +984,16 @@ country_article_plot_df <- country_df |>
     indicator == "corresponding_author_articles" ~ "Corresponding"
   ))
 
+# Countries I want to highlight
+country_focus <- c("USA", "CHN", "IND", "DEU", "GBR", "NLD", "SWE", "FRA", "HKG", "ZAF", "HUN", "FIN", "AUT", "NOR", "IRL")
+
 articles_plot <- country_article_plot_df |>
   filter(!is.na(country_code), hoad_articles > 10000) |>
   ggplot(aes(x = hoad_articles, y = value, fill = country_group)) +
   geom_point(pch = 21, size = 2.5) +
-  ggrepel::geom_text_repel(aes(label = country_code), size = 2) +
+  ggrepel::geom_text_repel(data = filter(country_article_plot_df, country_code %in% country_focus),
+    aes(label = country_code), size = 2, min.segment.length = 0,
+                force = 50) +
   scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf")) +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
@@ -1032,8 +1039,9 @@ oa_prop_plot_df <- country_df |>
 
 oa_prop_plot <- ggplot(oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, fill = country_group)) +
   geom_point(alpha = 1, pch = 21, size = 2.5) +
-  ggrepel::geom_text_repel(aes(label = country_code), size = 2) +
-  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
+ggrepel::geom_text_repel(data = filter(oa_prop_plot_df, country_code %in% country_focus),
+    aes(label = country_code), size = 2, min.segment.length = 0,
+                force = 50) +  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
   coord_fixed(ratio = 1) +
@@ -1083,8 +1091,9 @@ ta_oa_country_plot <- ta_oa_country_df |>
   filter(hoad_ta_oa_articles > 1000) |>
   ggplot(aes(x = hoad_ta_oa_articles, y = value, fill = country_group)) +
   geom_point(pch = 21, size = 2.5) +
-  ggrepel::geom_text_repel(aes(label = country_code), size = 2) +
-  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
+ggrepel::geom_text_repel(data = filter(ta_oa_country_df, hoad_ta_oa_articles > 1000, country_code %in% country_focus),
+    aes(label = country_code), size = 2, min.segment.length = 0,
+                force = 50) +  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
   coord_fixed(ratio = 1) +
@@ -1129,10 +1138,14 @@ ta_oa_prop_plot_df <- country_df |>
 
 ta_oa_prop_plot <- ggplot(ta_oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, fill = country_group)) +
   geom_point(alpha = 1, pch = 21, size = 2.5) +
-  ggrepel::geom_text_repel(aes(label = country_code), size = 2) +
   scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
+  geom_text_repel(data = filter(ta_oa_prop_plot_df, country_code %in% country_focus),
+                aes(label = country_code),
+                min.segment.length = 0,
+                force = 50,
+                size = 2) +
   coord_fixed(ratio = 1) +
   scale_x_continuous(
     labels = scales::percent_format(),
@@ -1162,7 +1175,7 @@ ta_oa_prop_plot <- ggplot(ta_oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, f
 
 
 
-```{r oa_country_comparision_plot_, fig.asp=1, fig.width = 8.5}
+```{r oa_country_comparision_plot_, fig.asp=1, fig.width = 8}
 layout <- "EE
 AC
 BD"
@@ -1179,7 +1192,7 @@ combined_oa_country_plot_ <- wrap_plots(
     theme(
       legend.position = "top",
       panel.border = element_rect(color = "grey50", fill = NA),
-      text = element_text(size = 10))
+      text = element_text(size = 12))
 
 combined_oa_country_plot_ + plot_layout(guides = "collect") +
   plot_annotation(tag_levels = 'A')
