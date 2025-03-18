@@ -45,7 +45,6 @@ library(kableExtra)
 library(patchwork)
 library(ComplexUpset)
 library(ggrepel)
-library(ggpp)
 
 # Themes
 my_upset_theme <-
@@ -92,7 +91,7 @@ By conducting a large-scale comparative analysis, this study aims to
 
 This study investigates the suitability of open scholarly data sources for assessing the impact of transformative agreements on hybrid open access.
 As shown in Figure \ref{fig:workflow}, the methodology involved comparing hoaddata, an openly available collection of open research information on hybrid open access, with the bibliometric databases Web of Science and Scopus.
-This section introduces the initial data sources, followed by a presentation of the necessary data processing steps to obtain eligible articles from transformative agreements by using author roles (first and corresponding) and harmonised affiliation data.
+This section introduces the initial data sources, followed by a presentation of the necessary data processing steps to obtain eligible articles enabled by transformative agreements using author roles (first and corresponding) and harmonised affiliation data.
 <!-- Overall, xxxx hybrid journals from xxx agreements that published at least one open access article between 2019 and 2023. formed the basis of this study. -->
 
 <!-- Replication studies, which can be found in the Life, Natural and Social Sciences, typically employ the same or comparable methods as the original study to determine whether consistent results can be obtained (https://pmc.ncbi.nlm.nih.gov/articles/PMC10019630/). 
@@ -150,11 +149,11 @@ Overall, xxxx hybrid journals from xxx agreements formed the basis of this study
 
 ### hoaddata 
 
-hoaddata, developed and maintained by the author to support open access monitoring and research [@Jahn_2025], is an R data package collecting information on hybrid open access uptake from multiple openly available data sources.
+hoaddata, developed and maintained by the author to support open access monitoring and research [@Jahn_2025], is an R data package collecting information on hybrid open access uptake from multiple openly available data sources [@hoaddata].
 It combines article-level metadata from Crossref and OpenAlex with transformative agreement information from the cOAlition S Journal Checker Tool (JCT), which links journal and institutional data to agreements in the ESAC registry.
 
-As discussed elsewhere [@Jahn_2025], hoaddata uses a unified dataset of historic JCT snapshots, which were safeguarded since July 2021.
-Journal data were enriched with ISSN variants linked to an ISSN-L and insitution data with associated ROR-IDs representing university hospitals or institutes of large research organisations, according to OpenAlex' institution entity.
+As discussed elsewhere [@Jahn_2025], hoaddata uses a unified dataset of various safeguarded JCT snapshots.
+Journal data were enriched with ISSN variants linked to an ISSN-L and institution data with associated ROR-IDs representing university hospitals or institutes of large research organisations, according to OpenAlex' institution entity.
 A comprehensive exclusion of fully open access journals using multiple journal lists (DOAJ, OpenAlex, Bielefeld)  was performed to identify hybrid journals.
 hoaddata relies on Crossref for obtaining journal publication volume and open access status through Creative Commons licence information relative to the published version ("version of record").
 Because of limited affiliation metadata in Crossref [@van_Eck_2022], hoaddata sources  affiliation metadata from OpenAlex.
@@ -165,20 +164,21 @@ To improve the matching, JCT data were enriched to include associated institutio
 
 hoaddata follows good practices for computational reproducibility using R [@Marwick_2018].
 The package, which includes data, code, a test suite and documentation, is openly available on GitHub.
-To ensure computational reproducibility while aggregating the data, a GitHub Actions continuous integration and delivery (CI/CD) workflow handles data retrieval from the SUB Göttingen's open scholarly data warehouse based on Google BigQuery, which provides high-performant programmatic access to monthly snapshots of Crossref and OpenAlex.
+To ensure computational reproducibility while aggregating the data, a GitHub Actions continuous integration and delivery (CI/CD) workflow handles data retrieval from the SUB Göttingen's open scholarly data warehouse based on Google BigQuery, which provides high-performant programmatic access to monthly snapshots of Crossref and OpenAlex.[^subugoe]
 The workflow has run regularly to fetch updates from these data sources since 2022.
 The package version used in this study is 0.3, containing data from the Crossref 2024-08 dump provided to Crossref Metadata Plus subscribers and the OpenAlex 2024-08-29 monthly dump.
+It covers agreements collected between July 2021 to July 2024 from the JCT.
 This version including the computation log is available on GitHub (https://github.com/subugoe/hoaddata/releases/tag/v.0.3).
 
 ### Web of Science
 
 Clarivate Analytics' Web of Science (WoS) is a well-established proprietary bibliometric database consisting of several collections [@Birkle_2020]. 
-The collections considered in this study were the Science Citation Index Expanded (SCIE), the Social Sciences Citation Index (SSCI) and the Arts & Humanities Citation Index (AHCI), collectively referred to as Web of Science Primary (WoS Primary).
+The collections considered in this study were the Science Citation Index Expanded (SCIE), the Social Sciences Citation Index (SSCI) and the Arts & Humanities Citation Index (AHCI).
 
-The WoS Primary provides important data points for analysing open access: author affiliations and roles, differentiation of journal articles into document types representing different types of journal contributions, such as original articles or reviews, and open access status information derived from OurResearch's Unpaywall, the same provider as OpenAlex.
-However, it lacks information about journals and articles under transformative agreements.
+These collections provides important data points for analysing open access: author affiliations and roles, differentiation of journal articles into document types representing different types of journal contributions, such as original articles or reviews, and open access status information derived from OurResearch's Unpaywall, the same provider as OpenAlex.
+However, the Web of Science lacks information about journals and articles under transformative agreements.
 
-For programmatic access to article-level data, this study used the database of the Kompetenznetzwerk Bibliometrie (KB) in Germany. The KB processes raw XML data provided by Clarivate Analytics, which is provided as an in-house PostgreSQL database under a uniform schema.
+For programmatic access to article-level data, this study used the database of the Kompetenznetzwerk Bibliometrie (KB) in Germany. The KB processes raw XML data provided by Clarivate Analytics, which is ingested into an in-house PostgreSQL database under a uniform schema.
 To support reproducibility, KB maintains annual snapshots of the database. 
 Accordingly, this study used the annual snapshot from April 2024 (wos_b_202404), which is considered to cover almost the entire previous publication year [@schmidt_2024_13935407].
 
@@ -195,7 +195,7 @@ This study used the Scopus annual snapshot of April 2024 as provided by the KB (
 
 ### Determining hybrid journal publication volume
 
-The hoaddata package (v.0.3) provided an enriched and unified list of hybrid journals in transformative agreements according to the JCT, covering agreements active from July 2021 to July 2024 according to the ESAC registry.
+Using an enriched and unified list of hybrid journals in transformative agreements according to the JCT, article metadata were retrieved from each database using all ISSN variants linked to an ISSN-L.
 <!-- This study examined the adoption of open access for hybrid journals included in transformative agreements, which published at least one journal article in the five-year period 2019-2023. 
 The initial data source was the Transformative Agreements Public Data from the cOAlition S Journal Checker Tool (JCT), which helps authors identify suitable open access publishing venues, as provided by hoaddata.
  Weekly snapshots of this data were archived using an automated GitHub Actions workflow (https://github.com/njahn82/jct_data) and into hoaddata.
@@ -206,7 +206,7 @@ A comprehensive exclusion of fully open access journals was performed, following
 This involved checking multiple journal lists (DOAJ, OpenAlex, Bielefeld) and article-level investigations.
 The JCT institution data was enriched with ROR-IDs from associated institutions, such as university hospitals or institutes of large research organisations such as the Max Planck Society, according to OpenAlex' institution entity.
 <!-- In total, xxxx hybrid journals could be linked to xxx agreements listed in the ESAC Transformative Agreements Registry, which formed to basis for obtaining article-level data including author affiliations, open access status ans document types. -->
-Article metadata were retrieved from each database using all ISSN variants linked to an ISSN-L. The metadata included DOIs, publication dates, article types, open access information as well as author roles and institutional affiliations.
+The article metadata included DOIs, publication dates, open access information as well as author roles and institutional affiliations.
 Publication years were determined using the earliest known date of publication in a journal.
 In hoaddata, this corresponded to Crossref's issued date.<!--, although variations were observed (check ref)-->
 For Web of Science and Scopus, the earliest publication date was used where available, with Scopus dates specifically determined by the KB through version tracking of the raw data.
@@ -215,17 +215,17 @@ Many transformative agreements typically cover only certain types of journal
 articles, in particular original research articles including reviews.
 Because of limited information on these document types in open scholarly data [@Haupka_2024], hoaddata used an extended version of Unpaywall's paratext recognition approach to exclude non-scholarly content [@Piwowar_2018].
 To exclude conference supplements, which are also often not covered by transformative agreements, only articles published in regular issues, indicated by numerical pagination, were considered.
-For Web of Science and Scopus, their established document type classifications were used to identify original research articles and reviews, referred to as core articles throughout this study.
+For Web of Science and Scopus, their established document type classifications were used to identify original research articles and reviews, referred to as original articles throughout this study.
 
 <!-- literature to check https://direct.mit.edu/qss/article/3/1/99/109079/The-prevalence-and-impact-of-university-->
 
 ### Identifying open access articles in hybrid journals
 
-Published articles were considered hybrid open access  when they were made freely available under a Creative Commons license on publishers' platforms. 
-While hoaddata sourced this information from Crossref license metadata, Web of Science and Scopus relied on Unpaywall. 
+Articles in hybrid journals were considered open access when they were made freely available under a Creative Commons license on publishers' platforms. 
+While hoaddata sourced this information from Crossref license metadata, Web of Science and Scopus relied on Unpaywall as evidence source. 
 Unpaywall supplements Crossref metadata by parsing publisher websites directly, addressing cases where publishers do not provide machine-readable Creative Commons license information [@Piwowar_2018]. 
 This additional parsing remains necessary despite transformative agreement workflows recommend the depositing license information during DOI registration [@Geschuhn_2017].
-Both Web of Science and Scopus defined hybrid open access consistently as content available under Creative Commons licenses on publisher platforms, distinguishing it from bronze open access that lack such explicit license information.
+Both Web of Science and Scopus defined hybrid open access consistently as content available under Creative Commons licenses on publisher platforms, distinguishing it from bronze open access that lack such explicit license information, or use publisher-specific licenses.
 
 ### Harmonising author affiliations across databases
 
@@ -233,12 +233,12 @@ Both Web of Science and Scopus defined hybrid open access consistently as conten
 # Article level data TA
 ta_oa_inst <- readr::read_csv(here::here("data-raw", "ta_oa_inst.csv"))
 ```
-Author affiliations were retrieved for both first and, if available, corresponding authors across all databases to prepare the linking between articles and institutions covered by transformative agreements.
+Author affiliations were retrieved for both first and, if available, corresponding authors to prepare the linking between articles and institutions covered by transformative agreements.
 To handle different address variants, database-specific affiliation identifiers were used: ROR-IDs from OpenAlex for hoaddata, affiliation enhanced names for Web of Science, and Scopus Affiliation Identifiers for Scopus.
 Additionally, ISO country codes were retrieved for each author's address to compile country-level statistics. 
 These country codes for Web of Science and Scopus were provided by the KB.
 
-Because neither Web of Science nor Scopus support ROR IDs—the institution identifier used by the JCT—a two-step matching process was implemented to harmonise affiliation data.
+Because neither Web of Science nor Scopus support ROR IDs, the institution identifier used by the JCT, a two-step matching process was implemented to harmonise affiliation data.
 First, `r length(unique(ta_oa_inst$doi))` articles from `r length(unique(ta_oa_inst$ror))` institutions with ROR-IDs in the JCT data since 2017 (according to hoaddata) were processed to map first authors' ROR-IDs to corresponding proprietary affiliation identifier in Web of Science and Scopus using DOI matching.
 Then, an algorithm selected the most frequent ROR ID and proprietary identifier pairs to handle multiple affiliations and organisational hierarchy differences.
 
@@ -261,8 +261,8 @@ The matching also took into account the duration of agreements according to the 
 ## Data records 
 
 As a result of the comprehensive data processing described above, datasets on open access in hybrid journals included in transformative agreements were aggregated for each database at country and journal level by year.
-@tbl-methods_overview_tab provides a general overview of the coverage between 2019 and 2023 per database.
-It shows that the majority of hybrid journals published at least one original research article or review marked as core during the five-year period.
+@tbl-methods_overview_tab provides a general overview of the coverage between 2019 and 2023.
+It shows that the majority of hybrid journals published at least one original research article or review marked as original during the five-year period.
 These journals formed the basis for the subsequent calculation of article-level indicators.  
 
 ```{r methods_overview_tab}
@@ -286,11 +286,11 @@ methods_overview_table_df <- bind_rows(
       indicator == "ind_active_jns_core" ~ "Active journals (core)",
       indicator == "ind_active_jns_core_with_oa" ~ "Active journals (core) with OA",
       indicator == "ind_articles_total" ~ "Total published articles ",
-      indicator == "ind_articles_core" ~ "Core articles",
+      indicator == "ind_articles_core" ~ "Original articles",
       indicator == "ind_articles_doi" ~ "Articles with DOI",
-      indicator == "ind_articles_core_doi" ~ "Core articles with DOI",
+      indicator == "ind_articles_core_doi" ~ "Original articles with DOI",
       indicator == "ind_oa_articles_all" ~ "OA articles",
-      indicator == "ind_oa_articles_core" ~ "Core OA articles",
+      indicator == "ind_oa_articles_core" ~ "Original OA articles",
       indicator == "first_aff" ~ "First author articles",
       indicator == "cor_aff" ~ "Corresponding author articles",
     )
@@ -311,14 +311,14 @@ kableExtra::kbl(
   pack_rows("Publication volume", 4, 5) |>
   pack_rows("Digital Object Identifier (DOI) coverage", 6, 7) |>
   pack_rows("Open Access (OA) metrics", 8, 9) |>
-  pack_rows("Core articles with affiliation data", 10, 11) 
+  pack_rows("Original articles with affiliation data", 10, 11) 
 ```
 
 While hoaddata only covers articles with a DOI, Scopus and Web of Science publication indicators were calculated using their database identifier.
-A subsequent comparison of DOI coverage shows that non-core articles in Web of Science often lacked a DOI.
+A subsequent comparison of DOI coverage shows that non-original articles in Web of Science often lacked a DOI.
 This was particularly the case for meeting abstracts, which are notably prevalent in Health Sciences journals [@Melero_Fuentes_2025] and are not indexed by Scopus [@Donner_2017].
 Open access indicators were aggregated by DOI, as Unpaywall only collects information on open access status for articles with a DOI.
-A closer look at the core articles with affiliation data reveals a lack of data on corresponding authors in the case of OpenAlex, the affiliation data source used by hoaddata, compared to Web of Science and Scopus.
+A closer look at original articles with affiliation data reveals a lack of data on corresponding authors in the case of OpenAlex, the affiliation data source used by hoaddata, compared to Web of Science and Scopus.
 Only about two-thirds of the articles examined provided corresponding author affiliations.
 For first authors, the proportion was `r methods_overview_table_df |> filter(indicator == "First author articles") |> pull(hoad) / methods_overview_table_df |> filter(indicator == "Core articles with DOI") |> pull(hoad) * 100`%.
 Therefore, only first author data for hoaddata were considered in the following analysis. 
@@ -438,13 +438,13 @@ upset_overview & my_upset_theme
 ```
 Journal coverage analysis revealed that `r round(nrow(union_jns) / nrow(all_jns) * 100)`% (n = `r nrow(union_jns)`) of hybrid journals included in transformative agreements were indexed in all three databases (Figure \ref{fig-upset_coverage_results}A).
 The second-largest set consisted of journals indexed in both hoaddata and Scopus, comprising `r round( jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == TRUE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == TRUE) |>  nrow()`) of hybrid journals.
-Notably, `r round(jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == FALSE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == FALSE) |>  nrow()`) of journals were exclusively contained in hoaadata, while `r round( jn_upset_articles |> filter(Crossref == FALSE, Scopus == TRUE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(Crossref == FALSE, Scopus == TRUE) |>  nrow()`) were only found in the proprietory database Scopus. 
+Notably, `r round(jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == FALSE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == FALSE) |>  nrow()`) of journals were exclusively contained in hoaadata, while another `r round( jn_upset_articles |> filter(Crossref == FALSE, Scopus == TRUE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(Crossref == FALSE, Scopus == TRUE) |>  nrow()`) were only found in the proprietory database Scopus. 
 Of these, `r jn_upset_articles |> filter(WoS == TRUE, Crossref == FALSE, Scopus == TRUE) |>  nrow()` were also available in the Web of Science.
-Upon inspection, this group of hybrid journals included only in the proprietary data sources mainly represents hybrid journals for which no open access evidence could be retrieved from Crossref, which served as the open access evidence source for hoaddata.
+Upon inspection, this group of hybrid journals exclusively covered in the proprietary data sources mainly represented hybrid journals for which no open access evidence could be retrieved from Crossref, the open access evidence source for hoaddata.
 
 In terms of article coverage, Figure \ref{fig-upset_coverage_results}B shows the total publication volume per combination in terms of DOI availability.
 The largest set of hybrid journals, which includes all three data sources, also contains the largest number of articles. 
-In total, these journals recorded `r upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum()` overlapping articles, represented by the blue bar. They represent `r round(upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum() / methods_overview_table_df |> filter(indicator == "Core articles with DOI") |> pull(wos) * 100)`% of core articles with DOI indexed in the Web of Science sample, and `r round(upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum() / methods_overview_table_df |> filter(indicator == "Core articles with DOI") |> pull(scp) * 100)`% in Scopus.
+In total, these journals recorded `r upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum()` overlapping articles, represented by the blue bar. They represented `r round(upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum() / methods_overview_table_df |> filter(indicator == "Core articles with DOI") |> pull(wos) * 100)`% of original articles with DOI indexed in the Web of Science sample, and `r round(upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum() / methods_overview_table_df |> filter(indicator == "Core articles with DOI") |> pull(scp) * 100)`% in Scopus.
 Another `r upset_data |> filter(Crossref == TRUE, WoS == FALSE, Scopus == TRUE) |> pull(n_cr) |> sum()` articles were exclusive to both Scopus and hoaddata. Exclusively in hoaddata were `r upset_data |> filter(Crossref == TRUE, WoS == FALSE, Scopus == FALSE) |> pull(n_cr) |> sum()` articles, and exclusively in the proprietary databases were `r upset_data |> filter(Crossref == FALSE, Scopus == TRUE) |> pull(overlap) |> sum(na.rm = TRUE)` articles. 
 
 ```{r miss_dois_check}
@@ -452,18 +452,20 @@ miss_dois <- readr::read_csv(here::here("data-raw", "missing_dois_in_active_jns.
 miss_dois_val <- readr::read_csv(here::here("data-raw", "miss_dois_in_active_jns_ckeck.csv"))
 ```
 
-Figure \ref{fig-upset_coverage_results}B also shows DOIs that were only available via hoaddata (grey area).
+Figure \ref{fig-upset_coverage_results}B also shows the surplus of articles with DOI that were only available via hoaddata (grey area).
 In case of hybrid journals covered by all three data sources, `r miss_dois |> nrow()` DOIs were only present in hoaddata.
 After validation at the DOI level using the KB databases and manual inspection, the main reasons for missing DOI coverage in the proprietary database were insufficient classification of journal content as original research articles and reviews during the compilation of hoaddata. 
-Particulalry, letters and editorials could not be fully detected.
-Paratext recognition failed in `r round(miss_dois_val |> filter(is.na(scp_item_type), is.na(wos_item_type)) |> pull(n_doi) / miss_dois |> nrow() * 100)`% of DOIs to identify non-scientific content such as front matters or reviewer lists, which are generally not indexed by Scopus and Web of Science. 
+Particularly, letters and editorials could not be fully detected.
+Paratext recognition failed in `r round(miss_dois_val |> filter(is.na(scp_item_type), is.na(wos_item_type)) |> pull(n_doi) / miss_dois |> nrow() * 100)`% of DOIs to identify non-scholarly content such as front matters or reviewer lists, which are generally not indexed by Scopus and Web of Science. 
 To a lesser extent, differences in publication and indexing dates were a reason for non-overlapping DOIs. 
 
 Using overlapping DOIs, the publication volume between 2019 and 2023 was also calculated for each journal. 
 Figure \ref{fig-upset_coverage_results}C illustrates the distribution for each combination. It shows that there is a large spread across the journals covered by all three data sources. 
 Furthermore, journals in this set published more on average than journals covered by only one or two data sources. 
-In particular, the journals covered exclusively by hoaddata are substantially smaller than those covered by all three sources. 
-Upon inspection, these are often newly launched journals, which explains the relatively low five-year publication volume.
+In particular, the journals covered exclusively by hoaddata were substantially smaller than those covered by all three sources. 
+Upon inspection, these were often newly launched journals, which explains the relatively low five-year publication volume.
+An example is *Digital society* that published `r jn_upset_articles |> filter(issn_l == "2731-4650") |> pull(n_cr)` articles.
+This hybrid journal was launched in 2022, being covered by various Springer Nature transformative agreements since then.
 
 ### Coverage by publisher portfolio
 
@@ -510,8 +512,9 @@ jn_upset_publisher_all <- jn_upset_publisher |>
 
 Figure \ref{fig-upset_coverage_results_publisher} presents the coverage of hybrid journals in transformative agreements across data sources from 2019 to 2023 with a focus on publisher portfolios.
 The analysis highlights the dominance of the three largest publishers--Elsevier, Springer Nature, and Wiley--, which collectively accounted for `r 100 - jn_upset_publisher_all |> filter(publisher == "Other") |> pull(prop_jn)*100`% of hybrid journals and `r 100 - jn_upset_publisher_all |> filter(publisher == "Other") |> pull(prop_art)*100`% of articles published during this five-year period.
-In terms of article volume, Elsevier led with `r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(articles)` artricles (`r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(prop_art)*100`% of the total) published across `r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(n_journals)` hybrid journals(`r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(prop_jn)*100`% of the total). 
-Springer Nature followed with `r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(articles)` articles (`r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(prop_art)*100`%) in `r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(n_journals)` hybrid journals (`r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(prop_jn)*100`%), while Wiley recorded `r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(articles)` articles (`r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(prop_art)*100`%) in`r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(n_journals)` hybrid journals (`r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(prop_jn)*100`%).
+In terms of article volume, Elsevier led with `r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(articles)` articles (`r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(prop_art)*100`% of the total) published across `r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(n_journals)` hybrid journals (`r jn_upset_publisher_all |> filter(publisher == "Elsevier") |> pull(prop_jn)*100`% of the total). 
+Springer Nature followed with `r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(articles)` articles (`r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(prop_art)*100`%) in `r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(n_journals)`, although recording the largest number of hybrid journals (`r jn_upset_publisher_all |> filter(publisher == "Springer Nature") |> pull(prop_jn)*100`%). 
+Wiley accounted for `r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(articles)` articles (`r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(prop_art)*100`%) in`r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(n_journals)` hybrid journals (`r jn_upset_publisher_all |> filter(publisher == "Wiley") |> pull(prop_jn)*100`%).
 The remaining `r jn_upset_publisher |> filter(publisher == "Other") |> distinct(esac_publisher) |> nrow()` publishers collectively accounted for `r jn_upset_publisher_all |> filter(publisher == "Other") |> pull(articles)` articles (`r jn_upset_publisher_all |> filter(publisher == "Other") |> pull(prop_art)*100`%) in `r jn_upset_publisher_all |> filter(publisher == "Other") |> pull(n_journals)` hybrid journals (`r jn_upset_publisher_all |> filter(publisher == "Other") |> pull(prop_jn)*100`%).
 
 
@@ -615,14 +618,14 @@ upset_publisher_plot & my_upset_theme
 ```
 
 The three largest publishers--Elsevier, Springer Nature and Wiley--were best represented in the exclusive intersection of all three data sources  (hoaddata, Scopus, and Web of Science).
-Together, they comprised `r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(n_journals) |> sum()` hybrid journals (`r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(n_journals) |> sum() / nrow(union_jns)*100`% of the intersectional set) and dominated article coverage with `r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(articles) |> sum()` (`r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(articles) |> sum() / upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum()*100`%), as determined through shared DOIs.
-When examining publication volume per journal, (\ref{fig-upset_coverage_results_publisher}C), Elsevier published, on average, the largest journals, followed by Springer Nature and Wiley.
+Together, they comprised `r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(n_journals) |> sum()` hybrid journals (`r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(n_journals) |> sum() / nrow(union_jns)*100`% of the intersectional set) and dominated article coverage (n = `r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(articles) |> sum()`; `r jn_upset_publisher_ind |> filter(publisher != "Other") |> pull(articles) |> sum() / upset_data |> filter(Crossref == TRUE, WoS == TRUE, Scopus == TRUE) |> pull(overlap) |> sum()*100`%), as determined through shared DOIs.
+When examining publication volume per journal, (Figure \ref{fig-upset_coverage_results_publisher}C), Elsevier published, on average, the largest journals, followed by Springer Nature and Wiley.
 
 A comparative analysis of publisher portfolios across different indexing sets demonstrates that publisher were not represented uniformly. 
-Springer Nature exhibited `r jn_upset_publisher |> filter(esac_publisher == "Springer Nature", WoS == FALSE, Crossref == TRUE, Scopus == TRUE) |> distinct(issn_l) |> nrow()` hybrid journals exclusively indexed in both hoaddata and Scopus.
+Notably, Springer Nature exhibited `r jn_upset_publisher |> filter(esac_publisher == "Springer Nature", WoS == FALSE, Crossref == TRUE, Scopus == TRUE) |> distinct(issn_l) |> nrow()` hybrid journals exclusively indexed in both hoaddata and Scopus.
 This set included journals from the Chinese Academy of Science, German-language medical journals, and Eastern European publications including the *Journal of Mathematical Sciences*, which also publishes English-language translations of Russian-language works. 
-Additionally, this subset included titles with a more broader disciplianry focus such as *SN Computer Science* and newly launched hybrid journals like *Nature Computational Science*, which started in 2021 and was indexed in Scopus but not yet in Web of Science.
-The set also captured ceased journals, providing insights into the dynamic nature of journal portfolios and business strategies.
+Additionally, this subset included titles with a more broader disciplinary focus such as *SN Computer Science* and newly launched hybrid journals like *Nature Computational Science*, which started in 2021 and was indexed in Scopus but not yet in Web of Science.
+The set also captured ceased journals, providing further insights into the dynamic nature of journal portfolios and business strategies.
 
 
 ```{r miss_portfolios}
@@ -641,17 +644,17 @@ miss_publishers <- miss_tas |>
   filter(!esac_publisher %in% cr_tas)
 ```
 
-Further examination of publisher portfolios not covered by hoaddata but present in Scopus or Web of Science identified several publishers with missing Creative Commons (CC) license information in Crossref.
+Examining publisher portfolios not covered by hoaddata but present in Scopus or Web of Science identified several publishers with missing CC license information in Crossref.
 In particular, `r miss_tas$esac_publisher[1]` represented `r miss_tas$journals[1]` journals with `r miss_tas$n[1]` articles, `r miss_tas$esac_publisher[2]` accounted for `r miss_tas$journals[2]` journals with `r miss_tas$n[2]` articles, and `r miss_tas$esac_publisher[3]` recorded `r miss_tas$journals[3]` journals and `r miss_tas$n[3]` articles.
 In total, `r nrow(miss_publishers)` publishers were not represented in Crossref.
 
-An inspection of individual journals uncovered discrepancies in Unpaywall's open access identification for certain publishers that typically deposit CC licenses with Crossref.
+An inspection of individual journals also uncovered discrepancies in Unpaywall's open access identification for certain publishers that typically deposit CC licenses with Crossref.
 Notably, some subscription-only journals contained one or two articles erroneously tagged as hybrid open access by Unpaywall, which were subsequently reflected in Scopus and Web of Science. Examples of such misclassifications include Elsevier's *Journal of Bioscience and Bioengineering* and Springer Nature's *Journal of Mechanical Science and Technology*. 
 
 ## Open Access Indicator Comparision
 
 This section examines the uptake of open access in hybrid journals, focusing on the influence of transformative agreements across hoaddata, Scopus, and Web of Science.
-The analysis assesses whether consistent results can be derived from these data sources despite differences in coverage and methodologies. 
+The aim was to assess whether consistent results can be derived from these data sources despite differences in coverage and methodologies. 
 Following @Jahn_2025, indicators were calculated for each data source and comprise the number and proportion of open access articles, including those enabled by transformative agreements, from 2019 to 2023.
 For Web of Science and Scopus, the impact of transformative agreements was estimated using both first and corresponding authorships, while hoaddata indicator calculation was limited to first-author affiliations.
 
@@ -783,18 +786,17 @@ combined_plot + plot_layout(guides = "collect")
 Figure \ref{fig-uptake_overview}A shows a moderate growth of open access in hybrid journals, which is consistent across hoaddata (black line), Scopus (orange line), and Web of Science (blue line).
 According to hoaddata, hybrid open access uptake increased from `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2019) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2019) |> pull(n_oa_articles)`) in 2019 to `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(n_oa_articles)`) in 2023.
 Similarly, Scopus recorded an growth from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(n_oa_articles)`) in 2019 to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(n_oa_articles)`) in 2023.
-However, Web of Science recorded higher open access uptake in early years, before converging in 2023, from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(n_oa_articles)`) in 2019 to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(n_oa_articles)`) in 2023.
-This may reflect delayed open access being labeled as hybrid in Web of Science.
+However, Web of Science recorded higher open access uptake in early years, before converging in 2023, from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(n_oa_articles)`) in 2019 to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(n_oa_articles)`) in 2023,suggesting an different approach towards labeling hybrid open access by the Web of Science.
 
-Open access by transformative agreements increased between 2019 and 2023 (Figures \ref{fig-uptake_overview}B and C).
+Simialry, hybrid open access by transformative agreements increased between 2019 and 2023 (Figures \ref{fig-uptake_overview}B and C).
 Trends were consistent for first (dashed line) and corresponding author (dotted line) affiliations. 
 According to Scopus, `r uptake_by_year_short |> filter(src == "Scopus") |> pull(ta_oa_first_author_articles) |> sum()` open access articles could be attributed to transformative agreements based on first author metadata (increasing from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`) and `r uptake_by_year_short |> filter(src == "Scopus") |> pull(ta_oa_corresponding_author_articles) |> sum()` using corresponding author metadata (from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(ta_oa_corresponding_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_corresponding_author_articles) |> sum()`).
 Web of Science recorded `r uptake_by_year_short |> filter(src == "Web of Science") |> pull(ta_oa_first_author_articles) |> sum()` open access articles via transformative agreements using first author metadata (increasing from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`)  and  `r uptake_by_year_short |> filter(src == "Web of Science") |> pull(ta_oa_corresponding_author_articles) |> sum()` using corresponding author metadata (from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(ta_oa_corresponding_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_corresponding_author_articles) |> sum()`).
 hoaddata, lacking corresponding author data, linked `r uptake_by_year_short |> filter(src == "HOAD") |> pull(ta_oa_first_author_articles) |> sum()` articles to transformative agreements but showed slower growth than Scopus and Web of Science, from `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`.
 
 From 2021 (hoadata, Scopus) resp. 2022 (Web of Science),  transformative agreements enabled the majority of hybrid open access.
-For first authors, the share ranged between `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_prop) * 100` % (Web of Science),  `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_prop) * 100`% (Scopus), and  `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(ta_oa_prop) * 100`% (hoaddata) in 2023.
-For corresponding authors, the shares were slightly larger, with Web of Science recording `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_cor_prop) * 100` % and Scopus  `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_cor_prop) * 100`% in 2023.
+For first authors, the share ranged between `r uptake_by_year_short |> filter(src == "HOAD", earliest_year == 2023) |> pull(ta_oa_prop) * 100`% (hoaddata),  `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_prop) * 100`% (Scopus), and   `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_prop) * 100` % (Web of Science) in 2023.
+For corresponding authors, the shares were slightly larger, with Scopus recording  `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_cor_prop) * 100`% and Web of Science `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_cor_prop) * 100`% in 2023.
 However, substantial hybrid open access was still facilitated outside transformative agreements, likely through APCs payed from discretionary research funds (ref).
 
 ### Open access by publishers
@@ -932,7 +934,7 @@ publisher_combined_plot + plot_layout(guides = "collect")
 
 ```
 
-When considering open access trends by publisher (see \ref{fig-uptake_publisher}), the observed differences in early uptake rates between hoaddata and Scopus compared to Web of Science can be largely attributed to articles published in Elsevier hybrid journals, the largest publisher in our sample. 
+When considering open access trends by publisher (see Figure \ref{fig-uptake_publisher}), the observed differences in early uptake rates between hoaddata and Scopus compared to Web of Science can be largely attributed to articles published in Elsevier hybrid journals, the largest publisher in our sample. 
 Both hoadata and Scopus reported an steady increase in open access uptake between 2019 and 2023 (hoaddata from `r uptake_by_publisher_short |> filter(src == "HOAD", publisher == "Elsevier", earliest_year == 2019) |> pull(oa_prop)*100`% to `r uptake_by_publisher_short |> filter(src == "HOAD", publisher == "Elsevier", earliest_year == 2023) |> pull(oa_prop)*100`%; Scopus from `r uptake_by_publisher_short |> filter(src == "Scopus", publisher == "Elsevier", earliest_year == 2019) |> pull(oa_prop)*100`% to `r uptake_by_publisher_short |> filter(src == "Scopus", publisher == "Elsevier", earliest_year == 2023) |> pull(oa_prop)*100`%).
 In contrast, Elsevier's share remained relatively constant, increasing only slightly from `r uptake_by_publisher_short |> filter(src == "Web of Science", publisher == "Elsevier", earliest_year == 2019) |> pull(oa_prop)*100`% to `r uptake_by_publisher_short |> filter(src == "Web of Science", publisher == "Elsevier", earliest_year == 2023) |> pull(oa_prop)*100`% according to the Web of Science.
 Upon inspection, this discrepancy primarily stemmed from articles provided under Elsevier's user license, used for the publisher's open archive. 
@@ -944,10 +946,10 @@ Specifically, Web of Science and Scopus recorded a drop in 2021 and 2022 compare
 For these two years, hoaddata reported `r uptake_publisher_by_year |> filter(publisher == "Wiley", src == "HOAD", earliest_year %in% 2021:2022) |> pull(n_oa_articles) |> sum() - uptake_publisher_by_year |> filter(publisher == "Wiley", src == "Scopus", earliest_year %in% 2021:2022) |> pull(n_oa_articles) |> sum()` more open access articles than Scopus and `r uptake_publisher_by_year |> filter(publisher == "Wiley", src == "HOAD", earliest_year %in% 2021:2022) |> pull(n_oa_articles) |> sum() - uptake_publisher_by_year |> filter(publisher == "Wiley", src == "Web of Science", earliest_year %in% 2021:2022) |> pull(n_oa_articles) |> sum()` more than Web of Science. 
 This discrepancy is presumably because of challenges in fetching full-texts by Unpaywall, the open access evidence source for Scopus and Web of Science.
 According to Unpaywall's software version history, Wiley's publisher platform redirects prevented Unpaywall from parsing license information from full-texts.[^unpaywallwiley]
-hoaddata, which relies solely on Crossref license information, was unaffected by these issues.
+hoaddata, which relies solely on Crossref metadata for open access identification, was unaffected by these issues.
 
 Despite these differences in open access evidence, the three data sources show consistent temporal trends in hybrid open access enabled by transformative agreements (see Figure \ref{fig-uptake_publisher}B and C).
-Wiley emerged as the fastest-growing publisher in terms of open access uptake, with more than 30% of articles in hybrid journals reported as open access in 2023 across all data sources, followed by Springer Nature and Elsevier. 
+Wiley emerged as the fastest-growing publisher in terms of open access uptake, with more than 30% of articles in hybrid journals reported as open access in 2023 across the examined data sources, followed by Springer Nature and Elsevier. 
 By 2023, the share of open access enabled by transformative agreements appeared to stabilise for all three publishers, with Wiley recording the largest share (see Figure \ref{fig-uptake_publisher}B). 
 Elsevier, however, showed a comparable late uptake, consistent with the publisher's historical reluctance to engage in negotations with library consortia. 
 Interestingly, the differences between first and corresponding author affiliations were more pronounced at the publisher level. 
@@ -955,14 +957,11 @@ In Scopus, for example, the share of open access via transformative agreements m
 
 ### Open access by country
 
-When comparing countries, consistent patterns were observed across data sources from 2019 to 2023. 
+When comparing countries, consistent patterns were observed across data sources for the five-year period 2019 to 2023. 
 Figure \ref{fig-uptake_country} presents hybrid open access indicators by country, comparing hoaddata (x-axis) with Web of Science and Scopus (y-axis).
 Indicators calculated from these proprietary databases are shown for both first and corresponding authors, with full counting used to account for multiple country affiliations.
 
 ```{r country_data_prep}
-#| fig-cap: "Open Access by country"
-#| label: fig-uptake_country
-#| 
 jn_df <- readr::read_csv(here::here("data", "jn_country_stats_all.csv")) |>
   filter(issn_l != "0027-8424")
 oecd <- readr::read_csv("https://raw.githubusercontent.com/njahn82/hoa_ta_effects/refs/heads/main/data/oecd.csv")
@@ -1183,6 +1182,9 @@ ta_oa_prop_plot <- ggplot(ta_oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, f
 
 
 ```{r oa_country_comparision_plot_, fig.asp=1, fig.width = 8}
+#| fig-cap: "Open Access by country"
+#| label: fig-uptake_country
+#| 
 layout <- "EE
 AC
 BD"
@@ -1205,33 +1207,35 @@ combined_oa_country_plot_ + plot_layout(guides = "collect") +
   plot_annotation(tag_levels = 'A')
 ```
 
-In terms of article output, a strong correlation was observed across the data sources.
-Between 2019 and 2023, China emerged as the most productive country, followed by the United States and, by a wide margin, India, the United Kingdom, and Germany. 
+In terms of article output (see Figure \ref{fig-uptake_country}A), a strong correlation was observed across the data sources.
+Between 2019 and 2023, China was the most productive country, followed by the United States and, by a certain margin, India, the United Kingdom, and Germany. 
 Analysis of authorship roles revealed minimal variation, indicating that first and corresponding authors were typically from the same country.
 
-When examining the percentage of open access articles in hybrid journals, a different pattern emerged.
-Authors affiliated with institutions in medium-sized European countries, such as Sweden, the Netherlands, Finland, and Hungary, provided a large proportion of their articles in open access. 
+When examining the percentage of open access articles in hybrid journals (see Figure \ref{fig-uptake_country}B), a different pattern emerged.
+Authors affiliated with institutions from medium-sized European countries, such as Sweden, the Netherlands, Finland, and Hungary, provided a large proportion of their articles in open access. 
 Germany and the United Kingdom also had approximately 50% of their output available as open access.
-In contrast, non-OECD countries showed notably lower adoption of hybrid open access, with South Africa being the only BRICS member well-represented in the sample. 
+In contrast, non-OECD countries showed notably lower adoption of hybrid open access, with South Africa being the only BRICS member well-represented in the data.
 The United States also demonstrated a relatively low proportion of open access articles.
 These findings were consistent across all databases.
 However, France was better represented in Web of Science, likely due to its agreement with Elsevier starting in 2019, which allowed delayed open access under the publisher’s user license [@Rabesandratana_2019]. 
 This license was not classified as hybrid open access in Scopus or hoaddata.
 
-Transformative agreements appeared to be a key driver of open access growth.
+Transformative agreements appeared to be a key driver of open access growth (see Figure \ref{fig-uptake_country}C and D).
 OECD members accounted for the majority of open access articles enabled by transformative agreements.
-As a notable exception, South Africa also featured prominently, as the South African National Library and Information Consortium (SANLiC) successfully negotiated transformative agreements with major publishers from 2022 onward [^sa].
+As a notable exception, South Africa also featured prominently, as the South African National Library and Information Consortium (SANLiC) successfully negotiated transformative agreements with major publishers from 2022 onward.[^sa]
 Results were consistent across data sources, with a strong correlation observed. 
 However, Wiley surplus in hoaddata led to better rankings for countries where Wiley played a substantial role, such as Germany, where the DEAL consortium negotiated its first transformative agreements with Wiley that started in July 2019.
 
-A closer examination of hybrid open access enabled by transformative agreements revealed that the French Elsevier agreement on delayed open access was not included in JCT data, as it did not qualify as a transformative agreement. 
+A closer examination of the proportion of hybrid open access enabled by transformative agreements (see Figure \ref{fig-uptake_country}D) revealed that the French Elsevier agreement on delayed open access was not included in JCT data, as it did not qualify as a transformative agreement. 
 Medium-sized European countries again showed a high proportion of hybrid open access through transformative agreements, highlighting the impact of this licensing model across all three data sources.
 In contrast, the United States had a low proportion of hybrid open access enabled by agreements, suggesting that a substantial number of open access articles were likely financed through other means, such as article processing charges (APCs).
 
-# discussion
+# Discussion
 
 <!-- [juan study] larger proportion of hybrid, suggest journals included which might not be covered by transformative agreement. -->
 
 [^unpaywallwiley]: See Unpaywall version history related to Wiley fixes: <https://github.com/search?q=repo%3Aourresearch%2Foadoi+wiley&type=commits>
 
 [^sa]: <https://sanlic.ac.za/read-and-publish-agreements/>
+
+[^subugoe]: <https://subugoe.github.io/scholcomm_analytics/data.html>
