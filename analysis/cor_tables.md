@@ -3,9 +3,14 @@
 
 ## About
 
-The aim of this document is to determine the correlation between
-coefficients for several hybrid open access indicators between hoaddata,
-Web of Science and Scopus.
+The aim of this document is to determine the correlation coefficients
+for several hybrid open access indicators between hoaddata, Web of
+Science and Scopus, focusing on country affiliations between 2019 and
+2023. Related research have compared open scholarly data sources and
+propietory databases at the country-level using Spearman’s rank
+correlation coefficient (Alperin et al. 2024) and Kendal tau correlation
+(Akbaritabar, Theile, and Zagheni 2024), showing high level of
+correlations.
 
 ## Data preparation
 
@@ -18,7 +23,6 @@ library(corrr)
 library(stats)
 library(Hmisc)
 library(here)
-library(gt)
 
 
 # Load data
@@ -93,76 +97,30 @@ create_correlation_table <- function(data, vars, group_name) {
     corr_df[i, i] <- "-"
   }
   
-  # Create a nicer version of variable names for display
-  nice_names <- gsub("_", " ", vars)
-  nice_names <- stringr::str_to_title(nice_names)
-  
-  # Set row and column names
-  rownames(corr_df) <- nice_names
-  colnames(corr_df) <- nice_names
-  
-  return(list(df = corr_df, title = paste("Spearman Correlation Matrix -", group_name)))
+  return(list(df = corr_df, title = paste0(group_name, "--Spearman Correlation Matrix")))
 }
 
-#' Display correlation matrix using gt package with row names
+#' Display correlation matrix using Pandoc table with row names
 #'
 #' @param corr_list A list containing the correlation data frame and title
-#' @return A gt table object
-#' @importFrom gt gt tab_header tab_footnote cells_body everything tab_options fmt_number
-create_gt_upper_triangle <- function(corr_list) {
-  footnote_text <- c("* p < 0.05", "** p < 0.01", "*** p < 0.001")
+#' @return A character string containing the Pandoc table
+create_pandoc_table <- function(corr_list) {
+  footnote_text <- c("\\* p < 0.05", "** p < 0.01", "*** p < 0.001")
   
   # Convert the correlation dataframe to include row names as a column
   corr_df <- corr_list$df
   corr_df <- rownames_to_column(corr_df, var = "Variable")
   
-  # Create the gt table
-  gt_table <- gt(corr_df) %>%
-    # Add title as header
-    tab_header(
-      title = corr_list$title
-    ) %>%
-    # Set the Variable column as row labels
-    tab_stubhead(label = "Variable") %>%
-    # Add footnotes for significance levels
-    tab_footnote(
-      footnote = footnote_text[1],
-      locations = cells_body(
-        columns = everything(),
-        rows = everything()
-      )
-    ) %>%
-    tab_footnote(
-      footnote = footnote_text[2],
-      locations = cells_body(
-        columns = everything(),
-        rows = everything()
-      )
-    ) %>%
-    tab_footnote(
-      footnote = footnote_text[3],
-      locations = cells_body(
-        columns = everything(),
-        rows = everything()
-      )
-    ) %>%
-    # Add styling
-    tab_options(
-      heading.title.font.size = px(16),
-      heading.subtitle.font.size = px(13),
-      table.font.size = px(12),
-      column_labels.font.weight = "bold",
-      table.width = pct(100),
-      column_labels.background.color = "#f8f8f8",
-      row_group.background.color = "#f8f8f8"
-    ) %>%
-    # Format any numeric columns
-    fmt_number(
-      columns = where(is.numeric),
-      decimals = 2
-    )
+  # Add title
+  table_title <- paste("###", corr_list$title, "\n\n")
   
-  return(gt_table)
+  # Create the Pandoc table
+  pandoc_table <- paste(capture.output(knitr::kable(corr_df, format = "pandoc")), collapse = "\n")
+  
+  # Add footnotes
+  footnotes <- paste(footnote_text, collapse = "\n")
+  
+  return(paste(table_title, pandoc_table, "\n\n", footnotes, sep = "\n"))
 }
 ```
 
@@ -170,426 +128,254 @@ create_gt_upper_triangle <- function(corr_list) {
 
 ## Results
 
-### Article volume 2019-23
-
 <details class="code-fold">
 <summary>Code</summary>
 
 ``` r
 cor_articles <- create_correlation_table(my_df_ind, vars = c("hoad_articles", "scp_first_author_articles", "wos_first_author_articles", 
             "scp_corresponding_author_articles", "wos_corresponding_author_articles"), "Article volume")
-create_gt_upper_triangle(cor_articles)
+cat(create_pandoc_table(cor_articles))
 ```
 
 </details>
 
-<div id="cpwfodfwkc" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#cpwfodfwkc table {
-  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-&#10;#cpwfodfwkc thead, #cpwfodfwkc tbody, #cpwfodfwkc tfoot, #cpwfodfwkc tr, #cpwfodfwkc td, #cpwfodfwkc th {
-  border-style: none;
-}
-&#10;#cpwfodfwkc p {
-  margin: 0;
-  padding: 0;
-}
-&#10;#cpwfodfwkc .gt_table {
-  display: table;
-  border-collapse: collapse;
-  line-height: normal;
-  margin-left: auto;
-  margin-right: auto;
-  color: #333333;
-  font-size: 12px;
-  font-weight: normal;
-  font-style: normal;
-  background-color: #FFFFFF;
-  width: 100%;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #A8A8A8;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #A8A8A8;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-}
-&#10;#cpwfodfwkc .gt_caption {
-  padding-top: 4px;
-  padding-bottom: 4px;
-}
-&#10;#cpwfodfwkc .gt_title {
-  color: #333333;
-  font-size: 16px;
-  font-weight: initial;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-bottom-color: #FFFFFF;
-  border-bottom-width: 0;
-}
-&#10;#cpwfodfwkc .gt_subtitle {
-  color: #333333;
-  font-size: 13px;
-  font-weight: initial;
-  padding-top: 3px;
-  padding-bottom: 5px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-top-color: #FFFFFF;
-  border-top-width: 0;
-}
-&#10;#cpwfodfwkc .gt_heading {
-  background-color: #FFFFFF;
-  text-align: center;
-  border-bottom-color: #FFFFFF;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-}
-&#10;#cpwfodfwkc .gt_bottom_border {
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-}
-&#10;#cpwfodfwkc .gt_col_headings {
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-}
-&#10;#cpwfodfwkc .gt_col_heading {
-  color: #333333;
-  background-color: #F8F8F8;
-  font-size: 100%;
-  font-weight: bold;
-  text-transform: inherit;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: bottom;
-  padding-top: 5px;
-  padding-bottom: 6px;
-  padding-left: 5px;
-  padding-right: 5px;
-  overflow-x: hidden;
-}
-&#10;#cpwfodfwkc .gt_column_spanner_outer {
-  color: #333333;
-  background-color: #F8F8F8;
-  font-size: 100%;
-  font-weight: bold;
-  text-transform: inherit;
-  padding-top: 0;
-  padding-bottom: 0;
-  padding-left: 4px;
-  padding-right: 4px;
-}
-&#10;#cpwfodfwkc .gt_column_spanner_outer:first-child {
-  padding-left: 0;
-}
-&#10;#cpwfodfwkc .gt_column_spanner_outer:last-child {
-  padding-right: 0;
-}
-&#10;#cpwfodfwkc .gt_column_spanner {
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  vertical-align: bottom;
-  padding-top: 5px;
-  padding-bottom: 5px;
-  overflow-x: hidden;
-  display: inline-block;
-  width: 100%;
-}
-&#10;#cpwfodfwkc .gt_spanner_row {
-  border-bottom-style: hidden;
-}
-&#10;#cpwfodfwkc .gt_group_heading {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  color: #333333;
-  background-color: #F8F8F8;
-  font-size: 100%;
-  font-weight: initial;
-  text-transform: inherit;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: middle;
-  text-align: left;
-}
-&#10;#cpwfodfwkc .gt_empty_group_heading {
-  padding: 0.5px;
-  color: #333333;
-  background-color: #F8F8F8;
-  font-size: 100%;
-  font-weight: initial;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  vertical-align: middle;
-}
-&#10;#cpwfodfwkc .gt_from_md > :first-child {
-  margin-top: 0;
-}
-&#10;#cpwfodfwkc .gt_from_md > :last-child {
-  margin-bottom: 0;
-}
-&#10;#cpwfodfwkc .gt_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  margin: 10px;
-  border-top-style: solid;
-  border-top-width: 1px;
-  border-top-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: middle;
-  overflow-x: hidden;
-}
-&#10;#cpwfodfwkc .gt_stub {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  text-transform: inherit;
-  border-right-style: solid;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-&#10;#cpwfodfwkc .gt_stub_row_group {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  text-transform: inherit;
-  border-right-style: solid;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-  padding-left: 5px;
-  padding-right: 5px;
-  vertical-align: top;
-}
-&#10;#cpwfodfwkc .gt_row_group_first td {
-  border-top-width: 2px;
-}
-&#10;#cpwfodfwkc .gt_row_group_first th {
-  border-top-width: 2px;
-}
-&#10;#cpwfodfwkc .gt_summary_row {
-  color: #333333;
-  background-color: #FFFFFF;
-  text-transform: inherit;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-&#10;#cpwfodfwkc .gt_first_summary_row {
-  border-top-style: solid;
-  border-top-color: #D3D3D3;
-}
-&#10;#cpwfodfwkc .gt_first_summary_row.thick {
-  border-top-width: 2px;
-}
-&#10;#cpwfodfwkc .gt_last_summary_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-}
-&#10;#cpwfodfwkc .gt_grand_summary_row {
-  color: #333333;
-  background-color: #FFFFFF;
-  text-transform: inherit;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-&#10;#cpwfodfwkc .gt_first_grand_summary_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-top-style: double;
-  border-top-width: 6px;
-  border-top-color: #D3D3D3;
-}
-&#10;#cpwfodfwkc .gt_last_grand_summary_row_top {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-bottom-style: double;
-  border-bottom-width: 6px;
-  border-bottom-color: #D3D3D3;
-}
-&#10;#cpwfodfwkc .gt_striped {
-  background-color: rgba(128, 128, 128, 0.05);
-}
-&#10;#cpwfodfwkc .gt_table_body {
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-}
-&#10;#cpwfodfwkc .gt_footnotes {
-  color: #333333;
-  background-color: #FFFFFF;
-  border-bottom-style: none;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-}
-&#10;#cpwfodfwkc .gt_footnote {
-  margin: 0px;
-  font-size: 90%;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-&#10;#cpwfodfwkc .gt_sourcenotes {
-  color: #333333;
-  background-color: #FFFFFF;
-  border-bottom-style: none;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-}
-&#10;#cpwfodfwkc .gt_sourcenote {
-  font-size: 90%;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-&#10;#cpwfodfwkc .gt_left {
-  text-align: left;
-}
-&#10;#cpwfodfwkc .gt_center {
-  text-align: center;
-}
-&#10;#cpwfodfwkc .gt_right {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-&#10;#cpwfodfwkc .gt_font_normal {
-  font-weight: normal;
-}
-&#10;#cpwfodfwkc .gt_font_bold {
-  font-weight: bold;
-}
-&#10;#cpwfodfwkc .gt_font_italic {
-  font-style: italic;
-}
-&#10;#cpwfodfwkc .gt_super {
-  font-size: 65%;
-}
-&#10;#cpwfodfwkc .gt_footnote_marks {
-  font-size: 75%;
-  vertical-align: 0.4em;
-  position: initial;
-}
-&#10;#cpwfodfwkc .gt_asterisk {
-  font-size: 100%;
-  vertical-align: 0;
-}
-&#10;#cpwfodfwkc .gt_indent_1 {
-  text-indent: 5px;
-}
-&#10;#cpwfodfwkc .gt_indent_2 {
-  text-indent: 10px;
-}
-&#10;#cpwfodfwkc .gt_indent_3 {
-  text-indent: 15px;
-}
-&#10;#cpwfodfwkc .gt_indent_4 {
-  text-indent: 20px;
-}
-&#10;#cpwfodfwkc .gt_indent_5 {
-  text-indent: 25px;
-}
-&#10;#cpwfodfwkc .katex-display {
-  display: inline-flex !important;
-  margin-bottom: 0.75em !important;
-}
-&#10;#cpwfodfwkc div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
-  height: 0px !important;
-}
-</style>
+### Article volume–Spearman Correlation Matrix
 
-| Spearman Correlation Matrix - Article volume |  |  |  |  |  |
-|----|----|----|----|----|----|
-| Variable | Hoad Articles | Scp First Author Articles | Wos First Author Articles | Scp Corresponding Author Articles | Wos Corresponding Author Articles |
-| Hoad Articles<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> - | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.99\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.94\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.99\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.94\*\*\* |
-| Scp First Author Articles<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.99\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> - | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.96\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 1\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.95\*\*\* |
-| Wos First Author Articles<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.94\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.96\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> - | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.95\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 1\*\*\* |
-| Scp Corresponding Author Articles<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.99\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 1\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.95\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> - | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.95\*\*\* |
-| Wos Corresponding Author Articles<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.94\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.95\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 1\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> 0.95\*\*\* | <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1,2,3</sup></span> - |
-| <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span> \* p \< 0.05 |  |  |  |  |  |
-| <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>2</sup></span> \*\* p \< 0.01 |  |  |  |  |  |
-| <span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>3</sup></span> \*\*\* p \< 0.001 |  |  |  |  |  |
+| Variable | hoad_articles | scp_first_author_articles | wos_first_author_articles | scp_corresponding_author_articles | wos_corresponding_author_articles |
+|:---|:---|:---|:---|:---|:---|
+| hoad_articles | \- | 0.99\*\*\* | 0.94\*\*\* | 0.99\*\*\* | 0.94\*\*\* |
+| scp_first_author_articles | 0.99\*\*\* | \- | 0.96\*\*\* | 1\*\*\* | 0.95\*\*\* |
+| wos_first_author_articles | 0.94\*\*\* | 0.96\*\*\* | \- | 0.95\*\*\* | 1\*\*\* |
+| scp_corresponding_author_articles | 0.99\*\*\* | 1\*\*\* | 0.95\*\*\* | \- | 0.95\*\*\* |
+| wos_corresponding_author_articles | 0.94\*\*\* | 0.95\*\*\* | 1\*\*\* | 0.95\*\*\* | \- |
+
+\* p \< 0.05 \*\* p \< 0.01 \*\*\* p \< 0.001
+
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
+oa_articles <- create_correlation_table(my_df_ind, vars =  c("hoad_oa_articles", "scp_oa_first_corresponding_author_articles", "scp_oa_corresponding_author_articles",
+            "wos_oa_first_author_articles", "wos_oa_corresponding_author_articles"), "Open Access volume")
+cat(create_pandoc_table(oa_articles))
+```
+
+</details>
+
+### Open Access volume–Spearman Correlation Matrix
+
+| Variable | hoad_oa_articles | scp_oa_first_corresponding_author_articles | scp_oa_corresponding_author_articles | wos_oa_first_author_articles | wos_oa_corresponding_author_articles |
+|:---|:---|:---|:---|:---|:---|
+| hoad_oa_articles | \- | 0.98\*\*\* | 0.98\*\*\* | 0.94\*\*\* | 0.94\*\*\* |
+| scp_oa_first_corresponding_author_articles | 0.98\*\*\* | \- | 1\*\*\* | 0.95\*\*\* | 0.95\*\*\* |
+| scp_oa_corresponding_author_articles | 0.98\*\*\* | 1\*\*\* | \- | 0.95\*\*\* | 0.95\*\*\* |
+| wos_oa_first_author_articles | 0.94\*\*\* | 0.95\*\*\* | 0.95\*\*\* | \- | 1\*\*\* |
+| wos_oa_corresponding_author_articles | 0.94\*\*\* | 0.95\*\*\* | 0.95\*\*\* | 1\*\*\* | \- |
+
+\* p \< 0.05 \*\* p \< 0.01 \*\*\* p \< 0.001
+
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
+oa_prop_ind <- my_df_ind |>
+  # As in Figure
+  mutate(
+    hoad_oa_prop = hoad_oa_articles / hoad_articles,
+    scp_first_oa_prop = scp_oa_first_author_articles / scp_first_author_articles,
+    scp_corresponding_oa_prop = scp_oa_corresponding_author_articles / scp_corresponding_author_articles,
+    wos_first_oa_prop = wos_oa_first_author_articles / wos_first_author_articles,
+    wos_corresponding_oa_prop = wos_oa_corresponding_author_articles / wos_corresponding_author_articles
+  ) |>
+  select(country_code, contains("prop")) |>
+  create_correlation_table(vars =  c("hoad_oa_prop", "scp_first_oa_prop", 
+            "scp_corresponding_oa_prop", "wos_first_oa_prop", "wos_corresponding_oa_prop"), "Open Access Uptake")
+cat(create_pandoc_table(oa_prop_ind))
+```
+
+</details>
+
+### Open Access Uptake–Spearman Correlation Matrix
+
+| Variable | hoad_oa_prop | scp_first_oa_prop | scp_corresponding_oa_prop | wos_first_oa_prop | wos_corresponding_oa_prop |
+|:---|:---|:---|:---|:---|:---|
+| hoad_oa_prop | \- | 0.9\*\*\* | 0.86\*\*\* | 0.9\*\*\* | 0.88\*\*\* |
+| scp_first_oa_prop | 0.9\*\*\* | \- | 0.95\*\*\* | 0.92\*\*\* | 0.86\*\*\* |
+| scp_corresponding_oa_prop | 0.86\*\*\* | 0.95\*\*\* | \- | 0.86\*\*\* | 0.89\*\*\* |
+| wos_first_oa_prop | 0.9\*\*\* | 0.92\*\*\* | 0.86\*\*\* | \- | 0.95\*\*\* |
+| wos_corresponding_oa_prop | 0.88\*\*\* | 0.86\*\*\* | 0.89\*\*\* | 0.95\*\*\* | \- |
+
+\* p \< 0.05 \*\* p \< 0.01 \*\*\* p \< 0.001
+
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
+oa_prop_ind <- my_df_ind |>
+  # As in Figure
+  filter(!is.na(country_code), hoad_articles > 10000) |>
+  mutate(
+    hoad_oa_prop = hoad_oa_articles / hoad_articles,
+    scp_first_oa_prop = scp_oa_first_author_articles / scp_first_author_articles,
+    scp_corresponding_oa_prop = scp_oa_corresponding_author_articles / scp_corresponding_author_articles,
+    wos_first_oa_prop = wos_oa_first_author_articles / wos_first_author_articles,
+    wos_corresponding_oa_prop = wos_oa_corresponding_author_articles / wos_corresponding_author_articles
+  ) |>
+  select(country_code, contains("prop")) |>
+  create_correlation_table(vars =  c("hoad_oa_prop", "scp_first_oa_prop", 
+            "scp_corresponding_oa_prop", "wos_first_oa_prop", "wos_corresponding_oa_prop"), "Open Access Uptake (min 1.000 articles)")
+cat(create_pandoc_table(oa_prop_ind))
+```
+
+</details>
+
+### Open Access Uptake (min 1.000 articles)–Spearman Correlation Matrix
+
+| Variable | hoad_oa_prop | scp_first_oa_prop | scp_corresponding_oa_prop | wos_first_oa_prop | wos_corresponding_oa_prop |
+|:---|:---|:---|:---|:---|:---|
+| hoad_oa_prop | \- | 1\*\*\* | 1\*\*\* | 0.98\*\*\* | 0.98\*\*\* |
+| scp_first_oa_prop | 1\*\*\* | \- | 1\*\*\* | 0.99\*\*\* | 0.99\*\*\* |
+| scp_corresponding_oa_prop | 1\*\*\* | 1\*\*\* | \- | 0.98\*\*\* | 0.99\*\*\* |
+| wos_first_oa_prop | 0.98\*\*\* | 0.99\*\*\* | 0.98\*\*\* | \- | 1\*\*\* |
+| wos_corresponding_oa_prop | 0.98\*\*\* | 0.99\*\*\* | 0.99\*\*\* | 1\*\*\* | \- |
+
+\* p \< 0.05 \*\* p \< 0.01 \*\*\* p \< 0.001
+
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
+ta_oa_articles <- create_correlation_table(my_df_ind, vars = c("hoad_ta_oa_articles", "scp_ta_oa_first_corresponding_author_articles", "scp_ta_oa_corresponding_author_articles",
+            "wos_ta_oa_first_author_articles", "wos_ta_oa_corresponding_author_articles"), "Open Access volume via Transformative Agreements")
+cat(create_pandoc_table(ta_oa_articles))
+```
+
+</details>
+
+### Open Access volume via Transformative Agreements–Spearman Correlation Matrix
+
+| Variable | hoad_ta_oa_articles | scp_ta_oa_first_corresponding_author_articles | scp_ta_oa_corresponding_author_articles | wos_ta_oa_first_author_articles | wos_ta_oa_corresponding_author_articles |
+|:---|:---|:---|:---|:---|:---|
+| hoad_ta_oa_articles | \- | 0.87\*\*\* | 0.87\*\*\* | 0.87\*\*\* | 0.87\*\*\* |
+| scp_ta_oa_first_corresponding_author_articles | 0.87\*\*\* | \- | 0.97\*\*\* | 0.85\*\*\* | 0.86\*\*\* |
+| scp_ta_oa_corresponding_author_articles | 0.87\*\*\* | 0.97\*\*\* | \- | 0.88\*\*\* | 0.89\*\*\* |
+| wos_ta_oa_first_author_articles | 0.87\*\*\* | 0.85\*\*\* | 0.88\*\*\* | \- | 0.99\*\*\* |
+| wos_ta_oa_corresponding_author_articles | 0.87\*\*\* | 0.86\*\*\* | 0.89\*\*\* | 0.99\*\*\* | \- |
+
+\* p \< 0.05 \*\* p \< 0.01 \*\*\* p \< 0.001
+
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
+ta_oa_articles <- my_df_ind |>
+    filter(!is.na(country_code), hoad_articles > 10000) |>
+  create_correlation_table(vars = c("hoad_ta_oa_articles", "scp_ta_oa_first_corresponding_author_articles", "scp_ta_oa_corresponding_author_articles",
+            "wos_ta_oa_first_author_articles", "wos_ta_oa_corresponding_author_articles"), "Open Access volume via Transformative Agreements (min 1,000 articles)")
+cat(create_pandoc_table(ta_oa_articles))
+```
+
+</details>
+
+### Open Access volume via Transformative Agreements (min 1,000 articles)–Spearman Correlation Matrix
+
+| Variable | hoad_ta_oa_articles | scp_ta_oa_first_corresponding_author_articles | scp_ta_oa_corresponding_author_articles | wos_ta_oa_first_author_articles | wos_ta_oa_corresponding_author_articles |
+|:---|:---|:---|:---|:---|:---|
+| hoad_ta_oa_articles | \- | 0.98\*\*\* | 0.98\*\*\* | 0.95\*\*\* | 0.95\*\*\* |
+| scp_ta_oa_first_corresponding_author_articles | 0.98\*\*\* | \- | 1\*\*\* | 0.96\*\*\* | 0.96\*\*\* |
+| scp_ta_oa_corresponding_author_articles | 0.98\*\*\* | 1\*\*\* | \- | 0.96\*\*\* | 0.96\*\*\* |
+| wos_ta_oa_first_author_articles | 0.95\*\*\* | 0.96\*\*\* | 0.96\*\*\* | \- | 1\*\*\* |
+| wos_ta_oa_corresponding_author_articles | 0.95\*\*\* | 0.96\*\*\* | 0.96\*\*\* | 1\*\*\* | \- |
+
+\* p \< 0.05 \*\* p \< 0.01 \*\*\* p \< 0.001
+
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
+ta_oa_prop <- my_df_ind |>
+ #filter(hoad_ta_oa_articles > 1000) |>
+  mutate(
+    hoad_oa_prop = hoad_ta_oa_articles / hoad_oa_articles,
+    scp_first_oa_prop = scp_ta_oa_first_author_articles / scp_oa_first_author_articles,
+    scp_corresponding_oa_prop = scp_ta_oa_corresponding_author_articles / scp_oa_corresponding_author_articles,
+    wos_first_oa_prop = wos_ta_oa_first_author_articles / wos_oa_first_author_articles,
+    wos_corresponding_oa_prop = wos_ta_oa_corresponding_author_articles / wos_oa_corresponding_author_articles
+  ) |>
+  select(country_code, contains("prop")) |>
+  create_correlation_table(vars =  c("hoad_oa_prop", "scp_first_oa_prop", 
+            "scp_corresponding_oa_prop", "wos_first_oa_prop", "wos_corresponding_oa_prop"), "% of Hybrid OA via Agreement")
+cat(create_pandoc_table(ta_oa_prop))
+```
+
+</details>
+
+### % of Hybrid OA via Agreement–Spearman Correlation Matrix
+
+| Variable | hoad_oa_prop | scp_first_oa_prop | scp_corresponding_oa_prop | wos_first_oa_prop | wos_corresponding_oa_prop |
+|:---|:---|:---|:---|:---|:---|
+| hoad_oa_prop | \- | 0.86\*\*\* | 0.85\*\*\* | 0.89\*\*\* | 0.89\*\*\* |
+| scp_first_oa_prop | 0.86\*\*\* | \- | 0.98\*\*\* | 0.85\*\*\* | 0.87\*\*\* |
+| scp_corresponding_oa_prop | 0.85\*\*\* | 0.98\*\*\* | \- | 0.86\*\*\* | 0.87\*\*\* |
+| wos_first_oa_prop | 0.89\*\*\* | 0.85\*\*\* | 0.86\*\*\* | \- | 0.99\*\*\* |
+| wos_corresponding_oa_prop | 0.89\*\*\* | 0.87\*\*\* | 0.87\*\*\* | 0.99\*\*\* | \- |
+
+\* p \< 0.05 \*\* p \< 0.01 \*\*\* p \< 0.001
+
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
+ta_oa_prop <- my_df_ind |>
+ filter(hoad_ta_oa_articles > 1000) |>
+  mutate(
+    hoad_oa_prop = hoad_ta_oa_articles / hoad_oa_articles,
+    scp_first_oa_prop = scp_ta_oa_first_author_articles / scp_oa_first_author_articles,
+    scp_corresponding_oa_prop = scp_ta_oa_corresponding_author_articles / scp_oa_corresponding_author_articles,
+    wos_first_oa_prop = wos_ta_oa_first_author_articles / wos_oa_first_author_articles,
+    wos_corresponding_oa_prop = wos_ta_oa_corresponding_author_articles / wos_oa_corresponding_author_articles
+  ) |>
+  select(country_code, contains("prop")) |>
+  create_correlation_table(vars =  c("hoad_oa_prop", "scp_first_oa_prop", 
+            "scp_corresponding_oa_prop", "wos_first_oa_prop", "wos_corresponding_oa_prop"), "% of Hybrid OA via Agreement (min 1.000 OA articles)")
+cat(create_pandoc_table(ta_oa_prop))
+```
+
+</details>
+
+### % of Hybrid OA via Agreement (min 1.000 OA articles)–Spearman Correlation Matrix
+
+| Variable | hoad_oa_prop | scp_first_oa_prop | scp_corresponding_oa_prop | wos_first_oa_prop | wos_corresponding_oa_prop |
+|:---|:---|:---|:---|:---|:---|
+| hoad_oa_prop | \- | 0.96\*\*\* | 0.94\*\*\* | 0.96\*\*\* | 0.97\*\*\* |
+| scp_first_oa_prop | 0.96\*\*\* | \- | 0.99\*\*\* | 0.96\*\*\* | 0.97\*\*\* |
+| scp_corresponding_oa_prop | 0.94\*\*\* | 0.99\*\*\* | \- | 0.96\*\*\* | 0.96\*\*\* |
+| wos_first_oa_prop | 0.96\*\*\* | 0.96\*\*\* | 0.96\*\*\* | \- | 1\*\*\* |
+| wos_corresponding_oa_prop | 0.97\*\*\* | 0.97\*\*\* | 0.96\*\*\* | 1\*\*\* | \- |
+
+\* p \< 0.05 \*\* p \< 0.01 \*\*\* p \< 0.001
+
+# References
+
+<div id="refs" class="references csl-bib-body hanging-indent"
+entry-spacing="0">
+
+<div id="ref-Akbaritabar_2024" class="csl-entry">
+
+Akbaritabar, Aliakbar, Tom Theile, and Emilio Zagheni. 2024. “Bilateral
+Flows and Rates of International Migration of Scholars for 210 Countries
+for the Period 1998-2020.” *Scientific Data* 11 (1).
+<https://doi.org/10.1038/s41597-024-03655-9>.
+
+</div>
+
+<div id="ref-alperin2024analysissuitabilityopenalexbibliometric"
+class="csl-entry">
+
+Alperin, Juan Pablo, Jason Portenoy, Kyle Demes, Vincent Larivière, and
+Stefanie Haustein. 2024. “An Analysis of the Suitability of OpenAlex for
+Bibliometric Analyses.” *arXiv*. <https://arxiv.org/abs/2404.17663>.
+
+</div>
 
 </div>
