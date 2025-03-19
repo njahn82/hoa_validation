@@ -21,7 +21,6 @@ library(corrr)
 library(stats)
 library(Hmisc)
 library(here)
-library(gt)
 
 
 # Load data
@@ -102,66 +101,29 @@ create_correlation_table <- function(data, vars, group_name) {
   return(list(df = corr_df, title = paste("Spearman Correlation Matrix -", group_name)))
 }
 
-#' Display correlation matrix using gt package with row names
+#' Display correlation matrix using Pandoc table with row names
 #'
 #' @param corr_list A list containing the correlation data frame and title
-#' @return A gt table object
-#' @importFrom gt gt tab_header tab_footnote cells_body everything tab_options fmt_number
-create_gt_upper_triangle <- function(corr_list) {
+#' @return A character string containing the Pandoc table
+create_pandoc_table <- function(corr_list) {
   footnote_text <- c("* p < 0.05", "** p < 0.01", "*** p < 0.001")
   
   # Convert the correlation dataframe to include row names as a column
   corr_df <- corr_list$df
   corr_df <- rownames_to_column(corr_df, var = "Variable")
   
-  # Create the gt table
-  gt_table <- gt(corr_df) %>%
-    # Add title as header
-    tab_header(
-      title = corr_list$title
-    ) %>%
-    # Set the Variable column as row labels
-    tab_stubhead(label = "Variable") %>%
-    # Add footnotes for significance levels
-    tab_footnote(
-      footnote = footnote_text[1],
-      locations = cells_body(
-        columns = everything(),
-        rows = everything()
-      )
-    ) %>%
-    tab_footnote(
-      footnote = footnote_text[2],
-      locations = cells_body(
-        columns = everything(),
-        rows = everything()
-      )
-    ) %>%
-    tab_footnote(
-      footnote = footnote_text[3],
-      locations = cells_body(
-        columns = everything(),
-        rows = everything()
-      )
-    ) %>%
-    # Add styling
-    tab_options(
-      heading.title.font.size = px(16),
-      heading.subtitle.font.size = px(13),
-      table.font.size = px(12),
-      column_labels.font.weight = "bold",
-      table.width = pct(100),
-      column_labels.background.color = "#f8f8f8",
-      row_group.background.color = "#f8f8f8"
-    ) %>%
-    # Format any numeric columns
-    fmt_number(
-      columns = where(is.numeric),
-      decimals = 2
-    )
+  # Add title
+  table_title <- paste("#", corr_list$title, "\n\n")
   
-  return(gt_table)
+  # Create the Pandoc table
+  pandoc_table <- paste(capture.output(knitr::kable(corr_df, format = "pandoc")), collapse = "\n")
+  
+  # Add footnotes
+  footnotes <- paste(footnote_text, collapse = "\n")
+  
+  return(paste(table_title, pandoc_table, "\n\n", footnotes, sep = "\n"))
 }
+
 ```
 
 
@@ -170,7 +132,9 @@ create_gt_upper_triangle <- function(corr_list) {
 ### Article volume 2019-23
 
 ```{r}
+#| results: asis
+
 cor_articles <- create_correlation_table(my_df_ind, vars = c("hoad_articles", "scp_first_author_articles", "wos_first_author_articles", 
             "scp_corresponding_author_articles", "wos_corresponding_author_articles"), "Article volume")
-create_gt_upper_triangle(cor_articles)
+cat(create_pandoc_table(cor_articles))
 ```
