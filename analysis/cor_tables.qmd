@@ -6,6 +6,7 @@ format:
       message: false
       warning: false
       code-fold: true
+prefer-html: true
 ---
 
 ## About  
@@ -169,7 +170,6 @@ create_gt_upper_triangle <- function(corr_list) {
 ### Article volume 2019-23
 
 ```{r}
-
 cor_articles <- create_correlation_table(my_df_ind, vars = c("hoad_articles", "scp_first_author_articles", "wos_first_author_articles", 
             "scp_corresponding_author_articles", "wos_corresponding_author_articles"), "Article volume")
 create_gt_upper_triangle(cor_articles)
