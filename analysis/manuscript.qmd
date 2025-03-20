@@ -1207,18 +1207,19 @@ combined_oa_country_plot_ + plot_layout(guides = "collect") +
   plot_annotation(tag_levels = 'A')
 ```
 
-In terms of article output (see Figure \ref{fig-uptake_country}A), a strong correlation was observed across the data sources.
+In terms of article output by country (see Figure \ref{fig-uptake_country}A), strong positive correlation was observed across the data sources and author roles (Spearman rank correlation $\rho > .9$, $p < 0.001$).
 Between 2019 and 2023, China was the most productive country, followed by the United States and, by a certain margin, India, the United Kingdom, and Germany. 
 Analysis of authorship roles revealed minimal variation, indicating that first and corresponding authors were typically from the same country.
 
 When examining the percentage of open access articles in hybrid journals (see Figure \ref{fig-uptake_country}B), a different pattern emerged.
-Authors affiliated with institutions from medium-sized European countries, such as Sweden, the Netherlands, Finland, and Hungary, provided a large proportion of their articles in open access. 
-Germany and the United Kingdom also had approximately 50% of their output available as open access.
+Authors affiliated with institutions from medium-sized European countries, such as Sweden, the Netherlands, Finland, and Hungary, provided a large proportion of their articles in open access.
+Germany and the United Kingdom also had approximately 40% of their output available as open access.
 In contrast, non-OECD countries showed notably lower adoption of hybrid open access, with South Africa being the only BRICS member well-represented in the data.
 The United States also demonstrated a relatively low proportion of open access articles.
 These findings were consistent across all databases.
 However, France was better represented in Web of Science, likely due to its agreement with Elsevier starting in 2019, which allowed delayed open access under the publisher’s user license [@Rabesandratana_2019]. 
 This license was not classified as hybrid open access in Scopus or hoaddata.
+In all cases, Spearman rank correlations were $\rho > .9$, $p < 0.001$, showing a high level of correlations between the databases and authorship roles considered.
 
 Transformative agreements appeared to be a key driver of open access growth (see Figure \ref{fig-uptake_country}C and D).
 OECD members accounted for the majority of open access articles enabled by transformative agreements.
@@ -1228,7 +1229,12 @@ However, Wiley surplus in hoaddata led to better rankings for countries where Wi
 
 A closer examination of the proportion of hybrid open access enabled by transformative agreements (see Figure \ref{fig-uptake_country}D) revealed that the French Elsevier agreement on delayed open access was not included in JCT data, as it did not qualify as a transformative agreement. 
 Medium-sized European countries again showed a high proportion of hybrid open access through transformative agreements, highlighting the impact of this licensing model across all three data sources.
-In contrast, the United States had a low proportion of hybrid open access enabled by agreements, suggesting that a substantial number of open access articles were likely financed through other means, such as article processing charges (APCs).
+In contrast, the United States had a low proportion of hybrid open access enabled by agreements, suggesting that a substantial number of open access articles were likely financed through other means, such as article processing charges (APCs). 
+
+In all cases, strong positive correlations were observed using Spearman's rank correlation: 
+$\rho > .9$, $p < 0.001$ between data sources and authorship roles, when considering countries with an minimum of 1,000 open access articles enabled by transformative agreements between 2019 and 2023. 
+When this limitation was removed, the correlation remained strong but slightly lower ($\rho > .85$, $p < 0.001$).
+This difference may signal countries where only a few institutions had transformative agreements in place, as opposed to those participating in national consortia with broader participation.
 
 # Discussion
 
