@@ -42,6 +42,7 @@ The [`data`](data) folder contains aggregated data sets used for the manuscript'
 The [`data-raw`](data-raw) folder contains analytical steps for obtaining the data. 
 
 -  [`data-raw/data_gathering.R`](data-raw/data_gathering.R) provides the source code used to obtain data from the Scopus and Web of Science KB in-house databases. The resulting datasets are safeguarded in the KB data infrastructure.
+- [`data-raw/ta_matching.R`](data-raw/ta_matching.R) describes the estimation of articles under transformative agreements. For performance reasons, the calculation was carried out using Google BigQuery.
 - [`data-raw/indicators.R`](data-raw/indicators.R) comprises the generation of the aggregated datasets. For performance reasons, the calculation was carried out using Google BigQuery.
 
 Data and source code used to generate hoaddata, v0.3., can be found on GitHub: <https://github.com/subugoe/hoaddata/releases/tag/v.0.3>
@@ -50,7 +51,7 @@ Data and source code used to generate hoaddata, v0.3., can be found on GitHub: <
 
 Scopus and Web of Science are proprietary data and can be openly shared within the KB. To improve reproducibility, safeguarded versions were used (see <https://zenodo.org/records/13935407> for comprehensive description). 
 
-However, data analytics including figures reported in the manuscript can be re-generated using Quarto and R. Please load the correpsonding renv environment before re-generatign the manuscript.
+However, data analytics including figures reported in the manuscript can be re-generated using Quarto and R. Please load the correpsonding [renv](https://rstudio.github.io/renv/articles/renv.html) environment before re-generating the manuscript.
 
 ### License
 
