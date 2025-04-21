@@ -68,7 +68,7 @@ This comparative approach informs bibliometric research and practice by highligh
 Transformative agreements are a much-discussed library licensing model for transitioning subscription-based journal publishing to full open access.
 Although these agreements can vary considerably, they are mainly aimed at hybrid journal bundles, enabling authors from participating institutions to publish open access in these journals while providing reading access to the entire portfolio [@Borrego_2020; @Hinchliffe_2019].
 Following their initial proposal in 2015 [@Schimmer_2015], the number of transformative agreements has grown substantially, resulting in increased open access publishing in hybrid journals [@Jahn_2025; @Rothfritz_2024; @McCabe_2024].
-Prior to these agreements, only a few articles in hybrid journals were openly accessible [@Bj_rk_2012; @Laakso_2016; @Piwowar_2018], except for some European countries that had dedicated funding policies and the SCOAP$^3$ consortium for high-energy physics journals [@Pinfield_2015; @Robinson_Garcia_2020; @Huang_2020; @Kohls_2018].
+Prior to these agreements, only a few articles in hybrid journals were openly accessible [@Bj_rk_2012; @Laakso_2016; @Piwowar_2018], except for some European countries that had dedicated funding policies and the SCOAP$^3$ consortium for high-energy physics journals [@Pinfield_2015; @Robinson_Garcia_2020; @Huang_2020_elife; @Kohls_2018].
 Coordination efforts through initiatives such as OA2020 and Efficiency and Standards for Article Charges (ESAC) have further streamlined workflows between library consortia and publishers [@ifla; @Geschuhn_2017].
 By April 2025, the ESAC Transformative Agreement Registry, the primary community-driven evidence source, listed approximately 1,300 agreements.[^esac_registry]
 
@@ -218,7 +218,7 @@ This study used the Scopus annual snapshot from April 2024 as provided by KB (sc
 Following @Jahn_2025, the starting point was a unified dataset of several safeguarded JCT snapshots[^jct_data].
 JCT journal data were enriched with ISSN variants linked to ISSN-L according to the ISSN agency. 
 To identify hybrid journals, a comprehensive exclusion of fully open access journals was performed using multiple journal lists including the Directory of Open Access Journals (DOAJ).
-The resulting hybrid journal data were made available via hoaddata and were used to independently determine the publication volume for each database.
+The resulting hybrid journal data comprising more tahn 13,000 hybrid journals were made available via hoaddata and were used to independently determine the publication volume for each database.
 
 hoaddata relies on Crossref to obtain journal publication volume and open access status through Creative Commons (CC) licence information relative to the published version ("version of record").
 <!-- Because of limited affiliation metadata in Crossref [@van_Eck_2022], hoaddata sources  affiliation metadata from OpenAlex.-->
@@ -1338,16 +1338,16 @@ But using them in conjunction with proprietary databases provides a more robust 
 
 # Author contributions {-}
 
-The author confirms the sole responsibility for the following: Conceptualization, Methodology, Formal analysis, Investigation, Data Curation, Writing - Original Draft, Writing - Review & Editing, Visualization.
+The author confirms the sole responsibility for the following: Conceptualisation, Methodology, Formal analysis, Investigation, Data Curation, Writing - Original Draft, Writing - Review & Editing, Visualization.
 
 # Competing interests {-}
 
-The author declares no competing interests. 
+The author has participated in working groups of OA2020, ESAC and the Barcelona Declaration as part of his professional responsibilities.
+No funding was received from these initiatives for the present study, and they had no influence on its design, data collection, analysis, or interpretation of results.
 
 # Funding information {-}
 
 This work was supported by the Federal Ministry of Education and Research of Germany (BMBF) under grants 16WIK2301E / 16WIK2101F.
-
 The proprietary bibliometric data from Scopus and Web of Science were provided by the German Competence Network for Bibliometrics under BMBF grant 16WIK2101A.
 
 # Data and code availability {-}
