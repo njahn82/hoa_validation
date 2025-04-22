@@ -4,7 +4,7 @@
 
 This repository contains the data and source code used for the manuscript:
 
-Jahn, N. (2025). Estimating transformative agreement impact on hybrid open access: A comparative large-scale study using Scopus, Web of Science and open metadata. arxiv: tbc.
+Jahn, N. (2025). Estimating transformative agreement impact on hybrid open access: A comparative large-scale study using Scopus, Web of Science and open metadata. arXiv. <http://arxiv.org/abs/2504.15038>.
 
 This repository is structured as a [research compendium](https://doi.org/10.7287/peerj.preprints.3192v2). 
 
