@@ -1,12 +1,13 @@
 
 ## About
 
-This folder contains analytical datasets providing aggregated counts on
-the uptake of open access in hybrid journals included in transformative
-agreements by journal and country information between 2019 and 2023. A
-particular focus was on whether publications were from eligible authors
-who could use such agreements. For this purpose, the affiliations of
-first and corresponding authors were analysed.
+This folder contains analytical datasets providing aggregated counts
+from proprietary bibliometric databases on the uptake of open access in
+hybrid journals included in transformative agreements by journal and
+country information between 2019 and 2023. A particular focus was on
+whether publications were from eligible authors who could use such
+agreements. For this purpose, the affiliations of first and
+corresponding authors were analysed.
 
 The following datasets were used:
 
@@ -14,6 +15,13 @@ The following datasets were used:
   Kompetenznetzwerk Bibliometrie (April 2024 snapshot)
 - Web of Science (`wos`): In-house Web of Science database provided by
   the Kompetenznetzwerk Bibliometrie (April 2024 snapshot)
+
+The folder also include respective datasets derived from the openly
+available hoaddata (`hoad`), v.0.3. It combines data from several open
+metadata sources, including cOAlition S Public Transformative Agreement
+Data powering the Journal Checker Tool, Crossref and OpenAlex.
+<https://github.com/subugoe/hoaddata/releases/tag/v.0.3>. Note that the
+OA indicators were calculated for first authors only.
 
 See `data-raw/` how the subset of publications associated with hybrid
 journals and transformative agreements was retrieved. The indicator were
@@ -443,5 +451,3 @@ readr::read_csv(here("data", "scp_jn_country_ta_by_year.csv"))
     ## #   ta_oa_corresponding_author_articles <dbl>,
     ## #   ta_first_corresponding_author_articles <dbl>,
     ## #   ta_oa_first_corresponding_author_articles <dbl>
-
-## hoadata
