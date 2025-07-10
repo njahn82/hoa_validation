@@ -5,7 +5,6 @@ format:
     fig_caption: yes
     template: apa6.sty
     extra_dependencies: ["flafter"]
-  docx: default
 csl: apa.csl
 bibliography: references.bib
 ---
@@ -32,7 +31,7 @@ knitr::knit_hooks$set(
   inline = function(x) {
     if (is.numeric(x)) {
       return(prettyNum(x, big.mark = ","))
-    } else{
+    } else {
       return(x)
     }
   }
@@ -49,11 +48,13 @@ library(ggrepel)
 
 # Themes
 my_upset_theme <-
-  theme(panel.grid.minor = element_blank(),
-        panel.grid.major.x = element_blank(),
-        plot.title.position="plot",
-        text = element_text(size = 10),
-        plot.title = element_text(hjust = 0, vjust = 1))
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    plot.title.position = "plot",
+    text = element_text(size = 10),
+    plot.title = element_text(hjust = 0, vjust = 1)
+  )
 ```
 
 # Introduction
@@ -273,8 +274,8 @@ First, `r length(unique(ta_oa_inst$doi))` articles from `r length(unique(ta_oa_i
 Then, an algorithm selected the most frequent ROR-ID and proprietary organisation identifier pairs to handle multiple affiliations and organisational hierarchy differences.
 
 ```{r aff_evaluation}
-scp_ror <- readr::read_csv(here::here("data-raw", "scp_wos_matching.csv")) 
-wos_ror <- readr::read_csv(here::here("data-raw", "ror_wos_matching.csv")) 
+scp_ror <- readr::read_csv(here::here("data-raw", "scp_wos_matching.csv"))
+wos_ror <- readr::read_csv(here::here("data-raw", "ror_wos_matching.csv"))
 ```
 
 This process linked `r length(unique(scp_ror$ror))` ROR-IDs to  `r length(unique(scp_ror$vendor_org_id))` Scopus Affiliation IDs and  `r length(unique(wos_ror$ror))` ROR-IDs to `r length(unique(wos_ror$vendor_org_id))` enhanced affiliation strings in Web of Science. 
@@ -329,10 +330,10 @@ methods_overview_table_df <- bind_rows(
 
 kableExtra::kbl(
   methods_overview_table_df,
-  booktabs = TRUE, 
-  format.args = list(big.mark = ","), 
-  digits = 1, 
-  escape = TRUE, 
+  booktabs = TRUE,
+  format.args = list(big.mark = ","),
+  digits = 1,
+  escape = TRUE,
   position = "ht",
   col.names = c("", "hoaddata*", "Web of Science", "Scopus")
 ) |>
@@ -375,23 +376,23 @@ Then, using the same methods, indicators at the publisher and country levels are
 ```{r}
 jn_upset_articles <- readr::read_csv(here::here("data", "jn_upset_articles.csv"))
 
-all_jns <- jn_upset_articles |> 
+all_jns <- jn_upset_articles |>
   distinct(issn_l)
 
 union_jns <- jn_upset_articles |>
   filter(WoS == TRUE, Crossref == TRUE, Scopus == TRUE) |>
   distinct(issn_l)
 
-upset_data <- jn_upset_articles |> 
-   mutate(overlap = case_when(Crossref == TRUE & WoS == TRUE & Scopus == TRUE ~ doi_in_wos_or_scopus,
-                             Crossref == TRUE & WoS == FALSE & Scopus == TRUE ~ doi_in_scopus,
-                             Crossref == TRUE & WoS == TRUE & Scopus == FALSE ~ doi_in_wos,
-                             Crossref == TRUE & WoS == FALSE & Scopus == FALSE ~ n_cr,
-                             Crossref == FALSE & WoS == FALSE & Scopus == TRUE ~ doi_in_scopus,
-                             Crossref == FALSE & WoS == TRUE & Scopus == FALSE ~ doi_in_wos,
-                             Crossref == FALSE & WoS == TRUE & Scopus == TRUE ~ doi_in_wos_or_scopus))
-
-
+upset_data <- jn_upset_articles |>
+  mutate(overlap = case_when(
+    Crossref == TRUE & WoS == TRUE & Scopus == TRUE ~ doi_in_wos_or_scopus,
+    Crossref == TRUE & WoS == FALSE & Scopus == TRUE ~ doi_in_scopus,
+    Crossref == TRUE & WoS == TRUE & Scopus == FALSE ~ doi_in_wos,
+    Crossref == TRUE & WoS == FALSE & Scopus == FALSE ~ n_cr,
+    Crossref == FALSE & WoS == FALSE & Scopus == TRUE ~ doi_in_scopus,
+    Crossref == FALSE & WoS == TRUE & Scopus == FALSE ~ doi_in_wos,
+    Crossref == FALSE & WoS == TRUE & Scopus == TRUE ~ doi_in_wos_or_scopus
+  ))
 ```
 
 Figure \ref{fig-upset_coverage_results} presents the coverage of hybrid journals included in transformative agreements, based on the intersections of the examined data sources. 
@@ -400,8 +401,8 @@ The x-axis represents the set intersections in a matrix layout.
 The analysis included hybrid journals that published at least one open access article between 2019 and 2023, based on open access status information from each database.
 Only original articles were included in the analysis.
 
-```{r upset_coverage_results, fig.asp=0.75}
-#| fig-cap: "Comparison of hybrid journal indexing by data source, 2019-2023. Only hybrid journals present in the cOAlition S Transformative Agreement Data dump with at least one open access article are considered. A) presents the number of journals, B) the number of articles (DOI), distinguishing between shared DOI corpus and surplus in hoaddata. Box plots (C) shows the five-years journal article volume (log-scale)."
+```{r upset_coverage_results}
+#| fig-cap: "Comparison of hybrid journal indexing by data source, 2019-2023. Only hybrid journals present in the cOAlition S Transformative Agreement Data dump with at least one open access article are considered. A) presents the number of journals, B) the number of articles (DOI), distinguishing between shared DOI corpus and surplus in hoaddata. Box plots (C) shows the five-years journal article volume (log scale)."
 #| label: fig-upset_coverage_results
 # Helper function to make text labels the same size as axis labels as seen in
 # <https://wjschne.github.io/posts/making-text-labels-the-same-size-as-axis-labels-in-ggplot2/>
@@ -414,70 +415,103 @@ ggtext_size <- function(base_size, ratio = 0.8) {
 bar_width <- 0.7
 size <- get_size_mode("exclusive_intersection")
 
-upset_overview <- upset_data |>
+upset_journal <- upset_data |>
   rename(hoaddata = Crossref) |>
   ComplexUpset::upset(
-  c("hoaddata", "WoS", "Scopus"),
-  # Only journals in Crossref
-  min_size = 30,
-  set_sizes = FALSE,
-  stripes = "transparent",
-  # wrap = TRUE,
-  name = "Data Source Coverage",
-  base_annotations = list(
-    "Journals" = (
-      ComplexUpset::intersection_size(
-        counts = FALSE,
-        text = list(size = 8 / .pt),
-        text_mapping = aes(
-          label = paste0(!!upset_text_percentage(), '\n(', format(!!size, big.mark = ","), ')'),
-          colour = ifelse(!!size > 5000, 'on_bar', 'on_background'),
-          y = ifelse(!!size > 5000, !!size - 4000, !!size)
-        ), width = bar_width
-      ) +
-        scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
-        ggtitle("A")
-    )
-  ),
-  annotations = list(
-    "Journal size\n(log scale)" = (
-      ggplot(mapping = aes(x = intersection, y = overlap)) +
-        geom_boxplot(outliers = FALSE, width = bar_width) +
-        scale_y_log10(labels =  scales::number_format(big.mark = ","), limits = c(5, 10000)) +
-        ggtitle("C")
+    c("hoaddata", "WoS", "Scopus"),
+    # Only journals in Crossref
+    min_size = 30,
+    set_sizes = FALSE,
+    stripes = "transparent",
+    wrap = FALSE,
+    name = NULL,
+    base_annotations = list(
+      "Journals" = (
+        ComplexUpset::intersection_size(
+          counts = FALSE,
+          text = list(size = 8 / .pt),
+          text_mapping = aes(
+            label = paste0(!!upset_text_percentage(), "\n(", format(!!size, big.mark = ","), ")"),
+            colour = ifelse(!!size > 5000, "on_bar", "on_background"),
+            y = ifelse(!!size > 5000, !!size - 4000, !!size)
+          ), width = bar_width
+        ) +
+          scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+          ggtitle("A")
+      )
     ),
-    "Articles" = (
-      ggplot(mapping = aes(y = n_cr)) +
-        geom_bar(
-          stat = "identity",
-          color = "grey80",
-          width = bar_width,
-          aes(fill = "Surplus")
-        ) +
-        geom_bar(
-          aes(y = overlap, fill = "Shared"),
-          stat = "identity",
-          width = bar_width,
-          color = "#0091c8"
-        ) +
-        scale_fill_manual(
-          values = c(
-            `Surplus` = "grey80",
-            `Shared` = "#0091c8"
-          ),
-          name = "DOI"
-        ) +
-        scale_y_continuous(labels =  scales::number_format(big.mark = ","),
-                           breaks = c(0, 2500000, 5000000, 7500000)) +
-        guides(fill = guide_legend(reverse = TRUE)) +
-        ggtitle("B")
-    )
-  ),
-  matrix = (intersection_matrix(geom = geom_point(
-    shape = "square", size = 2
-  )))
-)
-upset_overview & my_upset_theme
+    matrix = (intersection_matrix(geom = geom_point(
+      shape = "square", size = 2
+    )))
+  )
+upset_article_volume <- upset_data |>
+  rename(hoaddata = Crossref) |>
+  ComplexUpset::upset(
+    c("hoaddata", "WoS", "Scopus"),
+    # Only journals in Crossref
+    min_size = 30,
+    set_sizes = FALSE,
+    stripes = "transparent",
+    wrap = FALSE,
+    name = NULL,
+    base_annotations = list(
+      "Journal size (log scale)" = (
+        ggplot(mapping = aes(x = intersection, y = overlap)) +
+          geom_boxplot(outliers = FALSE, width = bar_width) +
+          scale_y_log10(labels = scales::number_format(big.mark = ","), limits = c(5, 10000)) +
+          ggtitle("C"))
+    ),
+    matrix = (intersection_matrix(geom = geom_point(
+      shape = "square", size = 2
+    )))
+  )
+upset_articles <- upset_data |>
+  rename(hoaddata = Crossref) |>
+  ComplexUpset::upset(
+    c("hoaddata", "WoS", "Scopus"),
+    # Only journals in Crossref
+    min_size = 30,
+    set_sizes = FALSE,
+    stripes = "transparent",
+    wrap = FALSE,
+    name = "Data Source Coverage",
+    base_annotations = list(
+      "Articles" = (
+        ggplot(mapping = aes(y = n_cr)) +
+          geom_bar(
+            stat = "identity",
+            color = "grey80",
+            width = bar_width,
+            aes(fill = "Surplus")
+          ) +
+          geom_bar(
+            aes(y = overlap, fill = "Shared"),
+            stat = "identity",
+            width = bar_width,
+            color = "#0091c8"
+          ) +
+          scale_fill_manual(
+            values = c(
+              `Surplus` = "grey80",
+              `Shared` = "#0091c8"
+            ),
+            name = "DOI"
+          ) +
+          scale_y_continuous(
+            labels = scales::number_format(big.mark = ","),
+            breaks = c(0, 2500000, 5000000, 7500000)
+          ) +
+          guides(fill = guide_legend(reverse = TRUE)) +
+          theme(legend.position = "top") +
+          ggtitle("B")
+      )
+    ),
+    matrix = (intersection_matrix(geom = geom_point(
+      shape = "square", size = 2
+    )))
+  )
+
+(guide_area() / (upset_journal | upset_articles | upset_article_volume)) + plot_layout(guides = "collect", heights = c(0.1, 1)) & my_upset_theme
 ```
 Journal coverage analysis revealed that `r round(nrow(union_jns) / nrow(all_jns) * 100)`% (n = `r nrow(union_jns)`) of the hybrid journals included in transformative agreements were indexed in all three databases (Figure \ref{fig-upset_coverage_results}A).
 The second largest set consisted of journals indexed in both hoaddata and Scopus, comprising `r round( jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == TRUE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == TRUE) |>  nrow()`) of hybrid journals.
@@ -522,12 +556,15 @@ esac <- hoaddata::jct_hybrid_jns |>
       esac_publisher == "Springer Nature" ~ "Springer Nature",
       esac_publisher == "Wiley" ~ "Wiley",
       is.character(esac_publisher) ~ "Other"
-    )) |>
-  mutate(publisher =
-           forcats::fct_relevel(
-             publisher,
-             c("Elsevier", "Springer Nature", "Wiley", "Other") 
-           )) |>
+    )
+  ) |>
+  mutate(
+    publisher =
+      forcats::fct_relevel(
+        publisher,
+        c("Elsevier", "Springer Nature", "Wiley", "Other")
+      )
+  ) |>
   mutate(publisher = forcats::fct_rev(publisher)) |>
   distinct(issn_l, publisher, esac_publisher)
 
@@ -535,13 +572,13 @@ jn_upset_publisher <- inner_join(upset_data, esac, by = "issn_l") |>
   # Because of Journal transfer, restrict choice to one portfolio
   distinct(issn_l, .keep_all = TRUE)
 
-jn_upset_publisher_ind <- 
+jn_upset_publisher_ind <-
   jn_upset_publisher |>
-  filter(Crossref == TRUE, Scopus == TRUE, WoS == TRUE) |> 
+  filter(Crossref == TRUE, Scopus == TRUE, WoS == TRUE) |>
   group_by(publisher) |>
   summarise(n_journals = n_distinct(issn_l), articles = sum(overlap, na.rm = TRUE))
 
-jn_upset_publisher_all <- 
+jn_upset_publisher_all <-
   jn_upset_publisher |>
   group_by(publisher) |>
   summarise(n_journals = n_distinct(issn_l), articles = sum(overlap, na.rm = TRUE))
@@ -549,8 +586,10 @@ jn_upset_publisher_all <-
 jn_upset_publisher_all <- jn_upset_publisher |>
   summarise(n_journals_all = n_distinct(issn_l), articles_all = sum(overlap, na.rm = TRUE)) |>
   bind_cols(jn_upset_publisher_all) |>
-  mutate(prop_jn = n_journals / n_journals_all,
-         prop_art = articles / articles_all)
+  mutate(
+    prop_jn = n_journals / n_journals_all,
+    prop_art = articles / articles_all
+  )
 ```
 
 Figure \ref{fig-upset_coverage_results_publisher} presents the coverage of hybrid journals in transformative agreements across data sources from 2019 to 2023 with a focus on publisher portfolios.
@@ -564,101 +603,104 @@ The remaining `r jn_upset_publisher |> filter(publisher == "Other") |> distinct(
 ```{r upset_publisher_plot, fig.asp=0.75}
 #| fig-cap: "Comparison of hybrid journal indexing by data source and publisher, 2019-2023. Only hybrid journals present in the cOAlition S Transformative Agreement Data dump with at least one open access article are considered. A) presents the percentage of journals by publisher, B) the number of articles by publisher (shared DOI). Box plots (C) shows the five-years journal article volume (log-scale) by publisher."
 #| label: fig-upset_coverage_results_publisher
-#| 
-size = get_size_mode('exclusive_intersection')
+#|
+size <- get_size_mode("exclusive_intersection")
 
 upset_publisher_plot <- jn_upset_publisher |>
   rename(hoaddata = Crossref) |>
   ComplexUpset::upset(
     c("hoaddata", "WoS", "Scopus"),
-  # Only journals in Crossref
-  min_size = 30,
-  width_ratio = 0.4,
-  stripes = "transparent",
-  name = "Data Source Coverage",
-  base_annotations = NULL,
-  annotations = list(
-    "Journal size\n(log-scale)" = (
-      ggplot(mapping = aes(x = intersection, y = overlap, fill = fct_rev(publisher))) +
-        geom_boxplot(outliers = FALSE, width = bar_width) +
-        scale_fill_manual(
-          "",
-          values = c(
-            "Elsevier" = "#e9711c",
-            "Springer Nature" = "#486a7e",
-            "Wiley" = "#068853",
-            "Other" = "#b3b3b3"
-          ), guide = "none") +
-          scale_y_log10(labels =  scales::number_format(big.mark = ",")) +
-        ggtitle("C")
-    ),
-    "Articles" = (
-      ggplot(mapping = aes(y = overlap, fill = publisher, color = publisher)) +
-        geom_bar(stat = "identity", width = bar_width) +
-        scale_fill_manual(
-          "",
-          values = c(
-            "Elsevier" = "#e9711c",
-            "Springer Nature" = "#486a7e",
-            "Wiley" = "#068853",
-            "Other" = "#b3b3b3a0"
-          ), guide = "none") +
-        scale_color_manual(
-          values = c(
-            "Elsevier" = "#e9711c",
-            "Springer Nature" = "#486a7e",
-            "Wiley" = "#068853",
-            "Other" = "#b3b3b3"
-          ), guide = "none"
-        ) + 
-        scale_y_continuous(labels =  scales::number_format(big.mark = ",")) +
-        ggtitle("B") 
-    ),
-    "Publisher" = (
-      ggplot(mapping = aes(fill = publisher)) +
-        geom_bar(stat = "count", position = "fill", width = bar_width) + 
-        scale_y_continuous("Journals", labels = scales::percent_format()) +
-        scale_fill_manual(
-          "",
-          values = c(
-            "Elsevier" = "#e9711c",
-            "Springer Nature" = "#486a7e",
-            "Wiley" = "#068853",
-            "Other" = "#b3b3b3"
-          ), guide = "none") +
-        ggtitle("A")
-    )
-  ),
-  set_sizes = (
-    upset_set_size(
-      geom = geom_bar(aes(fill = publisher), width = 0.8), 
-      position = "right"
-    ) +
-    scale_fill_manual(
-      "",
-      values = c(
-        "Elsevier" = "#e9711c",
-        "Springer Nature" = "#486a7e",
-        "Wiley" = "#068853",
-        "Other" = "#b3b3b3"
+    # Only journals in Crossref
+    min_size = 30,
+    width_ratio = 0.4,
+    stripes = "transparent",
+    name = "Data Source Coverage",
+    base_annotations = NULL,
+    annotations = list(
+      "Journal size\n(log-scale)" = (
+        ggplot(mapping = aes(x = intersection, y = overlap, fill = fct_rev(publisher))) +
+          geom_boxplot(outliers = FALSE, width = bar_width) +
+          scale_fill_manual(
+            "",
+            values = c(
+              "Elsevier" = "#e9711c",
+              "Springer Nature" = "#486a7e",
+              "Wiley" = "#068853",
+              "Other" = "#b3b3b3"
+            ), guide = "none"
+          ) +
+          scale_y_log10(labels = scales::number_format(big.mark = ",")) +
+          ggtitle("C")
+      ),
+      "Articles" = (
+        ggplot(mapping = aes(y = overlap, fill = publisher, color = publisher)) +
+          geom_bar(stat = "identity", width = bar_width) +
+          scale_fill_manual(
+            "",
+            values = c(
+              "Elsevier" = "#e9711c",
+              "Springer Nature" = "#486a7e",
+              "Wiley" = "#068853",
+              "Other" = "#b3b3b3a0"
+            ), guide = "none"
+          ) +
+          scale_color_manual(
+            values = c(
+              "Elsevier" = "#e9711c",
+              "Springer Nature" = "#486a7e",
+              "Wiley" = "#068853",
+              "Other" = "#b3b3b3"
+            ), guide = "none"
+          ) +
+          scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+          ggtitle("B")
+      ),
+      "Publisher" = (
+        ggplot(mapping = aes(fill = publisher)) +
+          geom_bar(stat = "count", position = "fill", width = bar_width) +
+          scale_y_continuous("Journals", labels = scales::percent_format()) +
+          scale_fill_manual(
+            "",
+            values = c(
+              "Elsevier" = "#e9711c",
+              "Springer Nature" = "#486a7e",
+              "Wiley" = "#068853",
+              "Other" = "#b3b3b3"
+            ), guide = "none"
+          ) +
+          ggtitle("A")
       )
-    ) +
-    scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
-  #  guides(fill = guide_legend(reverse = TRUE)) +
-    ylab("Journals") 
-  ),
-  guides = "over",
-  matrix = (
-    intersection_matrix(
-      geom = geom_point(
-        shape = "square",
-        size = 2
+    ),
+    set_sizes = (
+      upset_set_size(
+        geom = geom_bar(aes(fill = publisher), width = 0.8),
+        position = "right"
+      ) +
+        scale_fill_manual(
+          "",
+          values = c(
+            "Elsevier" = "#e9711c",
+            "Springer Nature" = "#486a7e",
+            "Wiley" = "#068853",
+            "Other" = "#b3b3b3"
+          )
+        ) +
+        scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+        #  guides(fill = guide_legend(reverse = TRUE)) +
+        ylab("Journals")
+    ),
+    guides = "over",
+    matrix = (
+      intersection_matrix(
+        geom = geom_point(
+          shape = "square",
+          size = 2
+        )
       )
     )
   )
-)
 
-upset_publisher_plot & my_upset_theme 
+upset_publisher_plot & my_upset_theme
 ```
 
 The three largest publishers, Elsevier, Springer Nature, and Wiley, were best represented at the  intersection of all three data sources  (hoaddata, Scopus, and Web of Science).
@@ -673,15 +715,17 @@ The set also captures discontinued journals, providing further insights into the
 
 
 ```{r miss_portfolios}
-miss_tas <- jn_upset_publisher |> 
-  filter(Crossref == FALSE) |> 
-  group_by(esac_publisher) |> 
-  summarise(journals = n_distinct(issn_l),
-            n = sum(overlap, na.rm = TRUE)) |> 
-  arrange(desc(n)) 
+miss_tas <- jn_upset_publisher |>
+  filter(Crossref == FALSE) |>
+  group_by(esac_publisher) |>
+  summarise(
+    journals = n_distinct(issn_l),
+    n = sum(overlap, na.rm = TRUE)
+  ) |>
+  arrange(desc(n))
 
 cr_tas <- jn_upset_publisher |>
-  filter(Crossref == TRUE) |> 
+  filter(Crossref == TRUE) |>
   pull(esac_publisher)
 
 miss_publishers <- miss_tas |>
@@ -706,7 +750,7 @@ For Web of Science and Scopus, the impact of transformative agreements was estim
 ```{r, plot_uptake_overview, fig.asp=.5}
 #| fig-cap: "Development of open access in hybrid journals in transformative agreements by data source and author role, 2019-2023. Figure shows the open access percentage (A), the number (B) and the percentage (C) of open access articles enabled by transformative agreements."
 #| label: fig-uptake_overview
-#| 
+#|
 uptake_df <- readr::read_csv(here::here("data", "uptake_df.csv"))
 
 # Data prep
@@ -721,9 +765,11 @@ uptake_by_year <- uptake_df |>
   mutate(src = ifelse(src == "HOAD", "hoaddata", src))
 
 uptake_by_year_short <- uptake_by_year |>
-  mutate(oa_prop = n_oa_articles / n_articles,
-         ta_oa_prop = ta_oa_first_author_articles / n_oa_articles,
-         ta_oa_cor_prop = ta_oa_corresponding_author_articles / n_oa_articles)
+  mutate(
+    oa_prop = n_oa_articles / n_articles,
+    ta_oa_prop = ta_oa_first_author_articles / n_oa_articles,
+    ta_oa_cor_prop = ta_oa_corresponding_author_articles / n_oa_articles
+  )
 
 uptake_by_year_df <- uptake_by_year |>
   mutate(earliest_year = gsub("^20", "'", as.character(earliest_year))) |>
@@ -737,7 +783,7 @@ plot_oa_all <- ggplot(uptake_by_year_df, aes(x = earliest_year)) +
     guide = "none"
   ) +
   scale_color_manual(NULL,
-   values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")
+    values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")
   ) +
   scale_y_continuous(
     labels = scales::percent_format(),
@@ -756,8 +802,9 @@ plot_ta_oa <- ggplot(filter(uptake_by_year_df, value > 0), aes(x = earliest_year
   geom_point(aes(y = value, fill = src), alpha = 0.8, shape = 21) +
   scale_color_manual(NULL, values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
-                    guide = "none") +
+    values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
+    guide = "none"
+  ) +
   scale_linetype_manual(NULL,
     values = c(
       `ta_oa_first_author_articles` = "longdash",
@@ -785,8 +832,9 @@ plot_ta_perc <- ggplot(filter(uptake_by_year_df, value > 0), aes(x = earliest_ye
   geom_point(aes(y = value / n_oa_articles, fill = src), alpha = 0.8, shape = 21) +
   scale_color_manual(NULL, values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
-                    guide = "none") +  
+    values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
+    guide = "none"
+  ) +
   scale_linetype_manual(NULL,
     values = c(
       `ta_oa_first_author_articles` = "longdash",
@@ -862,9 +910,11 @@ uptake_publisher_by_year <- uptake_publisher |>
   )
 
 uptake_by_publisher_short <- uptake_publisher_by_year |>
-  mutate(oa_prop = n_oa_articles / n_articles,
-         ta_oa_prop = ta_oa_first_author_articles / n_oa_articles,
-         ta_oa_cor_prop = ta_oa_corresponding_author_articles / n_oa_articles)
+  mutate(
+    oa_prop = n_oa_articles / n_articles,
+    ta_oa_prop = ta_oa_first_author_articles / n_oa_articles,
+    ta_oa_cor_prop = ta_oa_corresponding_author_articles / n_oa_articles
+  )
 
 
 uptake_by_year_publisher_df <- uptake_publisher_by_year |>
@@ -876,7 +926,7 @@ uptake_by_year_publisher_df <- uptake_publisher_by_year |>
 ```{r plot_publisher_uptake_overview, fig.asp=1.1}
 #| fig-cap: "Development of open access in hybrid journals included in transformative agreements by data source, author role and publisher, 2019-2023. Figure shows the open access percentage (A), the number (B) and the percentage (C) of open access articles enabled by transformative agreements."
 #| label: fig-uptake_publisher
-#| 
+#|
 publisher_plot_oa_all <- ggplot(uptake_by_year_publisher_df, aes(x = earliest_year)) +
   geom_line(aes(y = n_oa_articles / n_articles, group = src, color = src), linetype = "solid") +
   geom_point(aes(y = n_oa_articles / n_articles, fill = src), alpha = 0.5, shape = 21) +
@@ -892,7 +942,7 @@ publisher_plot_oa_all <- ggplot(uptake_by_year_publisher_df, aes(x = earliest_ye
     limits = c(0, NA),
     expand = expansion(mult = c(0, 0.05))
   ) +
-  facet_grid(~fct_rev(publisher)) +
+  facet_grid(~ fct_rev(publisher)) +
   labs(y = "Hybrid OA Uptake", x = NULL)
 
 publisher_plot_ta_oa <- ggplot(filter(uptake_by_year_publisher_df, value > 0), aes(x = earliest_year)) +
@@ -905,8 +955,9 @@ publisher_plot_ta_oa <- ggplot(filter(uptake_by_year_publisher_df, value > 0), a
   geom_point(aes(y = value, fill = src), alpha = 0.8, shape = 21) +
   scale_color_manual(NULL, values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
-                    guide = "none") +
+    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
+    guide = "none"
+  ) +
   scale_linetype_manual(NULL,
     values = c(
       `ta_oa_first_author_articles` = "longdash",
@@ -922,7 +973,7 @@ publisher_plot_ta_oa <- ggplot(filter(uptake_by_year_publisher_df, value > 0), a
     limits = c(0, NA),
     expand = expansion(mult = c(0, 0.05))
   ) +
-  facet_grid(~fct_rev(publisher)) +
+  facet_grid(~ fct_rev(publisher)) +
   labs(y = "Hybrid OA via Agreement", x = NULL)
 
 publisher_plot_ta_perc <- ggplot(filter(uptake_by_year_publisher_df, value > 0), aes(x = earliest_year)) +
@@ -935,8 +986,9 @@ publisher_plot_ta_perc <- ggplot(filter(uptake_by_year_publisher_df, value > 0),
   geom_point(aes(y = value / n_oa_articles, fill = src), alpha = 0.8, shape = 21) +
   scale_color_manual(NULL, values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
-                    guide = "none") +  
+    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
+    guide = "none"
+  ) +
   scale_linetype_manual(NULL,
     values = c(
       `ta_oa_first_author_articles` = "longdash",
@@ -952,8 +1004,8 @@ publisher_plot_ta_perc <- ggplot(filter(uptake_by_year_publisher_df, value > 0),
     limits = c(0, NA),
     expand = expansion(mult = c(0, 0.05))
   ) +
-  facet_grid(~fct_rev(publisher)) +
-  labs(y = "% of Hybrid OA via Agreement",  x = "Publication Year")
+  facet_grid(~ fct_rev(publisher)) +
+  labs(y = "% of Hybrid OA via Agreement", x = "Publication Year")
 
 layout <- "A
 B
@@ -977,7 +1029,6 @@ publisher_combined_plot <- wrap_plots(
   plot_annotation(tag_levels = "A")
 
 publisher_combined_plot + plot_layout(guides = "collect")
-
 ```
 
 When considering open access trends by publisher (see Figure \ref{fig-uptake_publisher}), the observed differences in early uptake rates between hoaddata and Scopus compared to Web of Science can be largely attributed to articles published in Elsevier hybrid journals, the largest publisher in our sample. 
@@ -1043,9 +1094,11 @@ articles_plot <- country_article_plot_df |>
   filter(!is.na(country_code), hoad_articles > 10000) |>
   ggplot(aes(x = hoad_articles, y = value, fill = country_group)) +
   geom_point(pch = 21, size = 2.5) +
-  ggrepel::geom_text_repel(data = filter(country_article_plot_df, country_code %in% country_focus),
+  ggrepel::geom_text_repel(
+    data = filter(country_article_plot_df, country_code %in% country_focus),
     aes(label = country_code), size = 2, min.segment.length = 0,
-                force = 50) +
+    force = 50
+  ) +
   scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf")) +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
@@ -1091,9 +1144,12 @@ oa_prop_plot_df <- country_df |>
 
 oa_prop_plot <- ggplot(oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, fill = country_group)) +
   geom_point(alpha = 1, pch = 21, size = 2.5) +
-ggrepel::geom_text_repel(data = filter(oa_prop_plot_df, country_code %in% country_focus),
+  ggrepel::geom_text_repel(
+    data = filter(oa_prop_plot_df, country_code %in% country_focus),
     aes(label = country_code), size = 2, min.segment.length = 0,
-                force = 50) +  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
+    force = 50
+  ) +
+  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
   coord_fixed(ratio = 1) +
@@ -1109,13 +1165,13 @@ ggrepel::geom_text_repel(data = filter(oa_prop_plot_df, country_code %in% countr
   ) +
   theme_minimal(base_size = 10) +
   labs(x = "Hybrid OA Uptake\nhoadata", y = "Hybrid OA Uptake") +
-    theme(
+  theme(
     axis.ticks.x = element_line(size = 0.2),
     axis.ticks.y = element_line(size = 0.2),
     axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
   ) +
   theme(
- #   strip.text.x = element_blank(),
+    #   strip.text.x = element_blank(),
     legend.position = "top",
     aspect.ratio = 1,
     panel.border = element_rect(color = "grey50", fill = NA),
@@ -1143,9 +1199,12 @@ ta_oa_country_plot <- ta_oa_country_df |>
   filter(hoad_ta_oa_articles > 1000) |>
   ggplot(aes(x = hoad_ta_oa_articles, y = value, fill = country_group)) +
   geom_point(pch = 21, size = 2.5) +
-ggrepel::geom_text_repel(data = filter(ta_oa_country_df, hoad_ta_oa_articles > 1000, country_code %in% country_focus),
+  ggrepel::geom_text_repel(
+    data = filter(ta_oa_country_df, hoad_ta_oa_articles > 1000, country_code %in% country_focus),
     aes(label = country_code), size = 2, min.segment.length = 0,
-                force = 50) +  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
+    force = 50
+  ) +
+  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
   coord_fixed(ratio = 1) +
@@ -1193,11 +1252,13 @@ ta_oa_prop_plot <- ggplot(ta_oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, f
   scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
-  geom_text_repel(data = filter(ta_oa_prop_plot_df, country_code %in% country_focus),
-                aes(label = country_code),
-                min.segment.length = 0,
-                force = 50,
-                size = 2) +
+  geom_text_repel(
+    data = filter(ta_oa_prop_plot_df, country_code %in% country_focus),
+    aes(label = country_code),
+    min.segment.length = 0,
+    force = 50,
+    size = 2
+  ) +
   coord_fixed(ratio = 1) +
   scale_x_continuous(
     labels = scales::percent_format(),
@@ -1217,7 +1278,7 @@ ta_oa_prop_plot <- ggplot(ta_oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, f
     axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
   ) +
   theme(
-#    strip.text.x = element_blank(),
+    #    strip.text.x = element_blank(),
     legend.position = "bottom",
     aspect.ratio = 1,
     panel.border = element_rect(color = "grey50", fill = NA),
@@ -1230,7 +1291,7 @@ ta_oa_prop_plot <- ggplot(ta_oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, f
 ```{r oa_country_comparision_plot_, fig.asp=1, fig.width = 8}
 #| fig-cap: "Comparison of hybrid open access by country, 2019-2023. Scatterplots distinguish between proprietary databases Scopus and Web of Science, and author role. The x-axis shows hoaddata indicators. A) Five-years article volume, B) open access percentage in hybrid journals, (A and B limited to countries with > 10.000 articles published), C) number and D) percentage of open access articles enabled by transformative agreements (limited to countries with > 1.000 open access articles enabled by transformative agreements). Line represents line of equality. An interactive version is accessible via: <https://najkoja-hoa-replication.hf.space/>"
 #| label: fig-uptake_country
-#| 
+#|
 layout <- "EE
 AC
 BD"
@@ -1242,15 +1303,16 @@ combined_oa_country_plot_ <- wrap_plots(
   C = ta_oa_country_plot,
   D = ta_oa_prop_plot,
   design = layout,
-  heights = c(0,1,1)
+  heights = c(0, 1, 1)
 ) &
-    theme(
-      legend.position = "top",
-      panel.border = element_rect(color = "grey50", fill = NA),
-      text = element_text(size = 12))
+  theme(
+    legend.position = "top",
+    panel.border = element_rect(color = "grey50", fill = NA),
+    text = element_text(size = 12)
+  )
 
 combined_oa_country_plot_ + plot_layout(guides = "collect") +
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = "A")
 ```
 
 In terms of article output by country (see Figure \ref{fig-uptake_country}A), strong positive correlations were observed across data sources and author roles (Spearman rank correlation $\rho > .9$, $p < 0.001$).
