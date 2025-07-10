@@ -606,7 +606,7 @@ The remaining `r jn_upset_publisher |> filter(publisher == "Other") |> distinct(
 #|
 size <- get_size_mode("exclusive_intersection")
 
-upset_publisher_plot <- jn_upset_publisher |>
+upset_publisher <- jn_upset_publisher |>
   rename(hoaddata = Crossref) |>
   ComplexUpset::upset(
     c("hoaddata", "WoS", "Scopus"),
@@ -615,46 +615,7 @@ upset_publisher_plot <- jn_upset_publisher |>
     width_ratio = 0.4,
     stripes = "transparent",
     name = "Data Source Coverage",
-    base_annotations = NULL,
-    annotations = list(
-      "Journal size\n(log-scale)" = (
-        ggplot(mapping = aes(x = intersection, y = overlap, fill = fct_rev(publisher))) +
-          geom_boxplot(outliers = FALSE, width = bar_width) +
-          scale_fill_manual(
-            "",
-            values = c(
-              "Elsevier" = "#e9711c",
-              "Springer Nature" = "#486a7e",
-              "Wiley" = "#068853",
-              "Other" = "#b3b3b3"
-            ), guide = "none"
-          ) +
-          scale_y_log10(labels = scales::number_format(big.mark = ",")) +
-          ggtitle("C")
-      ),
-      "Articles" = (
-        ggplot(mapping = aes(y = overlap, fill = publisher, color = publisher)) +
-          geom_bar(stat = "identity", width = bar_width) +
-          scale_fill_manual(
-            "",
-            values = c(
-              "Elsevier" = "#e9711c",
-              "Springer Nature" = "#486a7e",
-              "Wiley" = "#068853",
-              "Other" = "#b3b3b3a0"
-            ), guide = "none"
-          ) +
-          scale_color_manual(
-            values = c(
-              "Elsevier" = "#e9711c",
-              "Springer Nature" = "#486a7e",
-              "Wiley" = "#068853",
-              "Other" = "#b3b3b3"
-            ), guide = "none"
-          ) +
-          scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
-          ggtitle("B")
-      ),
+    base_annotations = list(
       "Publisher" = (
         ggplot(mapping = aes(fill = publisher)) +
           geom_bar(stat = "count", position = "fill", width = bar_width) +
@@ -683,13 +644,12 @@ upset_publisher_plot <- jn_upset_publisher |>
             "Springer Nature" = "#486a7e",
             "Wiley" = "#068853",
             "Other" = "#b3b3b3"
-          )
+          ), guide = "none"
         ) +
         scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
-        #  guides(fill = guide_legend(reverse = TRUE)) +
         ylab("Journals")
     ),
-    guides = "over",
+  #  guides = "over",
     matrix = (
       intersection_matrix(
         geom = geom_point(
@@ -700,7 +660,91 @@ upset_publisher_plot <- jn_upset_publisher |>
     )
   )
 
-upset_publisher_plot & my_upset_theme
+
+upset_publisher_articles <- jn_upset_publisher |>
+  rename(hoaddata = Crossref) |>
+  ComplexUpset::upset(
+    c("hoaddata", "WoS", "Scopus"),
+    # Only journals in Crossref
+    min_size = 30,
+    width_ratio = 0.4,
+    stripes = "transparent",
+    name = "Data Source Coverage",
+    set_sizes=FALSE,
+    base_annotations = list(
+      "Journal size\n(log scale)" = (
+        ggplot(mapping = aes(x = intersection, y = overlap, fill = fct_rev(publisher))) +
+          geom_boxplot(outliers = FALSE, width = bar_width) +
+          scale_fill_manual(
+            "",
+            values = c(
+              "Elsevier" = "#e9711c",
+              "Springer Nature" = "#486a7e",
+              "Wiley" = "#068853",
+              "Other" = "#b3b3b3"
+            ), guide = "none"
+          ) +
+          scale_y_log10(labels = scales::number_format(big.mark = ",")) +
+          ggtitle("C")
+      )), 
+      matrix = (
+      intersection_matrix(
+        geom = geom_point(
+          shape = "square",
+          size = 2
+        )
+      )
+    )
+  )
+
+upset_publisher_article_volume <- jn_upset_publisher |>
+  rename(hoaddata = Crossref) |>
+  ComplexUpset::upset(
+    c("hoaddata", "WoS", "Scopus"),
+    # Only journals in Crossref
+    min_size = 30,
+    width_ratio = 0.4,
+    stripes = "transparent",
+    name = "Data Source Coverage",
+    set_sizes=FALSE,
+    base_annotations = list(
+            "Articles" = (
+        ggplot(mapping = aes(y = overlap, fill = publisher, color = publisher)) +
+          geom_bar(stat = "identity", width = bar_width) +
+          scale_fill_manual(
+            "Publisher",
+            values = c(
+              "Elsevier" = "#e9711c",
+              "Springer Nature" = "#486a7e",
+              "Wiley" = "#068853",
+              "Other" = "#b3b3b3a0"
+            )
+          ) +
+          scale_color_manual(
+            values = c(
+              "Elsevier" = "#e9711c",
+              "Springer Nature" = "#486a7e",
+              "Wiley" = "#068853",
+              "Other" = "#b3b3b3"
+            ), guide = "none"
+          ) +
+          scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+          guides(fill = guide_legend(reverse = TRUE)) +
+          theme(legend.position = "top",
+          legend.justification.bottom = "left") +
+          ggtitle("B"))), 
+      matrix = (
+      intersection_matrix(
+        geom = geom_point(
+          shape = "square",
+          size = 2
+        )
+      )
+    )
+  )
+
+
+(guide_area() / upset_publisher / (upset_publisher_article_volume | upset_publisher_articles)) + plot_layout(guides = "collect", heights = c(0.05, 1, 1)) & my_upset_theme
 ```
 
 The three largest publishers, Elsevier, Springer Nature, and Wiley, were best represented at the  intersection of all three data sources  (hoaddata, Scopus, and Web of Science).
