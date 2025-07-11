@@ -1435,8 +1435,13 @@ This resulted in fewer open access articles being recorded in Scopus and Web of 
 Further inconsistencies emerged between Scopus and Web of Science, despite both relying on Unpaywall: Web of Science erroneously labels Elsevier’s delayed open access as hybrid, whereas Scopus correctly categorises it.
 Notably, Scopus and hoaddata showed greater alignment than that observed in a related comparison between Scopus and OpenAlex [@alperin2024analysissuitabilityopenalexbibliometric]. 
 This likely reflects the advantage of using of a curated list to identify hybrid open access journals, rather than depending solely on article-level tags.
-Given these variations, which may compromise comparability, research and monitoring exercises should avoid relying on a single source. 
-Instead, the selection of open access evidence should be cross-verified using multiple sources and snapshots that can be used to track changes in the data over time [@Huang_2020]. Incorporating expert-curated journal lists can also help prevent misclassification based on business models [@Visser_2021].
+
+The observed variations may compromise comparability across open access monitoring exercises. 
+This study suggests that design decisions of these services, in particular dashboards, which have evolved over the years, such as the data sources used, update frequencies, and open access definitions, may substantially affect the results and, consequently, the basis for decision-making [@Salamoura_2024;@pampel2025].
+Therefore, monitoring exercises might benefit from avoiding reliance on a single source. 
+Instead, the selection of open access evidence could be cross-verified using multiple sources and snapshots that can be used to track changes in the data over time [@Huang_2020].
+Incorporating expert-curated journal lists may also help reduce misclassification based on business models [@Visser_2021].
+Additionally, stakeholders should advocate for greater transparency from monitoring service providers in their methodological choices and data processing decisions [@Kramer_2024].
 
 It is important to note that the study's estimates of articles from institutions involved in transformative agreements are approximations because of a lack of access to invoice data, which is not usually shared by library consortia and publishers [@Kramer_2024]. 
 Furthermore, the open data sources for transformative agreements, including the cOAlition S Journal Checker Tool and the ESAC registry, are based on voluntary effort, crowd-sourced from various consortia. 
