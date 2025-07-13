@@ -135,11 +135,11 @@ Pinfield, 2015; Robinson-Garcia et al., 2020). Coordination efforts
 through initiatives such as OA2020 and Efficiency and Standards for
 Article Charges (ESAC) have further streamlined workflows between
 library consortia and publishers (Campbell et al., 2022; Geschuhn \&
-Stone, 2017). By April 2025, the ESAC Transformative Agreement Registry,
-the primary community-driven evidence source, listed approximately 1,300
-agreements, comprising all major commercial publishers as well as
-society publishers.\footnote{\url{https://esac-initiative.org/about/transformative-agreements/agreement-registry/}}(Rothfritz
-et al., 2024)
+Stone, 2017). By April 2025, the ESAC Transformative Agreement
+Registry\footnote{\url{https://esac-initiative.org/about/transformative-agreements/agreement-registry/}},
+the primary community-driven evidence source, listed around 1,300
+agreements between libraries and all the major commercial publishers and
+leading society publishers(Rothfritz et al., 2024).
 
 However, critics have raised concerns about these agreements,
 particularly regarding perpetuating issues related to hybrid open access
@@ -311,11 +311,11 @@ data.
 
 \subsubsection{hoaddata}\label{hoaddata}
 
-hoaddata (Jahn, 2024), developed and maintained by the author to support
-open access monitoring and research (Achterberg \& Jahn, 2023; Jahn,
-2025), is an R data package that regularly collects information on
-hybrid open access uptake from multiple openly available data
-sources.\footnote{\url{https://github.com/subugoe/hoaddata}} It combines
+hoaddata\footnote{\url{https://github.com/subugoe/hoaddata}}, developed
+and maintained by the author to support open access monitoring and
+research (Achterberg \& Jahn, 2023; Jahn, 2025), is an R data package
+that regularly collects information on hybrid open access uptake from
+multiple openly available data sources (Jahn, 2024). It combines
 article-level metadata from Crossref (Hendricks et al., 2020) and
 affilation metadata from OpenAlex (Priem et al., 2022) with
 transformative agreement information from the Transformative Agreement
@@ -508,13 +508,12 @@ overview of coverage between 2019 and 2023. The table categorises hybrid
 journal coverage in terms of publishing activity. Journals with at least
 one publication during the five-years period (``active journals'') were
 further differentiated based on whether they published at least one
-original research article or review (``active journals (original)'').
-The majority of hybrid journals published at least one original research
-article or review during the five-year period, collectively marked as
-``original article'' in the following. The table also presents the
-number of hybrid journals that published at least one open access
-article (``active journals (original) with OA''). These journals formed
-the basis for subsequent calculations of article-level indicators.
+original research article or review (``active journals (original)''),
+collectively marked as ``original article'' in the following. The table
+also presents the number of hybrid journals that made at least one
+original article open access (``active journals (original) with OA'').
+These journals formed the basis for subsequent calculations of
+article-level indicators.
 
 \begin{table}
 
@@ -625,7 +624,8 @@ cOAlition S Transformative Agreement Data dump with at least one open
 access article are considered. A) presents the number of journals, B)
 the number of articles (DOI), distinguishing between shared DOI corpus
 and surplus in hoaddata. Box plots (C) shows the five-years journal
-article volume (log scale).}
+article volume (log scale). Note that intersections sets with at least
+30 journals are shown.}
 
 \end{figure}%
 
@@ -711,7 +711,8 @@ hybrid journals present in the cOAlition S Transformative Agreement Data
 dump with at least one open access article are considered. A) presents
 the percentage of journals by publisher, B) the number of articles by
 publisher (shared DOI). Box plots (C) shows the five-years journal
-article volume (log-scale) by publisher.}
+article volume (log scale) by publisher. Note that intersections sets
+with at least 30 journals are shown.}
 
 \end{figure}%
 
@@ -800,8 +801,7 @@ Web of Science recorded higher open access uptake in the early years,
 before converging to a similar level in 2023, from 11\% (n = 137,202) in
 2019 to 20\% (n = 255,481) in 2023. This suggests that Web of Science
 takes a different approach to labelling hybrid open access, which will
-become clearer when open access indicators by publisher are presented
-later.
+become clearer when results by publisher are presented later.
 
 Figures \ref{fig-uptake_overview}B and C highlight that hybrid open
 access by transformative agreements substantially increased between 2019
@@ -1094,22 +1094,22 @@ than that observed in a related comparison between Scopus and OpenAlex
 curated list to identify hybrid journals, rather than depending solely
 on article-level open access tags.
 
-The observed variations may compromise comparability across open access
-monitoring exercises. This study suggests that design decisions of these
-services, in particular dashboards, which have evolved over the years,
-such as the data sources used, update frequencies, and confusion about
-the definition of open access and open licenses, may substantially
-affect the results and, consequently, the basis for decision-making
-(Pampel \& Schneider, 2025; Salamoura \& Tsakonas, 2024). Therefore,
-monitoring exercises might benefit from avoiding reliance on a single
-source. Instead, the selection of open access evidence could be
-cross-verified using multiple sources and snapshots that can be used to
-track changes in the data over time (C.-K. Huang et al., 2020).
-Incorporating expert-curated journal lists may also help reduce
-misclassification based on business models (Visser et al., 2021).
-Additionally, stakeholders should advocate for greater transparency from
-monitoring service providers in their methodological choices and data
-processing decisions (Kramer, 2024).
+The observed variations may compromise comparability not just in
+research, but also across open access monitoring services, which have
+grown over the years (Pampel \& Schneider, 2025; Salamoura \& Tsakonas,
+2024). This study highlights, in line with previous research (Salamoura
+\& Tsakonas, 2024), that design decisions underlying these services,
+such as data sources used, update frequencies, and open access
+definitions, are critical. Stakeholders should therefore advocate for
+greater transparency from monitoring service providers in their
+methodological choices and data processing decisions (Kramer, 2024).
+Research and monitoring exercises might also benefit from avoiding
+reliance on a single source. Instead, the selection of open access
+evidence could be cross-verified using multiple sources and snapshots
+that can be used to track changes in the data over time (C.-K. Huang et
+al., 2020; Pölönen et al., 2020). Incorporating expert-curated journal
+lists may also help reduce misclassification based on business models
+(Visser et al., 2021).
 
 It should be noted that the study's estimates of articles from
 institutions involved in transformative agreements are approximations
@@ -1138,13 +1138,20 @@ could not be included in this study due to a lack of CC licence
 information, have recently begun sharing this metadata via Crossref.
 Furthermore, during the 17th Berlin Open Access Conference (B17), an
 international conference organised by the OA2020 Initiative, research
-organisations and their library consortia emphasised the importance of
-open research information for achieving transparency. In conclusion,
-this study has shown that open metadata are well-suited for analysing
-the transition from subscription-based journal publishing to full open
-access. But using them in conjunction with proprietary databases
-provides a more robust understanding that overcomes individual
+organisations and their library consortia emphasised the global
+importance of open research information for achieving transparency. In
+conclusion, this study has shown that open metadata are well-suited for
+analysing the transition from subscription-based journal publishing to
+full open access. But using them in conjunction with proprietary
+databases provides a more robust understanding that overcomes individual
 shortcomings in coverage and metadata quality.
+
+\section*{Acknowledgement}\label{acknowledgement}
+\addcontentsline{toc}{section}{Acknowledgement}
+
+I would like to thank the two reviewers and the PREreview reviewers
+(Rittman et al., 2025) for their valuable and helpful feedback on the
+manuscript.
 
 \section*{Author contributions}\label{author-contributions}
 \addcontentsline{toc}{section}{Author contributions}
@@ -1195,8 +1202,8 @@ Checker Transformative Agreement Data are freely available for re-use.
 \phantomsection\label{refs}
 \begin{CSLReferences}{1}{0}
 \bibitem[\citeproctext]{ref-Achterberg_2023}
-Achterberg, I., \& Jahn, N. (2023). \emph{Introducing the hybrid open
-access dashboard (HOAD)}. {cOAlition S}.
+Achterberg, I., \& Jahn, N. (2023). \emph{Introducing the {Hybrid Open
+Access Dashboard (HOAD)}}. {cOAlition S}.
 \url{https://www.coalition-s.org/blog/introducing-the-hybrid-open-access-dashboard-hoad/}
 
 \bibitem[\citeproctext]{ref-Akbaritabar_2024}
@@ -1529,6 +1536,13 @@ of {OA}: A large-scale analysis of the prevalence and impact of open
 access articles. \emph{{PeerJ}}, \emph{6}, e4375.
 \url{https://doi.org/10.7717/peerj.4375}
 
+\bibitem[\citeproctext]{ref-P_l_nen_2020}
+Pölönen, J., Laakso, M., Guns, R., Kulczycki, E., \& Sivertsen, G.
+(2020). Open access at the national level: A comprehensive analysis of
+publications by {Finnish} researchers. \emph{Quantitative Science
+Studies}, \emph{1}(4), 1396--1428.
+\url{https://doi.org/10.1162/qss_a_00084}
+
 \bibitem[\citeproctext]{ref-priem2022openalex}
 Priem, J., Piwowar, H., \& Orr, R. (2022). \emph{OpenAlex: A fully-open
 index of scholarly works, authors, venues, institutions, and concepts}.
@@ -1543,6 +1557,13 @@ computing}. R Foundation for Statistical Computing.
 Rabesandratana, T. (2019). Elsevier deal with {France} disappoints
 open-access advocates. \emph{Science}.
 \url{https://doi.org/10.1126/science.aba5656}
+
+\bibitem[\citeproctext]{ref-Rittman_2025}
+Rittman, M., Chim, M., Rodsangiam, C., Li, X., Patel, J., \& 1 other
+author. (2025). \emph{PREreview of '{Estimating} transformative
+agreement impact on hybrid open access: A comparative large-scale study
+using {Scopus}, {Web of Science} and open metadata'}. Zenodo.
+\url{https://doi.org/10.5281/ZENODO.15775260}
 
 \bibitem[\citeproctext]{ref-Robinson_Garcia_2020}
 Robinson-Garcia, N., Costas, R., \& van Leeuwen, T. N. (2020). Open
