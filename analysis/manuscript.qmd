@@ -5,7 +5,6 @@ format:
     fig_caption: yes
     template: apa6.sty
     extra_dependencies: ["flafter"]
-  docx: default
 csl: apa.csl
 bibliography: references.bib
 ---
@@ -32,7 +31,7 @@ knitr::knit_hooks$set(
   inline = function(x) {
     if (is.numeric(x)) {
       return(prettyNum(x, big.mark = ","))
-    } else{
+    } else {
       return(x)
     }
   }
@@ -49,11 +48,13 @@ library(ggrepel)
 
 # Themes
 my_upset_theme <-
-  theme(panel.grid.minor = element_blank(),
-        panel.grid.major.x = element_blank(),
-        plot.title.position="plot",
-        text = element_text(size = 10),
-        plot.title = element_text(hjust = 0, vjust = 1))
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    plot.title.position = "plot",
+    text = element_text(size = 10),
+    plot.title = element_text(hjust = 0, vjust = 1)
+  )
 ```
 
 # Introduction
@@ -71,7 +72,7 @@ Although these agreements can vary considerably, they are mainly aimed at hybrid
 Following their initial proposal in 2015 [@Schimmer_2015], the number of transformative agreements has grown substantially, resulting in increased open access publishing in hybrid journals [@Jahn_2025; @Rothfritz_2024; @McCabe_2024].
 Prior to these agreements, only a few articles in hybrid journals were openly accessible [@Bj_rk_2012; @Laakso_2016; @Piwowar_2018], except for some European countries that had dedicated funding policies and the SCOAP$^3$ consortium for high-energy physics journals [@Pinfield_2015; @Robinson_Garcia_2020; @Huang_2020_elife; @Kohls_2018].
 Coordination efforts through initiatives such as OA2020 and Efficiency and Standards for Article Charges (ESAC) have further streamlined workflows between library consortia and publishers [@ifla; @Geschuhn_2017].
-By April 2025, the ESAC Transformative Agreement Registry, the primary community-driven evidence source, listed approximately 1,300 agreements.[^esac_registry]
+By April 2025, the ESAC Transformative Agreement Registry[^esac_registry], the primary community-driven evidence source, listed around 1,300 agreements between libraries and all the major commercial publishers and leading society publishers[@Rothfritz_2024].
 
 However, critics have raised concerns about these agreements, particularly regarding perpetuating issues related to hybrid open access such as charging twice for reading and publishing ("double dipping") [@Asai_2023], market concentration [@Shu_2023; @Butler_2023], and the failure of most hybrid journals to convert to full open access [@Momeni_2021; @Kiley_2024].
 Additional concerns include reduced competition and incentives [@McCabe_2024; @Schmal_competition], and the continuation of publication fees that widen gaps between well-resourced and under-resourced institutions [@budapest; @Ross_Hellauer_2022].
@@ -92,9 +93,9 @@ Simultaneously, the bibliometric community pushes for more open metadata through
 This push for comprehensive metadata has yielded results. 
 A growing number of open scholarly data services that build on publisher-provided metadata through Crossref have benefited from increasing metadata coverage, although differences between publishers can be observed [@van_Eck_2022].
 OpenAlex stands out as a prominent example that primarily retrieves updated records from Crossref and has gained attention for its inclusivity, openness and comprehensive coverage [@priem2022openalex]. 
-Comparative studies confirm it as a suitable alternative to proprietary bibliometric databases [@alperin2024analysissuitabilityopenalexbibliometric; @culbert2024referencecoverageanalysisopenalex].
+Comparative studies confirm it as a suitable alternative to proprietary bibliometric databases [@alperin2024analysissuitabilityopenalexbibliometric; @Culbert_2025].
 Notably, @C_spedes_2025 synthesised evidence on both OpenAlex's strengths and its shortcomings for bibliometric analysis.
-These include challenges with open access status identification [@jahn2023analysing; @Simard_2024], author attribution [@culbert2024referencecoverageanalysisopenalex], institutional affiliations [@Zhang_2024], and document type classification [@Haupka_2024].
+These include challenges with open access status identification [@jahn2023analysing; @Simard_2025], author attribution [@Culbert_2025], institutional affiliations [@Zhang_2024], and document type classification [@Haupka_2024].
 
 While promising for general bibliometric research, measuring hybrid open accesss and transformative agreements presents particular challenges. 
 With invoicing data largely unavailable [@Kramer_2024], previous studies have relied on publication fee pricing lists or expenditures, and first and/or corresponding author affiliations as proxies to attribute funding to institutions [@Butler_2023; @Zhang_2022; @Haustein_APC_2024].
@@ -177,7 +178,7 @@ Overall, xxxx hybrid journals from xxx agreements formed the basis of this study
 
 ### hoaddata 
 
-hoaddata [@hoaddata], developed and maintained by the author to support open access monitoring and research [@Achterberg_2023; @Jahn_2025], is an R data package that regularly collects information on hybrid open access uptake from multiple openly available data sources.
+hoaddata[^hoaddata], developed and maintained by the author to support open access monitoring and research [@Achterberg_2023; @Jahn_2025], is an R data package that regularly collects information on hybrid open access uptake from multiple openly available data sources [@hoaddata].
 It combines article-level metadata from Crossref [@Hendricks_2020] and affilation metadata from OpenAlex [@priem2022openalex] with transformative agreement information from the Transformative Agreement Data dump used by the cOAlition S Journal Checker Tool (JCT)[^tadump], which links journal and institutional data about participating research organisations to agreements in the ESAC Transformative Agreement Registry[^esac_registry].
 
 <!--While the country in which a first-author was located was used to aggregate country-level statistics, Research Organization Registry (ROR) identifiers (ROR-ID) were used in conjunction with ESAC registry information on the duration of an agreement was used to estimate whether an article was published under active transformative agreements.
@@ -273,8 +274,8 @@ First, `r length(unique(ta_oa_inst$doi))` articles from `r length(unique(ta_oa_i
 Then, an algorithm selected the most frequent ROR-ID and proprietary organisation identifier pairs to handle multiple affiliations and organisational hierarchy differences.
 
 ```{r aff_evaluation}
-scp_ror <- readr::read_csv(here::here("data-raw", "scp_wos_matching.csv")) 
-wos_ror <- readr::read_csv(here::here("data-raw", "ror_wos_matching.csv")) 
+scp_ror <- readr::read_csv(here::here("data-raw", "scp_wos_matching.csv"))
+wos_ror <- readr::read_csv(here::here("data-raw", "ror_wos_matching.csv"))
 ```
 
 This process linked `r length(unique(scp_ror$ror))` ROR-IDs to  `r length(unique(scp_ror$vendor_org_id))` Scopus Affiliation IDs and  `r length(unique(wos_ror$ror))` ROR-IDs to `r length(unique(wos_ror$vendor_org_id))` enhanced affiliation strings in Web of Science. 
@@ -293,8 +294,10 @@ A related study [@de_Jonge_2025], applied to publications funded by the Dutch Re
 
 As a result of the comprehensive data processing described above, datasets on open access in hybrid journals included in transformative agreements were aggregated for each database at the country and journal levels by year.
 @tbl-methods_overview_tab provides a general overview of coverage between 2019 and 2023.
-It shows that the majority of hybrid journals published at least one original research article or review, collectively marked as "original article" in the following, during the five-year period.
-These journals have provided the basis for the subsequent calculation of article-level indicators.  
+The table categorises hybrid journal coverage in terms of publishing activity.
+Journals with at least one publication during the five-years period ("active journals") were further differentiated based on whether they published at least one original research article or review ("active journals (original)"), collectively marked as "original article" in the following.
+The table also presents the number of hybrid journals that made at least one original  article open access ("active journals (original) with OA"). 
+These journals formed the basis for subsequent calculations of article-level indicators.  
 
 ```{r methods_overview_tab}
 #| label: tbl-methods_overview_tab
@@ -329,10 +332,10 @@ methods_overview_table_df <- bind_rows(
 
 kableExtra::kbl(
   methods_overview_table_df,
-  booktabs = TRUE, 
-  format.args = list(big.mark = ","), 
-  digits = 1, 
-  escape = TRUE, 
+  booktabs = TRUE,
+  format.args = list(big.mark = ","),
+  digits = 1,
+  escape = TRUE,
   position = "ht",
   col.names = c("", "hoaddata*", "Web of Science", "Scopus")
 ) |>
@@ -375,23 +378,23 @@ Then, using the same methods, indicators at the publisher and country levels are
 ```{r}
 jn_upset_articles <- readr::read_csv(here::here("data", "jn_upset_articles.csv"))
 
-all_jns <- jn_upset_articles |> 
+all_jns <- jn_upset_articles |>
   distinct(issn_l)
 
 union_jns <- jn_upset_articles |>
   filter(WoS == TRUE, Crossref == TRUE, Scopus == TRUE) |>
   distinct(issn_l)
 
-upset_data <- jn_upset_articles |> 
-   mutate(overlap = case_when(Crossref == TRUE & WoS == TRUE & Scopus == TRUE ~ doi_in_wos_or_scopus,
-                             Crossref == TRUE & WoS == FALSE & Scopus == TRUE ~ doi_in_scopus,
-                             Crossref == TRUE & WoS == TRUE & Scopus == FALSE ~ doi_in_wos,
-                             Crossref == TRUE & WoS == FALSE & Scopus == FALSE ~ n_cr,
-                             Crossref == FALSE & WoS == FALSE & Scopus == TRUE ~ doi_in_scopus,
-                             Crossref == FALSE & WoS == TRUE & Scopus == FALSE ~ doi_in_wos,
-                             Crossref == FALSE & WoS == TRUE & Scopus == TRUE ~ doi_in_wos_or_scopus))
-
-
+upset_data <- jn_upset_articles |>
+  mutate(overlap = case_when(
+    Crossref == TRUE & WoS == TRUE & Scopus == TRUE ~ doi_in_wos_or_scopus,
+    Crossref == TRUE & WoS == FALSE & Scopus == TRUE ~ doi_in_scopus,
+    Crossref == TRUE & WoS == TRUE & Scopus == FALSE ~ doi_in_wos,
+    Crossref == TRUE & WoS == FALSE & Scopus == FALSE ~ n_cr,
+    Crossref == FALSE & WoS == FALSE & Scopus == TRUE ~ doi_in_scopus,
+    Crossref == FALSE & WoS == TRUE & Scopus == FALSE ~ doi_in_wos,
+    Crossref == FALSE & WoS == TRUE & Scopus == TRUE ~ doi_in_wos_or_scopus
+  ))
 ```
 
 Figure \ref{fig-upset_coverage_results} presents the coverage of hybrid journals included in transformative agreements, based on the intersections of the examined data sources. 
@@ -400,8 +403,8 @@ The x-axis represents the set intersections in a matrix layout.
 The analysis included hybrid journals that published at least one open access article between 2019 and 2023, based on open access status information from each database.
 Only original articles were included in the analysis.
 
-```{r upset_coverage_results, fig.asp=0.75}
-#| fig-cap: "Comparison of hybrid journal indexing by data source, 2019-2023. Only hybrid journals present in the cOAlition S Transformative Agreement Data dump with at least one open access article are considered. A) presents the number of journals, B) the number of articles (DOI), distinguishing between shared DOI corpus and surplus in hoaddata. Box plots (C) shows the five-years journal article volume (log-scale)."
+```{r upset_coverage_results}
+#| fig-cap: "Comparison of hybrid journal indexing by data source, 2019-2023. Only hybrid journals present in the cOAlition S Transformative Agreement Data dump with at least one open access article are considered. A) presents the number of journals, B) the number of articles (DOI), distinguishing between shared DOI corpus and surplus in hoaddata. Box plots (C) shows the five-years journal article volume (log scale). Note that intersections sets with at least 30 journals are shown."
 #| label: fig-upset_coverage_results
 # Helper function to make text labels the same size as axis labels as seen in
 # <https://wjschne.github.io/posts/making-text-labels-the-same-size-as-axis-labels-in-ggplot2/>
@@ -414,70 +417,103 @@ ggtext_size <- function(base_size, ratio = 0.8) {
 bar_width <- 0.7
 size <- get_size_mode("exclusive_intersection")
 
-upset_overview <- upset_data |>
+upset_journal <- upset_data |>
   rename(hoaddata = Crossref) |>
   ComplexUpset::upset(
-  c("hoaddata", "WoS", "Scopus"),
-  # Only journals in Crossref
-  min_size = 30,
-  set_sizes = FALSE,
-  stripes = "transparent",
-  # wrap = TRUE,
-  name = "Data Source Coverage",
-  base_annotations = list(
-    "Journals" = (
-      ComplexUpset::intersection_size(
-        counts = FALSE,
-        text = list(size = 8 / .pt),
-        text_mapping = aes(
-          label = paste0(!!upset_text_percentage(), '\n(', format(!!size, big.mark = ","), ')'),
-          colour = ifelse(!!size > 5000, 'on_bar', 'on_background'),
-          y = ifelse(!!size > 5000, !!size - 4000, !!size)
-        ), width = bar_width
-      ) +
-        scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
-        ggtitle("A")
-    )
-  ),
-  annotations = list(
-    "Journal size\n(log scale)" = (
-      ggplot(mapping = aes(x = intersection, y = overlap)) +
-        geom_boxplot(outliers = FALSE, width = bar_width) +
-        scale_y_log10(labels =  scales::number_format(big.mark = ","), limits = c(5, 10000)) +
-        ggtitle("C")
+    c("hoaddata", "WoS", "Scopus"),
+    # Only journals in Crossref
+    min_size = 30,
+    set_sizes = FALSE,
+    stripes = "transparent",
+    wrap = FALSE,
+    name = NULL,
+    base_annotations = list(
+      "Journals" = (
+        ComplexUpset::intersection_size(
+          counts = FALSE,
+          text = list(size = 8 / .pt),
+          text_mapping = aes(
+            label = paste0(!!upset_text_percentage(), "\n(", format(!!size, big.mark = ","), ")"),
+            colour = ifelse(!!size > 5000, "on_bar", "on_background"),
+            y = ifelse(!!size > 5000, !!size - 4000, !!size)
+          ), width = bar_width
+        ) +
+          scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+          ggtitle("A")
+      )
     ),
-    "Articles" = (
-      ggplot(mapping = aes(y = n_cr)) +
-        geom_bar(
-          stat = "identity",
-          color = "grey80",
-          width = bar_width,
-          aes(fill = "Surplus")
-        ) +
-        geom_bar(
-          aes(y = overlap, fill = "Shared"),
-          stat = "identity",
-          width = bar_width,
-          color = "#0091c8"
-        ) +
-        scale_fill_manual(
-          values = c(
-            `Surplus` = "grey80",
-            `Shared` = "#0091c8"
-          ),
-          name = "DOI"
-        ) +
-        scale_y_continuous(labels =  scales::number_format(big.mark = ","),
-                           breaks = c(0, 2500000, 5000000, 7500000)) +
-        guides(fill = guide_legend(reverse = TRUE)) +
-        ggtitle("B")
-    )
-  ),
-  matrix = (intersection_matrix(geom = geom_point(
-    shape = "square", size = 2
-  )))
-)
-upset_overview & my_upset_theme
+    matrix = (intersection_matrix(geom = geom_point(
+      shape = "square", size = 2
+    )))
+  )
+upset_article_volume <- upset_data |>
+  rename(hoaddata = Crossref) |>
+  ComplexUpset::upset(
+    c("hoaddata", "WoS", "Scopus"),
+    # Only journals in Crossref
+    min_size = 30,
+    set_sizes = FALSE,
+    stripes = "transparent",
+    wrap = FALSE,
+    name = NULL,
+    base_annotations = list(
+      "Journal size (log scale)" = (
+        ggplot(mapping = aes(x = intersection, y = overlap)) +
+          geom_boxplot(outliers = FALSE, width = bar_width) +
+          scale_y_log10(labels = scales::number_format(big.mark = ","), limits = c(5, 10000)) +
+          ggtitle("C"))
+    ),
+    matrix = (intersection_matrix(geom = geom_point(
+      shape = "square", size = 2
+    )))
+  )
+upset_articles <- upset_data |>
+  rename(hoaddata = Crossref) |>
+  ComplexUpset::upset(
+    c("hoaddata", "WoS", "Scopus"),
+    # Only journals in Crossref
+    min_size = 30,
+    set_sizes = FALSE,
+    stripes = "transparent",
+    wrap = FALSE,
+    name = "Data Source Coverage",
+    base_annotations = list(
+      "Articles" = (
+        ggplot(mapping = aes(y = n_cr)) +
+          geom_bar(
+            stat = "identity",
+            color = "grey80",
+            width = bar_width,
+            aes(fill = "Surplus")
+          ) +
+          geom_bar(
+            aes(y = overlap, fill = "Shared"),
+            stat = "identity",
+            width = bar_width,
+            color = "#0091c8"
+          ) +
+          scale_fill_manual(
+            values = c(
+              `Surplus` = "grey80",
+              `Shared` = "#0091c8"
+            ),
+            name = "DOI"
+          ) +
+          scale_y_continuous(
+            labels = scales::number_format(big.mark = ","),
+            breaks = c(0, 2500000, 5000000, 7500000)
+          ) +
+          guides(fill = guide_legend(reverse = FALSE)) +
+          theme(legend.position = "top") +
+          ggtitle("B")
+      )
+    ),
+    matrix = (intersection_matrix(geom = geom_point(
+      shape = "square", size = 2
+    )))
+  )
+
+(guide_area() / (upset_journal | upset_articles | upset_article_volume)) + plot_layout(guides = "collect", heights = c(0.1, 1)) & my_upset_theme
 ```
 Journal coverage analysis revealed that `r round(nrow(union_jns) / nrow(all_jns) * 100)`% (n = `r nrow(union_jns)`) of the hybrid journals included in transformative agreements were indexed in all three databases (Figure \ref{fig-upset_coverage_results}A).
 The second largest set consisted of journals indexed in both hoaddata and Scopus, comprising `r round( jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == TRUE) |> distinct(issn_l) |> nrow() / nrow(all_jns) * 100)`% (n = `r jn_upset_articles |> filter(WoS == FALSE, Crossref == TRUE, Scopus == TRUE) |>  nrow()`) of hybrid journals.
@@ -522,12 +558,15 @@ esac <- hoaddata::jct_hybrid_jns |>
       esac_publisher == "Springer Nature" ~ "Springer Nature",
       esac_publisher == "Wiley" ~ "Wiley",
       is.character(esac_publisher) ~ "Other"
-    )) |>
-  mutate(publisher =
-           forcats::fct_relevel(
-             publisher,
-             c("Elsevier", "Springer Nature", "Wiley", "Other") 
-           )) |>
+    )
+  ) |>
+  mutate(
+    publisher =
+      forcats::fct_relevel(
+        publisher,
+        c("Elsevier", "Springer Nature", "Wiley", "Other")
+      )
+  ) |>
   mutate(publisher = forcats::fct_rev(publisher)) |>
   distinct(issn_l, publisher, esac_publisher)
 
@@ -535,13 +574,13 @@ jn_upset_publisher <- inner_join(upset_data, esac, by = "issn_l") |>
   # Because of Journal transfer, restrict choice to one portfolio
   distinct(issn_l, .keep_all = TRUE)
 
-jn_upset_publisher_ind <- 
+jn_upset_publisher_ind <-
   jn_upset_publisher |>
-  filter(Crossref == TRUE, Scopus == TRUE, WoS == TRUE) |> 
+  filter(Crossref == TRUE, Scopus == TRUE, WoS == TRUE) |>
   group_by(publisher) |>
   summarise(n_journals = n_distinct(issn_l), articles = sum(overlap, na.rm = TRUE))
 
-jn_upset_publisher_all <- 
+jn_upset_publisher_all <-
   jn_upset_publisher |>
   group_by(publisher) |>
   summarise(n_journals = n_distinct(issn_l), articles = sum(overlap, na.rm = TRUE))
@@ -549,8 +588,10 @@ jn_upset_publisher_all <-
 jn_upset_publisher_all <- jn_upset_publisher |>
   summarise(n_journals_all = n_distinct(issn_l), articles_all = sum(overlap, na.rm = TRUE)) |>
   bind_cols(jn_upset_publisher_all) |>
-  mutate(prop_jn = n_journals / n_journals_all,
-         prop_art = articles / articles_all)
+  mutate(
+    prop_jn = n_journals / n_journals_all,
+    prop_art = articles / articles_all
+  )
 ```
 
 Figure \ref{fig-upset_coverage_results_publisher} presents the coverage of hybrid journals in transformative agreements across data sources from 2019 to 2023 with a focus on publisher portfolios.
@@ -562,103 +603,150 @@ The remaining `r jn_upset_publisher |> filter(publisher == "Other") |> distinct(
 
 
 ```{r upset_publisher_plot, fig.asp=0.75}
-#| fig-cap: "Comparison of hybrid journal indexing by data source and publisher, 2019-2023. Only hybrid journals present in the cOAlition S Transformative Agreement Data dump with at least one open access article are considered. A) presents the percentage of journals by publisher, B) the number of articles by publisher (shared DOI). Box plots (C) shows the five-years journal article volume (log-scale) by publisher."
+#| fig-cap: "Comparison of hybrid journal indexing by data source and publisher, 2019-2023. Only hybrid journals present in the cOAlition S Transformative Agreement Data dump with at least one open access article are considered. A) presents the percentage of journals by publisher, B) the number of articles by publisher (shared DOI). Box plots (C) shows the five-years journal article volume (log scale) by publisher. Note that intersections sets with at least 30 journals are shown."
 #| label: fig-upset_coverage_results_publisher
-#| 
-size = get_size_mode('exclusive_intersection')
+#|
+size <- get_size_mode("exclusive_intersection")
 
-upset_publisher_plot <- jn_upset_publisher |>
+upset_publisher <- jn_upset_publisher |>
   rename(hoaddata = Crossref) |>
   ComplexUpset::upset(
     c("hoaddata", "WoS", "Scopus"),
-  # Only journals in Crossref
-  min_size = 30,
-  width_ratio = 0.4,
-  stripes = "transparent",
-  name = "Data Source Coverage",
-  base_annotations = NULL,
-  annotations = list(
-    "Journal size\n(log-scale)" = (
-      ggplot(mapping = aes(x = intersection, y = overlap, fill = fct_rev(publisher))) +
-        geom_boxplot(outliers = FALSE, width = bar_width) +
-        scale_fill_manual(
-          "",
-          values = c(
-            "Elsevier" = "#e9711c",
-            "Springer Nature" = "#486a7e",
-            "Wiley" = "#068853",
-            "Other" = "#b3b3b3"
-          ), guide = "none") +
-          scale_y_log10(labels =  scales::number_format(big.mark = ",")) +
-        ggtitle("C")
+    # Only journals in Crossref
+    min_size = 30,
+    width_ratio = 0.4,
+    stripes = "transparent",
+    name = "Data Source Coverage",
+    base_annotations = list(
+      "Publisher" = (
+        ggplot(mapping = aes(fill = publisher)) +
+          geom_bar(stat = "count", position = "fill", width = bar_width) +
+          scale_y_continuous("Journals", labels = scales::percent_format()) +
+          scale_fill_manual(
+            "",
+            values = c(
+              "Elsevier" = "#e9711c",
+              "Springer Nature" = "#486a7e",
+              "Wiley" = "#068853",
+              "Other" = "#b3b3b3"
+            ), guide = "none"
+          ) +
+          ggtitle("A")
+      )
     ),
-    "Articles" = (
-      ggplot(mapping = aes(y = overlap, fill = publisher, color = publisher)) +
-        geom_bar(stat = "identity", width = bar_width) +
+    set_sizes = (
+      upset_set_size(
+        geom = geom_bar(aes(fill = publisher), width = 0.8),
+        position = "right"
+      ) +
         scale_fill_manual(
           "",
-          values = c(
-            "Elsevier" = "#e9711c",
-            "Springer Nature" = "#486a7e",
-            "Wiley" = "#068853",
-            "Other" = "#b3b3b3a0"
-          ), guide = "none") +
-        scale_color_manual(
           values = c(
             "Elsevier" = "#e9711c",
             "Springer Nature" = "#486a7e",
             "Wiley" = "#068853",
             "Other" = "#b3b3b3"
           ), guide = "none"
-        ) + 
-        scale_y_continuous(labels =  scales::number_format(big.mark = ",")) +
-        ggtitle("B") 
+        ) +
+        scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+        ylab("Journals")
     ),
-    "Publisher" = (
-      ggplot(mapping = aes(fill = publisher)) +
-        geom_bar(stat = "count", position = "fill", width = bar_width) + 
-        scale_y_continuous("Journals", labels = scales::percent_format()) +
-        scale_fill_manual(
-          "",
-          values = c(
-            "Elsevier" = "#e9711c",
-            "Springer Nature" = "#486a7e",
-            "Wiley" = "#068853",
-            "Other" = "#b3b3b3"
-          ), guide = "none") +
-        ggtitle("A")
-    )
-  ),
-  set_sizes = (
-    upset_set_size(
-      geom = geom_bar(aes(fill = publisher), width = 0.8), 
-      position = "right"
-    ) +
-    scale_fill_manual(
-      "",
-      values = c(
-        "Elsevier" = "#e9711c",
-        "Springer Nature" = "#486a7e",
-        "Wiley" = "#068853",
-        "Other" = "#b3b3b3"
-      )
-    ) +
-    scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
-  #  guides(fill = guide_legend(reverse = TRUE)) +
-    ylab("Journals") 
-  ),
-  guides = "over",
-  matrix = (
-    intersection_matrix(
-      geom = geom_point(
-        shape = "square",
-        size = 2
+  #  guides = "over",
+    matrix = (
+      intersection_matrix(
+        geom = geom_point(
+          shape = "square",
+          size = 2
+        )
       )
     )
   )
-)
 
-upset_publisher_plot & my_upset_theme 
+
+upset_publisher_articles <- jn_upset_publisher |>
+  rename(hoaddata = Crossref) |>
+  ComplexUpset::upset(
+    c("hoaddata", "WoS", "Scopus"),
+    # Only journals in Crossref
+    min_size = 30,
+    width_ratio = 0.4,
+    stripes = "transparent",
+    name = "Data Source Coverage",
+    set_sizes=FALSE,
+    base_annotations = list(
+      "Journal size\n(log scale)" = (
+        ggplot(mapping = aes(x = intersection, y = overlap, fill = fct_rev(publisher))) +
+          geom_boxplot(outliers = FALSE, width = bar_width) +
+          scale_fill_manual(
+            "",
+            values = c(
+              "Elsevier" = "#e9711c",
+              "Springer Nature" = "#486a7e",
+              "Wiley" = "#068853",
+              "Other" = "#b3b3b3"
+            ), guide = "none"
+          ) +
+          scale_y_log10(labels = scales::number_format(big.mark = ",")) +
+          ggtitle("C")
+      )), 
+      matrix = (
+      intersection_matrix(
+        geom = geom_point(
+          shape = "square",
+          size = 2
+        )
+      )
+    )
+  )
+
+upset_publisher_article_volume <- jn_upset_publisher |>
+  rename(hoaddata = Crossref) |>
+  ComplexUpset::upset(
+    c("hoaddata", "WoS", "Scopus"),
+    # Only journals in Crossref
+    min_size = 30,
+    width_ratio = 0.4,
+    stripes = "transparent",
+    name = "Data Source Coverage",
+    set_sizes=FALSE,
+    base_annotations = list(
+            "Articles" = (
+        ggplot(mapping = aes(y = overlap, fill = publisher, color = publisher)) +
+          geom_bar(stat = "identity", width = bar_width) +
+          scale_fill_manual(
+            "Publisher",
+            values = c(
+              "Elsevier" = "#e9711c",
+              "Springer Nature" = "#486a7e",
+              "Wiley" = "#068853",
+              "Other" = "#b3b3b3a0"
+            )
+          ) +
+          scale_color_manual(
+            values = c(
+              "Elsevier" = "#e9711c",
+              "Springer Nature" = "#486a7e",
+              "Wiley" = "#068853",
+              "Other" = "#b3b3b3"
+            ), guide = "none"
+          ) +
+          scale_y_continuous(labels = scales::number_format(big.mark = ",")) +
+          guides(fill = guide_legend(reverse = TRUE)) +
+          theme(legend.position = "top",
+          legend.justification.bottom = "left") +
+          ggtitle("B"))), 
+      matrix = (
+      intersection_matrix(
+        geom = geom_point(
+          shape = "square",
+          size = 2
+        )
+      )
+    )
+  )
+
+
+(guide_area() / upset_publisher / (upset_publisher_article_volume | upset_publisher_articles)) + plot_layout(guides = "collect", heights = c(0.05, 1, 1)) & my_upset_theme
 ```
 
 The three largest publishers, Elsevier, Springer Nature, and Wiley, were best represented at the  intersection of all three data sources  (hoaddata, Scopus, and Web of Science).
@@ -673,15 +761,17 @@ The set also captures discontinued journals, providing further insights into the
 
 
 ```{r miss_portfolios}
-miss_tas <- jn_upset_publisher |> 
-  filter(Crossref == FALSE) |> 
-  group_by(esac_publisher) |> 
-  summarise(journals = n_distinct(issn_l),
-            n = sum(overlap, na.rm = TRUE)) |> 
-  arrange(desc(n)) 
+miss_tas <- jn_upset_publisher |>
+  filter(Crossref == FALSE) |>
+  group_by(esac_publisher) |>
+  summarise(
+    journals = n_distinct(issn_l),
+    n = sum(overlap, na.rm = TRUE)
+  ) |>
+  arrange(desc(n))
 
 cr_tas <- jn_upset_publisher |>
-  filter(Crossref == TRUE) |> 
+  filter(Crossref == TRUE) |>
   pull(esac_publisher)
 
 miss_publishers <- miss_tas |>
@@ -706,7 +796,7 @@ For Web of Science and Scopus, the impact of transformative agreements was estim
 ```{r, plot_uptake_overview, fig.asp=.5}
 #| fig-cap: "Development of open access in hybrid journals in transformative agreements by data source and author role, 2019-2023. Figure shows the open access percentage (A), the number (B) and the percentage (C) of open access articles enabled by transformative agreements."
 #| label: fig-uptake_overview
-#| 
+#|
 uptake_df <- readr::read_csv(here::here("data", "uptake_df.csv"))
 
 # Data prep
@@ -721,9 +811,11 @@ uptake_by_year <- uptake_df |>
   mutate(src = ifelse(src == "HOAD", "hoaddata", src))
 
 uptake_by_year_short <- uptake_by_year |>
-  mutate(oa_prop = n_oa_articles / n_articles,
-         ta_oa_prop = ta_oa_first_author_articles / n_oa_articles,
-         ta_oa_cor_prop = ta_oa_corresponding_author_articles / n_oa_articles)
+  mutate(
+    oa_prop = n_oa_articles / n_articles,
+    ta_oa_prop = ta_oa_first_author_articles / n_oa_articles,
+    ta_oa_cor_prop = ta_oa_corresponding_author_articles / n_oa_articles
+  )
 
 uptake_by_year_df <- uptake_by_year |>
   mutate(earliest_year = gsub("^20", "'", as.character(earliest_year))) |>
@@ -737,7 +829,7 @@ plot_oa_all <- ggplot(uptake_by_year_df, aes(x = earliest_year)) +
     guide = "none"
   ) +
   scale_color_manual(NULL,
-   values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")
+    values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")
   ) +
   scale_y_continuous(
     labels = scales::percent_format(),
@@ -756,8 +848,9 @@ plot_ta_oa <- ggplot(filter(uptake_by_year_df, value > 0), aes(x = earliest_year
   geom_point(aes(y = value, fill = src), alpha = 0.8, shape = 21) +
   scale_color_manual(NULL, values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
-                    guide = "none") +
+    values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
+    guide = "none"
+  ) +
   scale_linetype_manual(NULL,
     values = c(
       `ta_oa_first_author_articles` = "longdash",
@@ -785,8 +878,9 @@ plot_ta_perc <- ggplot(filter(uptake_by_year_df, value > 0), aes(x = earliest_ye
   geom_point(aes(y = value / n_oa_articles, fill = src), alpha = 0.8, shape = 21) +
   scale_color_manual(NULL, values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
-                    guide = "none") +  
+    values = c(`hoaddata` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
+    guide = "none"
+  ) +
   scale_linetype_manual(NULL,
     values = c(
       `ta_oa_first_author_articles` = "longdash",
@@ -832,9 +926,9 @@ Figure \ref{fig-uptake_overview}A shows a moderate growth of open access in hybr
 According to hoaddata, hybrid open access uptake increased from `r uptake_by_year_short |> filter(src == "hoaddata", earliest_year == 2019) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "hoaddata", earliest_year == 2019) |> pull(n_oa_articles)`) in 2019 to `r uptake_by_year_short |> filter(src == "hoaddata", earliest_year == 2023) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "hoaddata", earliest_year == 2023) |> pull(n_oa_articles)`) in 2023.
 Similarly, Scopus recorded a growth from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(n_oa_articles)`) in 2019 to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(n_oa_articles)`) in 2023.
 However, Web of Science recorded higher open access uptake in the early years, before converging to a similar level in 2023, from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(n_oa_articles)`) in 2019 to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(oa_prop)*100`% (n = `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(n_oa_articles)`) in 2023. 
-This suggests a different approach towards labelling hybrid open access by Web of Science.
+This suggests that Web of Science takes a different approach to labelling hybrid open access, which will become clearer when results by publisher are presented later.
 
-Similarly, hybrid open access by transformative agreements substantially increased between 2019 and 2023 (Figures \ref{fig-uptake_overview}B and C).
+Figures \ref{fig-uptake_overview}B and C highlight that hybrid open access by transformative agreements substantially increased between 2019 and 2023.
 Trends were consistent when measuring first (dashed line) and corresponding authorship (dotted line). 
 According to Scopus, `r uptake_by_year_short |> filter(src == "Scopus") |> pull(ta_oa_first_author_articles) |> sum()` open access articles could be attributed to transformative agreements based on first author metadata (increasing from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`) and `r uptake_by_year_short |> filter(src == "Scopus") |> pull(ta_oa_corresponding_author_articles) |> sum()` using corresponding author metadata (from `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2019) |> pull(ta_oa_corresponding_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Scopus", earliest_year == 2023) |> pull(ta_oa_corresponding_author_articles) |> sum()`).
 Web of Science recorded `r uptake_by_year_short |> filter(src == "Web of Science") |> pull(ta_oa_first_author_articles) |> sum()` open access articles via transformative agreements using first author metadata (increasing from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(ta_oa_first_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_first_author_articles) |> sum()`)  and  `r uptake_by_year_short |> filter(src == "Web of Science") |> pull(ta_oa_corresponding_author_articles) |> sum()` using corresponding author metadata (from `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2019) |> pull(ta_oa_corresponding_author_articles) |> sum()` to `r uptake_by_year_short |> filter(src == "Web of Science", earliest_year == 2023) |> pull(ta_oa_corresponding_author_articles) |> sum()`).
@@ -862,9 +956,11 @@ uptake_publisher_by_year <- uptake_publisher |>
   )
 
 uptake_by_publisher_short <- uptake_publisher_by_year |>
-  mutate(oa_prop = n_oa_articles / n_articles,
-         ta_oa_prop = ta_oa_first_author_articles / n_oa_articles,
-         ta_oa_cor_prop = ta_oa_corresponding_author_articles / n_oa_articles)
+  mutate(
+    oa_prop = n_oa_articles / n_articles,
+    ta_oa_prop = ta_oa_first_author_articles / n_oa_articles,
+    ta_oa_cor_prop = ta_oa_corresponding_author_articles / n_oa_articles
+  )
 
 
 uptake_by_year_publisher_df <- uptake_publisher_by_year |>
@@ -876,7 +972,7 @@ uptake_by_year_publisher_df <- uptake_publisher_by_year |>
 ```{r plot_publisher_uptake_overview, fig.asp=1.1}
 #| fig-cap: "Development of open access in hybrid journals included in transformative agreements by data source, author role and publisher, 2019-2023. Figure shows the open access percentage (A), the number (B) and the percentage (C) of open access articles enabled by transformative agreements."
 #| label: fig-uptake_publisher
-#| 
+#|
 publisher_plot_oa_all <- ggplot(uptake_by_year_publisher_df, aes(x = earliest_year)) +
   geom_line(aes(y = n_oa_articles / n_articles, group = src, color = src), linetype = "solid") +
   geom_point(aes(y = n_oa_articles / n_articles, fill = src), alpha = 0.5, shape = 21) +
@@ -892,7 +988,7 @@ publisher_plot_oa_all <- ggplot(uptake_by_year_publisher_df, aes(x = earliest_ye
     limits = c(0, NA),
     expand = expansion(mult = c(0, 0.05))
   ) +
-  facet_grid(~fct_rev(publisher)) +
+  facet_grid(~ fct_rev(publisher)) +
   labs(y = "Hybrid OA Uptake", x = NULL)
 
 publisher_plot_ta_oa <- ggplot(filter(uptake_by_year_publisher_df, value > 0), aes(x = earliest_year)) +
@@ -905,8 +1001,9 @@ publisher_plot_ta_oa <- ggplot(filter(uptake_by_year_publisher_df, value > 0), a
   geom_point(aes(y = value, fill = src), alpha = 0.8, shape = 21) +
   scale_color_manual(NULL, values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
-                    guide = "none") +
+    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
+    guide = "none"
+  ) +
   scale_linetype_manual(NULL,
     values = c(
       `ta_oa_first_author_articles` = "longdash",
@@ -922,7 +1019,7 @@ publisher_plot_ta_oa <- ggplot(filter(uptake_by_year_publisher_df, value > 0), a
     limits = c(0, NA),
     expand = expansion(mult = c(0, 0.05))
   ) +
-  facet_grid(~fct_rev(publisher)) +
+  facet_grid(~ fct_rev(publisher)) +
   labs(y = "Hybrid OA via Agreement", x = NULL)
 
 publisher_plot_ta_perc <- ggplot(filter(uptake_by_year_publisher_df, value > 0), aes(x = earliest_year)) +
@@ -935,8 +1032,9 @@ publisher_plot_ta_perc <- ggplot(filter(uptake_by_year_publisher_df, value > 0),
   geom_point(aes(y = value / n_oa_articles, fill = src), alpha = 0.8, shape = 21) +
   scale_color_manual(NULL, values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9")) +
   scale_fill_manual(NULL,
-                    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
-                    guide = "none") +  
+    values = c(`HOAD` = "#000000", `Scopus` = "#E69F00", `Web of Science` = "#56B4E9"),
+    guide = "none"
+  ) +
   scale_linetype_manual(NULL,
     values = c(
       `ta_oa_first_author_articles` = "longdash",
@@ -952,8 +1050,8 @@ publisher_plot_ta_perc <- ggplot(filter(uptake_by_year_publisher_df, value > 0),
     limits = c(0, NA),
     expand = expansion(mult = c(0, 0.05))
   ) +
-  facet_grid(~fct_rev(publisher)) +
-  labs(y = "% of Hybrid OA via Agreement",  x = "Publication Year")
+  facet_grid(~ fct_rev(publisher)) +
+  labs(y = "% of Hybrid OA via Agreement", x = "Publication Year")
 
 layout <- "A
 B
@@ -977,7 +1075,6 @@ publisher_combined_plot <- wrap_plots(
   plot_annotation(tag_levels = "A")
 
 publisher_combined_plot + plot_layout(guides = "collect")
-
 ```
 
 When considering open access trends by publisher (see Figure \ref{fig-uptake_publisher}), the observed differences in early uptake rates between hoaddata and Scopus compared to Web of Science can be largely attributed to articles published in Elsevier hybrid journals, the largest publisher in our sample. 
@@ -1043,9 +1140,11 @@ articles_plot <- country_article_plot_df |>
   filter(!is.na(country_code), hoad_articles > 10000) |>
   ggplot(aes(x = hoad_articles, y = value, fill = country_group)) +
   geom_point(pch = 21, size = 2.5) +
-  ggrepel::geom_text_repel(data = filter(country_article_plot_df, country_code %in% country_focus),
+  ggrepel::geom_text_repel(
+    data = filter(country_article_plot_df, country_code %in% country_focus),
     aes(label = country_code), size = 2, min.segment.length = 0,
-                force = 50) +
+    force = 50
+  ) +
   scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf")) +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
@@ -1053,7 +1152,7 @@ articles_plot <- country_article_plot_df |>
   scale_x_log10(guide = "axis_logticks", labels = scales::number_format(big.mark = ",")) +
   scale_y_log10(guide = "axis_logticks", labels = scales::number_format(big.mark = ",")) +
   theme_minimal(base_size = 10) +
-  labs(x = "Article volume (log-scale)\nhoaddata", y = "Article volume (log-scale)") +
+  labs(x = "Article volume (log scale)\nhoaddata", y = "Article volume (log scale)") +
   theme(
     axis.ticks.x = element_line(size = 0.2),
     axis.ticks.y = element_line(size = 0.2),
@@ -1091,9 +1190,12 @@ oa_prop_plot_df <- country_df |>
 
 oa_prop_plot <- ggplot(oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, fill = country_group)) +
   geom_point(alpha = 1, pch = 21, size = 2.5) +
-ggrepel::geom_text_repel(data = filter(oa_prop_plot_df, country_code %in% country_focus),
+  ggrepel::geom_text_repel(
+    data = filter(oa_prop_plot_df, country_code %in% country_focus),
     aes(label = country_code), size = 2, min.segment.length = 0,
-                force = 50) +  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
+    force = 50
+  ) +
+  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
   coord_fixed(ratio = 1) +
@@ -1109,13 +1211,13 @@ ggrepel::geom_text_repel(data = filter(oa_prop_plot_df, country_code %in% countr
   ) +
   theme_minimal(base_size = 10) +
   labs(x = "Hybrid OA Uptake\nhoadata", y = "Hybrid OA Uptake") +
-    theme(
+  theme(
     axis.ticks.x = element_line(size = 0.2),
     axis.ticks.y = element_line(size = 0.2),
     axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
   ) +
   theme(
- #   strip.text.x = element_blank(),
+    #   strip.text.x = element_blank(),
     legend.position = "top",
     aspect.ratio = 1,
     panel.border = element_rect(color = "grey50", fill = NA),
@@ -1143,16 +1245,19 @@ ta_oa_country_plot <- ta_oa_country_df |>
   filter(hoad_ta_oa_articles > 1000) |>
   ggplot(aes(x = hoad_ta_oa_articles, y = value, fill = country_group)) +
   geom_point(pch = 21, size = 2.5) +
-ggrepel::geom_text_repel(data = filter(ta_oa_country_df, hoad_ta_oa_articles > 1000, country_code %in% country_focus),
+  ggrepel::geom_text_repel(
+    data = filter(ta_oa_country_df, hoad_ta_oa_articles > 1000, country_code %in% country_focus),
     aes(label = country_code), size = 2, min.segment.length = 0,
-                force = 50) +  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
+    force = 50
+  ) +
+  scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
   coord_fixed(ratio = 1) +
   scale_x_log10(guide = "axis_logticks", labels = scales::number_format(big.mark = ",")) +
   scale_y_log10(guide = "axis_logticks", labels = scales::number_format(big.mark = ",")) +
   theme_minimal(base_size = 10) +
-  labs(x = "Hybrid OA via Agreement (log-scale)\nhoadata", y = "Hybrid OA via Agreement (log-scale)") +
+  labs(x = "Hybrid OA via Agreement (log scale)\nhoadata", y = "Hybrid OA via Agreement (log scale)") +
   theme(
     axis.ticks.x = element_line(size = 0.2),
     axis.ticks.y = element_line(size = 0.2),
@@ -1193,11 +1298,13 @@ ta_oa_prop_plot <- ggplot(ta_oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, f
   scale_fill_manual(NULL, values = c("OECD" = "#91bfdb", "BRICS" = "#fc8d59", "Other" = "#ffffbf"), guide = "none") +
   facet_grid(vars(indicator), vars(scr)) +
   geom_abline() +
-  geom_text_repel(data = filter(ta_oa_prop_plot_df, country_code %in% country_focus),
-                aes(label = country_code),
-                min.segment.length = 0,
-                force = 50,
-                size = 2) +
+  geom_text_repel(
+    data = filter(ta_oa_prop_plot_df, country_code %in% country_focus),
+    aes(label = country_code),
+    min.segment.length = 0,
+    force = 50,
+    size = 2
+  ) +
   coord_fixed(ratio = 1) +
   scale_x_continuous(
     labels = scales::percent_format(),
@@ -1217,7 +1324,7 @@ ta_oa_prop_plot <- ggplot(ta_oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, f
     axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)
   ) +
   theme(
-#    strip.text.x = element_blank(),
+    #    strip.text.x = element_blank(),
     legend.position = "bottom",
     aspect.ratio = 1,
     panel.border = element_rect(color = "grey50", fill = NA),
@@ -1230,7 +1337,7 @@ ta_oa_prop_plot <- ggplot(ta_oa_prop_plot_df, aes(x = hoad_oa_prop, y = value, f
 ```{r oa_country_comparision_plot_, fig.asp=1, fig.width = 8}
 #| fig-cap: "Comparison of hybrid open access by country, 2019-2023. Scatterplots distinguish between proprietary databases Scopus and Web of Science, and author role. The x-axis shows hoaddata indicators. A) Five-years article volume, B) open access percentage in hybrid journals, (A and B limited to countries with > 10.000 articles published), C) number and D) percentage of open access articles enabled by transformative agreements (limited to countries with > 1.000 open access articles enabled by transformative agreements). Line represents line of equality. An interactive version is accessible via: <https://najkoja-hoa-replication.hf.space/>"
 #| label: fig-uptake_country
-#| 
+#|
 layout <- "EE
 AC
 BD"
@@ -1242,18 +1349,19 @@ combined_oa_country_plot_ <- wrap_plots(
   C = ta_oa_country_plot,
   D = ta_oa_prop_plot,
   design = layout,
-  heights = c(0,1,1)
+  heights = c(0, 1, 1)
 ) &
-    theme(
-      legend.position = "top",
-      panel.border = element_rect(color = "grey50", fill = NA),
-      text = element_text(size = 12))
+  theme(
+    legend.position = "top",
+    panel.border = element_rect(color = "grey50", fill = NA),
+    text = element_text(size = 12)
+  )
 
 combined_oa_country_plot_ + plot_layout(guides = "collect") +
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = "A")
 ```
 
-In terms of article output by country (see Figure \ref{fig-uptake_country}A), strong positive correlations were observed across data sources and author roles (Spearman rank correlation $\rho > .9$, $p < 0.001$).
+In terms of article output by country (see Figure \ref{fig-uptake_country}A), strong positive correlations were observed across data sources and author roles (Spearman rank correlation $\rho > .9$).
 Between 2019 and 2023, China was the most productive country, followed by the United States and, by a certain margin, India, the United Kingdom, and Germany. 
 The analysis of authorship roles revealed minimal variation, indicating that the first and corresponding author of an article were typically from the same country.
 
@@ -1265,7 +1373,7 @@ The United States also demonstrated a relatively low proportion of open access a
 These findings were consistent across all databases.
 However, France was better represented in Web of Science, likely because of its agreement with Elsevier starting in 2019, which allowed delayed open access under the publisher’s user license [@Rabesandratana_2019]. 
 This licence was not classified as hybrid open access in either Scopus or hoaddata.
-In all cases, Spearman rank correlations were $\rho > .9$, $p < 0.001$, indicating a high level of correlation between the databases and authorship roles considered.
+In all cases, Spearman rank correlations were $\rho > .9$, indicating a high level of correlation between the databases and authorship roles considered.
 
 Transformative agreements appeared to be a key driver of national open access growth (see Figure \ref{fig-uptake_country}C and D).
 OECD members accounted for the majority of open access articles enabled by transformative agreements.
@@ -1278,8 +1386,8 @@ Medium-sized European countries again showed a high proportion of hybrid open ac
 In contrast, the United States had a low proportion of hybrid open access enabled by agreements, suggesting that a substantial number of open access articles from US-based authors were likely financed through other means. 
 
 In all cases, strong positive correlations were observed using Spearman's rank correlation: 
-$\rho > .9$, $p < 0.001$ between data sources and authorship roles, when considering countries with a minimum of 1,000 open access articles enabled by transformative agreements between 2019 and 2023. 
-When this limitation was removed, the correlation remained strong ($\rho > .85$, $p < 0.001$).
+$\rho > .9$ between data sources and authorship roles, when considering countries with a minimum of 1,000 open access articles enabled by transformative agreements between 2019 and 2023. 
+When this limitation was removed, the correlation remained strong ($\rho > .85$).
 This difference may signal countries where only a few institutions had transformative agreements in place, as opposed to those participating in national consortia with broader participation.
 
 # Discussion
@@ -1296,12 +1404,12 @@ This aligns with previous studies [@Akbaritabar_2024; @alperin2024analysissuitab
 Overall, the results show strong correlations by country affiliation, which supports the use open metadata for large-scale analyses of hybrid open access. 
 However, the observed differences in journal coverage and metadata availability warrant further discussion, affecting not only open data sources but also proprietary databases when used in isolation.
 
-The coverage analysis revealed that hybrid journals are well indexed in all three data sources, particularly in terms of article coverage, which reflects the dominance of major publishers whose established journal portfolios are comprehensively indexed in proprietary databases [@vanbellen2024oligopolyacademicpublisherspersists; @Bakker_2024].
+The coverage analysis revealed that hybrid journals are well indexed in all three data sources, particularly in terms of article coverage, which reflects the dominance of major publishers whose established journal portfolios are comprehensively indexed in proprietary databases [@van_Bellen_2025; @Bakker_2024].
 Differences emerge for journals targeting practitioners or local non-English language communities, with many such titles indexed exclusively in Crossref and Scopus.
 Using Crossref as a bibliometric database in hoaddata demonstrated a particular strength in identifying newly established hybrid journals, a notable finding given that transformative agreements primarily target existing subscription-based journals.
 The landscape of hybrid journal publishing thus differs markedly from that of fully open access journals.
-Comparing the coverage of OpenAlex, Scopus and Web of Science, @Simard_2024 indicate that only half of the fully open access journals listed in the DOAJ are also indexed in Scopus and Web of Science.
-Notably, journals that charge no publication fees ("diamond journals") are absent from the selective Web of Science, which reinforces existing disparities in the indexing of under-represented research communities and regions in selective bibliometric databases [@Simard_2024].
+Comparing the coverage of OpenAlex, Scopus and Web of Science, @Simard_2025 indicate that only half of the fully open access journals listed in the DOAJ are also indexed in Scopus and Web of Science.
+Notably, journals that charge no publication fees ("diamond journals") are absent from the selective Web of Science, which reinforces existing disparities in the indexing of under-represented research communities and regions in selective bibliometric databases [@Simard_2025].
 
 <!-- A notable advantage of using Scopus and Web of Science to study the impact of transformative agreements is their comprehensive differentiation of journal articles by document type, as many agreements restrict funding to original articles and reviews [@Borrego_2023]. 
 This resulted in slightly higher open access rates in Scopus and Web of Science. -->
@@ -1328,15 +1436,28 @@ While Unpaywall can detect such gaps by parsing publishers' websites for open ac
 This resulted in fewer open access articles being recorded in Scopus and Web of Science.
 Further inconsistencies emerged between Scopus and Web of Science, despite both relying on Unpaywall: Web of Science erroneously labels Elsevier’s delayed open access as hybrid, whereas Scopus correctly categorises it.
 Notably, Scopus and hoaddata showed greater alignment than that observed in a related comparison between Scopus and OpenAlex [@alperin2024analysissuitabilityopenalexbibliometric]. 
-This likely reflects the advantage of using of a curated list to identify hybrid open access journals, rather than depending solely on article-level tags.
-Given these variations, which may compromise comparability, research and monitoring exercises should avoid relying on a single source. 
-Instead, the selection of open access evidence should be cross-verified using multiple sources and snapshots that can be used to track changes in the data over time [@Huang_2020]. Incorporating expert-curated journal lists can also help prevent misclassification based on business models [@Visser_2021].
+This likely reflects the advantage of using of a curated list to identify hybrid  journals, rather than depending solely on article-level open access tags.
 
-It is important to note that the study's estimates of articles from institutions involved in transformative agreements are approximations because of a lack of access to invoice data, which is not usually shared by library consortia and publishers [@Kramer_2024]. 
+The observed variations may compromise comparability not just in research, but also across open access monitoring services, which have grown over the years [@Salamoura_2024;@pampel2025]. 
+This study highlights, in line with previous research [@Salamoura_2024], that design decisions underlying these services, such as data sources used, update frequencies, and open access definitions, are critical. 
+Stakeholders should therefore advocate for greater transparency from monitoring service providers in their methodological choices and data processing decisions [@Kramer_2024].
+Research and monitoring exercises might also benefit from avoiding reliance on a single source. 
+Instead, the selection of open access evidence could be cross-verified using multiple sources and snapshots that can be used to track changes in the data over time [@Huang_2020;@P_l_nen_2020]. 
+Incorporating expert-curated journal lists may also help reduce misclassification based on business models [@Visser_2021].
+
+It should be noted that the study's estimates of articles from institutions involved in transformative agreements are approximations because of a lack of access to invoice data, which is not usually shared by library consortia and publishers [@Kramer_2024]. 
 Furthermore, the open data sources for transformative agreements, including the cOAlition S Journal Checker Tool and the ESAC registry, are based on voluntary effort, crowd-sourced from various consortia. 
-However, recent validation using Dutch research information demonstrates the reliability of such an open approach for the assessment of articles under transformative agreements [@de_Jonge_2025]. 
-With enhanced open metadata compliance attributable to evolving standards and initiatives in support of negotiations with publishers, particularly through the ESAC initiative and Barcelona Declaration on Open Research Information, the situation is likely to improve. In conclusion, this study has shown that open metadata are well-suited for analysing the transition from subscription-based journal publishing to full open access.
+Additionally, while this study observed strong correlations at the country level, institutional-level correlations may differ due to matching inaccuracies that can occur when working with long lists of participating institutions and different disambiguation approaches for author affiliations. Future research could explore institutional-level analysis in more detail, though recent validation using Dutch research information demonstrates the reliability of such an open approach for assessing articles under transformative agreements [@de_Jonge_2025].
+
+Despite these current limitations, the situation is likely to improve with enhanced open metadata compliance attributable to evolving standards and initiatives in support of negotiations with publishers, particularly through the ESAC initiative and Barcelona Declaration on Open Research Information, the situation is likely to improve.
+For example, AIP Publishing and Emerald, whose hybrid journal portfolios could not be included in this study due to a lack of CC licence information, have recently begun sharing this metadata via Crossref.
+Furthermore, during the 17th Berlin Open Access Conference (B17), an international conference organised by the OA2020 Initiative, research organisations and their library consortia emphasised the global importance of open research information for achieving transparency.
+In conclusion, this study has shown that open metadata are well-suited for analysing the transition from subscription-based journal publishing to full open access.
 But using them in conjunction with proprietary databases provides a more robust understanding that overcomes individual shortcomings in coverage and metadata quality.
+
+# Acknowledgement {-}
+
+I would like to thank the two reviewers and the PREreview reviewers [@Rittman_2025] for their valuable and helpful feedback on the manuscript.
 
 # Author contributions {-}
 
@@ -1374,8 +1495,10 @@ Open metadata provided by Crossref, OpenAlex, and cOAlition S Journal Checker Tr
 
 [^wosoa]: <https://webofscience.help.clarivate.com/en-us/Content/open-access.html>
 
-[^scopusoa]: <https://blog.scopus.com/posts/scopus-filters-for-open-access-type-and-green-oa-full-text-access-option>
+[^scopusoa]: <https://web.archive.org/web/20250426153752/https://blog.scopus.com/posts/scopus-filters-for-open-access-type-and-green-oa-full-text-access-option>
 
 [^oacorresponding]: <https://docs.openalex.org/api-entities/works/work-object/authorship-object#is_corresponding>
 
 [^esac_registry]: <https://esac-initiative.org/about/transformative-agreements/agreement-registry/>
+
+[^hoaddata]: <https://github.com/subugoe/hoaddata>
